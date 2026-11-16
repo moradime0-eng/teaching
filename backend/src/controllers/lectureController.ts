@@ -27,6 +27,8 @@ import { asyncHandler } from '../middlewares/asyncHandler';
 import { LectureType } from '../enums/LectureType';
 import { recalculateCourseStats } from './sectionController';
 import { sanitizeLectureMedia } from '../utils/mediaGuard';
+import { isExactOrder } from '../utils/orderValidation';
+import { courseAccess, visibleLecture } from '../utils/courseAccess';
 import {
   safeDeleteLectureS3Files,
   safeDeleteContentItemS3Files,
@@ -114,18 +116,20 @@ export const listLectures = asyncHandler(async (req: Request, res: Response) => 
   const section = await Section.findOne({ _id: sectionId, course: courseId });
   if (!section) throw ApiError.notFound('فصل یافت نشد');
 
-  const lectures = await Lecture.find({ section: sectionId }).sort({ order: 1 }).lean();
-  return ApiResponse.success(res, lectures.map((l) => sanitizeLectureMedia(l)));
+  const access = await courseAccess(req, courseId);
+  const lectures = await Lecture.find({ section: sectionId, course: courseId }).sort({ order: 1 }).lean();
+  return ApiResponse.success(res, lectures.map((l) => visibleLecture(l, access)).filter(Boolean).map((l) => access.manager ? l : sanitizeLectureMedia(l)));
 });
 
 // ==================== LIST ALL COURSE LECTURES (flat) ====================
 export const listAllCourseLectures = asyncHandler(async (req: Request, res: Response) => {
   const { courseId } = req.params;
+  const access = await courseAccess(req, courseId);
   const lectures = await Lecture.find({ course: courseId })
     .sort({ order: 1 })
     .populate('section', 'title order')
     .lean();
-  return ApiResponse.success(res, lectures.map((l) => sanitizeLectureMedia(l)));
+  return ApiResponse.success(res, lectures.map((l) => visibleLecture(l, access)).filter(Boolean).map((l) => access.manager ? l : sanitizeLectureMedia(l)));
 });
 
 // ==================== UPDATE LECTURE ====================
@@ -213,6 +217,11 @@ export const reorderLectures = asyncHandler(async (req: Request, res: Response) 
   if (!section) throw ApiError.notFound('فصل یافت نشد');
 
   await verifyCourseOwnership(courseId, req.user._id.toString(), req.user.role);
+
+  const existingLectures = await Lecture.find({ section: sectionId, course: courseId }).select('_id').lean();
+  if (!isExactOrder(lectureIds, existingLectures.map((item) => item._id.toString()))) {
+    throw ApiError.badRequest('لیست دروس باید شامل همه دروس همین فصل و بدون تکرار باشد');
+  }
 
   const bulkOps = lectureIds.map((id: string, index: number) => ({
     updateOne: {
@@ -351,7 +360,7 @@ export const updateContentItem = asyncHandler(async (req: Request, res: Response
     (typeSpecificData.audioUrl && String(typeSpecificData.audioUrl).trim() !== '') ||
     (typeSpecificData.storage?.key && String(typeSpecificData.storage.key).trim() !== '');
 
-const needsValidation = hasNewFileData;
+const needsValidation = hasNewFileData || typeChanged || typeSpecificData.richTextContent !== undefined || typeSpecificData.externalUrl !== undefined;
   // ─── ۳. اعمال تغییرات فیلدهای متنی ───
   if (title !== undefined) contentItem.title = title?.trim() || contentItem.title;
   if (description !== undefined) contentItem.description = description?.trim() || '';
@@ -441,7 +450,7 @@ export const reorderContentItems = asyncHandler(async (req: Request, res: Respon
 
   const lectureItemIds =
     lecture.contentItems?.map((item: any) => item._id.toString()) || [];
-  const allValid = contentItemIds.every((id: string) => lectureItemIds.includes(id));
+  const allValid = isExactOrder(contentItemIds, lectureItemIds);
   if (!allValid) {
     throw ApiError.badRequest('یک یا چند شناسه محتوا متعلق به این درس نیست');
   }

@@ -1,3 +1,4 @@
+import { courseAccess, visibleLecture } from '../utils/courseAccess';
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
 import Course from '../models/Course';
@@ -160,17 +161,8 @@ export const getCourseBySlug = asyncHandler(
 
     // ─── ۱. دوره منتشر شده ───
     if (course.status === CourseStatus.PUBLISHED) {
-      let isEnrolled = false;
+      const access = await courseAccess(req, course._id);
       const isAdmin = req.user?.role === 'admin';
-
-      if (req.user) {
-        const enrollment = await Enrollment.findOne({
-          student: req.user._id,
-          course: course._id,
-          isRefunded: false,
-        });
-        isEnrolled = !!enrollment;
-      }
 
       // 🔒 مالک دوره و ادمین می‌توانند لینک خام ویدیوی معرفی را ببینند (ویرایشگر)
       // ولی هیچ کاربر دیگری (حتی دانشجوی ثبت‌نام‌شده) لینک خام را دریافت نمی‌کند.
@@ -201,28 +193,11 @@ export const getCourseBySlug = asyncHandler(
         };
       }
 
-      if (course.isFree) {
-        courseObj.sections = sanitizeCourseSections(sectionsWithLectures);
-      } else if (!isEnrolled && !isAdmin) {
-        courseObj.sections = sectionsWithLectures.map((sec: any) => ({
-          ...sec,
-          lectures: (sec.lectures || []).map((lec: any) => {
-            if (lec.isFreePreview) return sanitizeLectureMedia(lec);
-            return {
-              _id: lec._id,
-              title: lec.title,
-              type: lec.type,
-              duration: lec.duration,
-              isFreePreview: lec.isFreePreview,
-              order: lec.order,
-            };
-          }),
-        }));
-      } else {
-        // 🔒 حتی برای دانشجوی ثبت‌نام‌شده، لینک خام S3 برگردانده نمی‌شود.
-        // ویدیو فقط از طریق /upload/stream/:lectureId (با بررسی دسترسی) قابل دریافت است.
-        courseObj.sections = sanitizeCourseSections(sectionsWithLectures);
-      }
+      courseObj.sections = sectionsWithLectures.map((sec: any) => ({
+        ...sec,
+        lectures: (sec.lectures || []).map((lec: any) => visibleLecture(lec, access))
+          .filter(Boolean).map((lec: any) => access.manager ? lec : sanitizeLectureMedia(lec)),
+      }));
 
       courseObj.reviews = reviews;
       return ApiResponse.success(res, courseObj);
@@ -285,8 +260,8 @@ export const getCourseById = asyncHandler(
 
     if (!course) throw ApiError.notFound('دوره یافت نشد');
 
-    // Ownership check: non-published courses are only visible to owner or admin
-    if (course.status !== 'published') {
+    // Editing details are private for published courses too.
+    {
       const instructorRef = (course.instructor as any)?._id ?? course.instructor;
       const isOwner =
         instructorRef?.toString() === req.user?._id?.toString();
@@ -427,6 +402,7 @@ export const updateCourse = asyncHandler(
       );
     }
 
+    const oldStatus = course.status;
     const courseDoc = course as any;
     Object.keys(updateData).forEach((key) => {
       courseDoc[key] = updateData[key];
@@ -484,7 +460,6 @@ export const updateCourse = asyncHandler(
 
     // اطلاع‌رسانی رد یا تأیید
     if (req.user.role === 'admin' && updateData.status) {
-      const oldStatus = course.status;
       const newStatus = updateData.status;
 
       if (oldStatus !== newStatus) {

@@ -17,6 +17,7 @@ import storageService from '../services/storageService';
 import Lecture from '../models/Lecture';
 import Course from '../models/Course';
 import Enrollment from '../models/Enrollment';
+import { courseAccess } from '../utils/courseAccess';
 
 const requireInstructor = (req: Request): void => {
   if (!req.user) throw ApiError.unauthorized();
@@ -116,26 +117,11 @@ const assertContentAccess = async (
   courseId: any,
   isFreePreview: boolean,
 ): Promise<void> => {
-  if (isFreePreview) return;
-  if (!courseId) return;
-
-  const course = await Course.findById(courseId).select('isFree instructor coInstructors');
-  if (!course) throw ApiError.notFound('دوره یافت نشد');
-  if (course.isFree) return;
-
+  if (!courseId) throw ApiError.notFound('دوره یافت نشد');
+  const access = await courseAccess(req, courseId);
+  if (access.canViewContent || isFreePreview) return;
   if (!req.user) throw ApiError.unauthorized('برای دسترسی به این محتوا ابتدا وارد شوید');
-  if (req.user.role === 'admin') return;
-  if (course.instructor?.toString() === req.user._id.toString()) return;
-  const isCoInstructor = Array.isArray(course.coInstructors)
-    && course.coInstructors.some((c: any) => (typeof c === 'object' ? c?._id || c : c)?.toString() === req.user!._id.toString());
-  if (isCoInstructor) return;
-
-  const enrollment = await Enrollment.findOne({
-    student: req.user._id,
-    course: courseId,
-    isRefunded: false,
-  }).select('_id');
-  if (!enrollment) throw ApiError.forbidden('شما در این دوره ثبت‌نام نکرده‌اید');
+  throw ApiError.forbidden('شما در این دوره ثبت‌نام نکرده‌اید');
 };
 
 // ==================== ۱. دریافت Presigned URL ====================
@@ -324,7 +310,7 @@ export const getPlaybackUrl = asyncHandler(async (req: Request, res: Response) =
         );
       }
 
-      if (!videoItem) {
+      if (!videoItem && !resourceId) {
         videoItem = lecture.contentItems.find((item: any) =>
           item.type === 'video' && (item.storage?.key || item.videoUrl)
         );
@@ -336,47 +322,18 @@ export const getPlaybackUrl = asyncHandler(async (req: Request, res: Response) =
       }
     }
 
-    if (!hasValidVideo && (lecture.storage?.key || lecture.videoUrl)) {
+    if (!resourceId && !hasValidVideo && (lecture.storage?.key || lecture.videoUrl)) {
       hasValidVideo = true;
     }
   }
 
-  if (!hasValidVideo && process.env.NODE_ENV !== 'production') {
-    console.warn(`⚠️ [getPlaybackUrl] ویدیو یافت نشد:`, {
-      lectureId,
-      resourceId,
-      lectureFound: !!lecture,
-      contentItemsCount: lecture?.contentItems?.length || 0,
-      contentItems: lecture?.contentItems?.map((i: any) => ({
-        id: i._id?.toString(),
-        type: i.type,
-        hasStorageKey: !!i.storage?.key,
-        hasVideoUrl: !!i.videoUrl,
-      })) || [],
-      legacyStorageKey: lecture?.storage?.key || null,
-      legacyVideoUrl: lecture?.videoUrl || null,
-    });
-  }
 
   if (!hasValidVideo) {
     throw ApiError.notFound('فایل ویدیو یافت نشد');
   }
 
-  const isAdmin = req.user.role === 'admin';
-
-  if (!isFreePreview && !isAdmin && courseId) {
-    const course = await Course.findById(courseId).select('instructor coInstructors');
-    const isInstructorOfCourse =
-      course?.instructor?.toString() === req.user._id.toString() ||
-      (Array.isArray(course?.coInstructors) &&
-        course.coInstructors.some(
-          (c: any) => (typeof c === 'object' ? c?._id || c : c)?.toString() === req.user!._id.toString(),
-        ));
-    if (!isInstructorOfCourse) {
-      const enrollment = await Enrollment.findOne({ student: req.user._id, course: courseId, isRefunded: false });
-      if (!enrollment) throw ApiError.forbidden('شما در این دوره ثبت‌نام نکرده‌اید');
-    }
-  }
+  await assertContentAccess(req, courseId, isFreePreview);
+  if (lecture?.isPublished === false && !(await courseAccess(req, courseId)).manager) throw ApiError.notFound('درس یافت نشد');
 
   const apiBase = process.env.API_URL || (req.hostname === 'localhost' ? 'http://localhost:5000' : `${req.protocol}://${req.get('host')}`);
   const streamToken = signStreamToken(req.user._id.toString(), req.user.role, lectureId);
@@ -386,7 +343,7 @@ export const getPlaybackUrl = asyncHandler(async (req: Request, res: Response) =
     url: streamUrl,
     type: 'mp4',
     duration,
-    expiresIn: 86400,
+    expiresIn: 900,
   });
 });
 
@@ -421,7 +378,7 @@ export const streamLectureVideo = async (req: Request, res: Response): Promise<v
           }
         }
 
-        if (!s3Key) {
+        if (!s3Key && !resourceId) {
           videoItem = lecture.contentItems.find((item: any) =>
             item.type === 'video' && (item.storage?.key || item.videoUrl || item.fileUrl)
           );
@@ -433,49 +390,32 @@ export const streamLectureVideo = async (req: Request, res: Response): Promise<v
         }
       }
 
-      if (!s3Key) {
+      if (!s3Key && !resourceId) {
         const rawKey = lecture.storage?.key || lecture.videoUrl || lecture.fileUrl || '';
         s3Key = extractS3Key(rawKey);
         if (s3Key) foundVia = `lecture.${lecture.storage?.key ? 'storage.key' : 'videoUrl'}`;
       }
     }
 
-    if (!s3Key) {
+    if (!s3Key && !resourceId) {
       const course = await Course.findById(lectureId);
       if (course) {
         const anyCourse = course as any;
         const rawKey = anyCourse.promoVideoKey || anyCourse.promoVideo || anyCourse.promoVideoUrl || '';
         s3Key = extractS3Key(rawKey);
-        if (s3Key) foundVia = 'promoVideo';
+        if (s3Key) { foundVia = 'promoVideo'; courseId = course._id; isFreePreview = true; }
       }
     }
 
     if (!s3Key) {
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('❌ [streamLectureVideo] فایل یافت نشد:', {
-          lectureId,
-          resourceId,
-          lectureFound: !!lecture,
-          contentItemsCount: lecture?.contentItems?.length || 0,
-          contentItems: lecture?.contentItems?.map((i: any) => ({
-            id: i._id?.toString(),
-            type: i.type,
-            hasStorageKey: !!i.storage?.key,
-            storageKey: i.storage?.key,
-            hasVideoUrl: !!i.videoUrl,
-            videoUrl: i.videoUrl,
-          })) || [],
-          legacyStorageKey: lecture?.storage?.key || null,
-          legacyVideoUrl: lecture?.videoUrl || null,
-        });
-      }
       res.status(404).json({ message: 'فایل ویدیو یافت نشد' });
       return;
     }
 
-    console.log(`🎬 [streamLectureVideo] lectureId=${lectureId}, resourceId=${resourceId || '-'}, s3Key=${s3Key}, foundVia=${foundVia}`);
+
 
     await assertContentAccess(req, courseId, isFreePreview);
+    if (lecture?.isPublished === false && !(await courseAccess(req, courseId)).manager) throw ApiError.notFound('درس یافت نشد');
 
     if (req.method === 'HEAD') {
       const fileInfo = await storageService.getFileInfo(s3Key);
@@ -484,7 +424,7 @@ export const streamLectureVideo = async (req: Request, res: Response): Promise<v
         'Content-Length': fileInfo?.size || 0,
         'Accept-Ranges': 'bytes',
         'X-Content-Type-Options': 'nosniff',
-        'Cache-Control': 'public, max-age=86400',
+        'Cache-Control': 'private, no-store',
         'Content-Security-Policy': "default-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; frame-src 'self'",
       });
       res.end();
@@ -496,7 +436,7 @@ export const streamLectureVideo = async (req: Request, res: Response): Promise<v
 
     const securityHeaders: Record<string, any> = {
       'X-Content-Type-Options': 'nosniff',
-      'Cache-Control': 'public, max-age=86400',
+      'Cache-Control': 'private, no-store',
       'Content-Security-Policy': "default-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; frame-src 'self'",
     };
 
@@ -555,7 +495,7 @@ export const streamPromoVideo = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    await assertContentAccess(req, null, true);
+    await assertContentAccess(req, courseId, true);
 
     if (req.method === 'HEAD') {
       const fileInfo = await storageService.getFileInfo(s3Key);
@@ -661,16 +601,7 @@ export const serveFile = asyncHandler(async (req: Request, res: Response) => {
           || (contentItem as any).mimeType
           || null;
 
-        if (!fileKey) {
-          const rawLegacy = lecture.storage?.key || lecture.fileUrl || '';
-          fileKey = extractS3Key(rawLegacy);
-          if (fileKey) {
-            console.warn(
-              `⚠️ [serveFile] contentItem ${resourceId} خالی بود، fallback به lecture.storage. ` +
-              `lectureId=${lectureId}, contentItemType=${contentItem.type}`
-            );
-          }
-        }
+
       } else {
         const resource = lecture.resources?.find(
           (r: any) => r._id?.toString() === resourceId || r.id?.toString() === resourceId
@@ -682,24 +613,11 @@ export const serveFile = asyncHandler(async (req: Request, res: Response) => {
       }
     }
 
-    if (!fileKey) {
+    if (!fileKey && !resourceId) {
       const rawLegacy = lecture.storage?.key || lecture.fileUrl || '';
       fileKey = extractS3Key(rawLegacy);
       originalName = lecture.storage?.originalFileName || lecture.fileName || 'file';
     }
-  }
-
-  if (!fileKey && process.env.NODE_ENV !== 'production') {
-    console.error('❌ [serveFile] فایل یافت نشد:', {
-      lectureId,
-      resourceId,
-      lectureFound: !!lecture,
-      contentItemsCount: lecture?.contentItems?.length || 0,
-      resourcesCount: lecture?.resources?.length || 0,
-      contentItemIds: lecture?.contentItems?.map((i: any) => i._id?.toString()) || [],
-      legacyStorageKey: lecture?.storage?.key || null,
-      legacyFileUrl: lecture?.fileUrl || null,
-    });
   }
 
   if (!fileKey) {
@@ -707,6 +625,7 @@ export const serveFile = asyncHandler(async (req: Request, res: Response) => {
   }
 
   await assertContentAccess(req, accessCourseId, isFreePreview);
+  if (lecture?.isPublished === false && !(await courseAccess(req, accessCourseId)).manager) throw ApiError.notFound('درس یافت نشد');
 
   const lowerKey = fileKey.toLowerCase();
   const isInlineType = /\.(pdf|png|jpg|jpeg|gif|txt|webp|svg|avif)$/.test(lowerKey);
@@ -725,7 +644,7 @@ export const serveFile = asyncHandler(async (req: Request, res: Response) => {
       'Content-Disposition': `${disposition}; filename="${encodeURIComponent(safeName)}"`,
       'Accept-Ranges': 'bytes',
       'X-Content-Type-Options': 'nosniff',
-      'Cache-Control': 'public, max-age=86400',
+      'Cache-Control': 'private, no-store',
     });
     res.end();
     return;
@@ -740,7 +659,7 @@ export const serveFile = asyncHandler(async (req: Request, res: Response) => {
     'Content-Disposition': `${disposition}; filename="${encodeURIComponent(safeName)}"`,
     'Accept-Ranges': 'bytes',
     'X-Content-Type-Options': 'nosniff',
-    'Cache-Control': 'public, max-age=86400',
+    'Cache-Control': 'private, no-store',
     'Content-Security-Policy': "default-src 'self'; img-src 'self'; media-src 'self'; connect-src 'self'; frame-src 'self'",
   };
 
@@ -765,7 +684,7 @@ export const refreshPlaybackUrl = asyncHandler(async (req: Request, res: Respons
 
   let refreshCourseId: any = null;
   let isFreePreview = false;
-  const lectureDoc = await Lecture.findById(lectureId).select('course isFreePreview contentItems storage videoUrl');
+  const lectureDoc = await Lecture.findById(lectureId).select('course isFreePreview isPublished contentItems storage videoUrl');
 
   if (lectureDoc) {
     refreshCourseId = lectureDoc.course;
@@ -787,7 +706,7 @@ export const refreshPlaybackUrl = asyncHandler(async (req: Request, res: Respons
       if (videoItem) hasVideo = true;
     }
 
-    if (!hasVideo && (lectureDoc.storage?.key || lectureDoc.videoUrl)) {
+    if (!resourceId && !hasVideo && (lectureDoc.storage?.key || lectureDoc.videoUrl)) {
       hasVideo = true;
     }
 
@@ -797,9 +716,12 @@ export const refreshPlaybackUrl = asyncHandler(async (req: Request, res: Respons
   } else {
     const promoCourse = await Course.findById(lectureId).select('_id');
     if (!promoCourse) throw ApiError.notFound('محتوا یافت نشد');
+    refreshCourseId = promoCourse._id;
+    isFreePreview = true;
   }
 
   await assertContentAccess(req, refreshCourseId, isFreePreview);
+  if (lectureDoc?.isPublished === false && !(await courseAccess(req, refreshCourseId)).manager) throw ApiError.notFound('درس یافت نشد');
 
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
 
@@ -810,7 +732,7 @@ export const refreshPlaybackUrl = asyncHandler(async (req: Request, res: Respons
   return ApiResponse.success(res, {
     url: streamUrl,
     type: 'mp4',
-    expiresIn: 86400,
+    expiresIn: 900,
   });
 });
 

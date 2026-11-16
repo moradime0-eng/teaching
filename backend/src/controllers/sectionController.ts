@@ -9,6 +9,8 @@ import { Request, Response } from 'express';
 import Section from '../models/Section';
 import Lecture from '../models/Lecture';
 import Course from '../models/Course';
+import { isExactOrder } from '../utils/orderValidation';
+import { courseAccess } from '../utils/courseAccess';
 import { ApiError } from '../utils/ApiError';
 import { ApiResponse } from '../utils/ApiResponse';
 import { asyncHandler } from '../middlewares/asyncHandler';
@@ -92,6 +94,7 @@ export const createSection = asyncHandler(async (req: Request, res: Response) =>
 // ==================== LIST SECTIONS ====================
 export const listSections = asyncHandler(async (req: Request, res: Response) => {
   const { courseId } = req.params;
+  await courseAccess(req, courseId);
   const sections = await Section.find({ course: courseId }).sort({ order: 1 }).lean();
   return ApiResponse.success(res, sections);
 });
@@ -151,6 +154,11 @@ export const reorderSections = asyncHandler(async (req: Request, res: Response) 
   }
 
   await verifyCourseOwnership(courseId, req.user._id.toString(), req.user.role);
+
+  const existingSections = await Section.find({ course: courseId }).select('_id').lean();
+  if (!isExactOrder(sectionIds, existingSections.map((item) => item._id.toString()))) {
+    throw ApiError.badRequest('لیست فصل‌ها باید شامل همه فصل‌های همین دوره و بدون تکرار باشد');
+  }
 
   const bulkOps = sectionIds.map((id: string, index: number) => ({
     updateOne: {

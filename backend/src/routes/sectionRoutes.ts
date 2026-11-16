@@ -10,14 +10,14 @@ import {
   deleteSection,
   reorderSections,
 } from '../controllers/sectionController';
-import { authenticate } from '../middlewares/auth';
+import { authenticate, optionalAuth } from '../middlewares/auth';
 import { instructorOnly } from '../middlewares/authorize';
 import { validate } from '../middlewares/validate';
 
 const router = Router({ mergeParams: true }); // mergeParams to access :courseId from parent
 
 // GET /courses/:courseId/sections — List all sections (public)
-router.get('/', listSections);
+router.get('/', optionalAuth, listSections);
 
 // All write operations require auth + instructor role
 router.use(authenticate, instructorOnly);
