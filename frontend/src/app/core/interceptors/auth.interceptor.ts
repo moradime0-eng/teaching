@@ -8,7 +8,7 @@ import {
 import { inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
-import { Observable, ReplaySubject, catchError, switchMap, tap, throwError } from 'rxjs';
+import { Observable, ReplaySubject, catchError, switchMap, tap, throwError, timeout } from 'rxjs';
 import { TokenService } from '../services/token.service';
 import { environment } from '../../../environments/environment.development';
 
@@ -46,6 +46,7 @@ function refreshAccessToken(
 
   http
     .post<any>(`${environment.apiUrl}/auth/refresh-token`, {}, { withCredentials: true })
+    .pipe(timeout(20000))
     .subscribe({
       next: (response: any) => {
         const newAccessToken = response?.data?.accessToken;

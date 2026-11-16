@@ -188,6 +188,46 @@ describe('CourseBuilderComponent', () => {
     fixture.detectChanges();
   });
 
+  it('restores nested curriculum and form arrays from a local draft', () => {
+    const key = 'course_builder_draft:test-user:new';
+    localStorage.removeItem(key);
+    asAny(component).draftKey = key;
+    component.basicForm.patchValue({ title: 'عنوان آزمایشی دوره' });
+    component.tags.push(fb.control('فارسی'));
+    component.addSection();
+    component.sections.at(0).get('title')?.setValue('فصل اول');
+    component.addLecture(0);
+    component.getLectures(0).at(0).get('title')?.setValue('جلسه اول');
+    component.addContentItem(0, 0, 'rich-text');
+    component.getContentItems(0, 0).at(0).get('richTextContent')?.setValue('متن فارسی');
+    asAny(component).saveDraftToLocalStorage();
+    component.sections.clear(); component.tags.clear();
+    component.recoverDraft();
+    expect(component.tags.value).toEqual(['فارسی']);
+    expect(component.sections.at(0).get('title')?.value).toBe('فصل اول');
+    expect(component.getLectures(0).at(0).get('title')?.value).toBe('جلسه اول');
+    expect(component.getContentItems(0, 0).at(0).get('richTextContent')?.value).toBe('متن فارسی');
+    localStorage.removeItem(key);
+  });
+
+  it('does not clear a draft when edits happen during a save', () => {
+    const key = 'course_builder_draft:test-user:new';
+    asAny(component).draftKey = key;
+    component.basicForm.patchValue({ title: 'عنوان نخستین دوره' });
+    const snapshot = asAny(component).draftSnapshot();
+    component.basicForm.patchValue({ title: 'عنوان اصلاح شده دوره' });
+    asAny(component).markSavedIfUnchanged(snapshot);
+    expect(JSON.parse(localStorage.getItem(key)!).basicForm.title).toBe('عنوان اصلاح شده دوره');
+    localStorage.removeItem(key);
+  });
+
+  it('does not treat a failed section read as an empty course', async () => {
+    mockSectionService.getSections.and.returnValue(throwError(() => new Error('network')));
+    await expectAsync(asAny(component).syncSectionsAndLectures('course-id')).toBeRejected();
+    expect(mockSectionService.createSection).not.toHaveBeenCalled();
+    expect(mockSectionService.deleteSection).not.toHaveBeenCalled();
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });

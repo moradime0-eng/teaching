@@ -42,8 +42,10 @@ import { GlobalTicketWidgetComponent } from './shared/components/global-ticket-w
     <app-activity-snackbar></app-activity-snackbar>
     <app-loading-spinner
       *ngIf="isLoading"
-      [overlay]="true"
-      message="لطفاً صبر کنید..."
+      class="global-loading-indicator"
+      [overlay]="false"
+      [diameter]="24"
+      message="در حال ارتباط با سرور..."
     ></app-loading-spinner>
     <main class="main-content" [class.full-page]="isFullPage()">
       <router-outlet></router-outlet>
@@ -57,6 +59,14 @@ import { GlobalTicketWidgetComponent } from './shared/components/global-ticket-w
   `,
   styles: [
     `
+      .global-loading-indicator {
+        position: fixed;
+        bottom: 1rem;
+        left: 1rem;
+        z-index: 10000;
+        pointer-events: none;
+      }
+
       .sticky-header {
         position: sticky;
         top: 0;

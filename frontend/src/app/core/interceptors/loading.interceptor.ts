@@ -1,30 +1,37 @@
-import { HttpInterceptorFn, HttpRequest, HttpHandlerFn } from '@angular/common/http';
+import { HttpInterceptorFn } from '@angular/common/http';
 import { inject, PLATFORM_ID } from '@angular/core';
-import { finalize } from 'rxjs';
-import { BehaviorSubject } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
+import { BehaviorSubject, defer, finalize } from 'rxjs';
 
 export const loadingState = new BehaviorSubject<boolean>(false);
 
-export const loadingInterceptor: HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => {
-  const platformId = inject(PLATFORM_ID);
-  const isBrowser = isPlatformBrowser(platformId);
+// Loading indicators are advisory, never a lock on the whole application.
+// Forget a long-running indicator without cancelling its request (especially uploads).
+const MAX_INDICATOR_MS = 15000;
+let activeIndicators = 0;
 
-  // Skip loading for background requests and polling endpoints
-  if (req.url.includes('/notifications') || req.url.includes('/refresh-token') || req.url.includes('/unread-summary')) {
+export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
+  const browser = isPlatformBrowser(inject(PLATFORM_ID));
+  if (!browser || ['/notifications', '/refresh-token', '/unread-summary'].some(path => req.url.includes(path))) {
     return next(req);
   }
 
-  // Use setTimeout to avoid ExpressionChangedAfterItHasBeenCheckedError
-  if (isBrowser) {
-    setTimeout(() => loadingState.next(true), 0);
-  }
-
-  return next(req).pipe(
-    finalize(() => {
-      if (isBrowser) {
-        setTimeout(() => loadingState.next(false), 0);
-      }
-    }),
-  );
+  return defer(() => {
+    let active = true;
+    activeIndicators++;
+    // Schedule updates to avoid changing a bound value during Angular's check.
+    const publish = () => setTimeout(() => loadingState.next(activeIndicators > 0), 0);
+    const release = () => {
+      if (!active) return;
+      active = false;
+      activeIndicators--;
+      publish();
+    };
+    publish();
+    const timer = setTimeout(release, MAX_INDICATOR_MS);
+    return next(req).pipe(finalize(() => {
+      clearTimeout(timer);
+      release();
+    }));
+  });
 };

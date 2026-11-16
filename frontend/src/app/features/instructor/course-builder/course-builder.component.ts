@@ -38,7 +38,7 @@ import {
 import { SectionService } from '../../../core/services/section.service';
 import { LectureService } from '../../../core/services/lecture.service';
 import { environment } from '../../../../environments/environment.development';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable, timeout } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { LearningPathService } from '../../../services/learning-path.service';
 import {
@@ -214,8 +214,10 @@ export class CourseBuilderComponent implements OnInit, OnDestroy {
 
   // Auto-save with localStorage backup
   private autosaveInterval: any;
-  private readonly AUTOSAVE_KEY = 'course_builder_draft';
-  private readonly AUTOSAVE_DEBOUNCE_MS = 5000;
+  private draftKey: string | null = null;
+  private hydratingCourse = false;
+  private restoredDraft = false;
+  private readonly AUTOSAVE_DEBOUNCE_MS = 500;
   private autosaveDebounceTimer: any;
   hasUnsavedChanges = signal(false);
   showRecoveryBanner = signal(false);
@@ -476,6 +478,16 @@ export class CourseBuilderComponent implements OnInit, OnDestroy {
 
     this.initForms();
 
+    const id = this.route.snapshot.paramMap.get('id');
+    if (id) {
+      this.courseId.set(id);
+      this.isEditMode = true;
+      this.hydratingCourse = true;
+    }
+    // Separate drafts by authenticated user and editor route, never share across accounts.
+    const userId = this.authService.currentUser()?._id;
+    this.draftKey = userId ? `course_builder_draft:${userId}:${id || 'new'}` : null;
+
     // بارگذاری دوره‌های منتشر شده برای لیست پیش‌نیازها
     this.loadAllCourses();
 
@@ -506,12 +518,7 @@ export class CourseBuilderComponent implements OnInit, OnDestroy {
       );
     }
 
-    const id = this.route.snapshot.paramMap.get('id');
-    if (id) {
-      this.courseId.set(id);
-      this.isEditMode = true;
-      this.loadCourse(id);
-    }
+    if (id) this.loadCourse(id);
   }
 
   @HostListener('window:keydown', ['$event'])
@@ -538,31 +545,20 @@ export class CourseBuilderComponent implements OnInit, OnDestroy {
     // Check for existing draft on load
     this.checkForDraftRecovery();
 
-    // Debounced localStorage auto-save (works in both create and edit mode)
-    const saveToLocalStorage = () => {
-      if (this.basicForm?.dirty || this.curriculumForm?.dirty || this.pricingForm?.dirty || this.mediaForm?.dirty || this.seoForm?.dirty) {
-        this.saveDraftToLocalStorage();
-        this.hasUnsavedChanges.set(true);
-      }
-    };
-
-    // Debounced localStorage save on form changes
     const forms = [this.basicForm, this.mediaForm, this.curriculumForm, this.pricingForm, this.seoForm];
-    forms.forEach(form => {
-      if (form) {
-        form.valueChanges.subscribe(() => {
-          if (this.autosaveDebounceTimer) {
-            clearTimeout(this.autosaveDebounceTimer);
-          }
-          this.autosaveDebounceTimer = setTimeout(saveToLocalStorage, this.AUTOSAVE_DEBOUNCE_MS);
-        });
-      }
-    });
+    forms.forEach(form => form.valueChanges.subscribe(() => {
+      if (this.hydratingCourse || this.showRecoveryBanner()) return;
+      this.hasUnsavedChanges.set(true);
+      clearTimeout(this.autosaveDebounceTimer);
+      this.autosaveDebounceTimer = setTimeout(() => this.saveDraftToLocalStorage(), this.AUTOSAVE_DEBOUNCE_MS);
+    }));
 
     // Periodic server auto-save (only in edit mode)
     this.autosaveInterval = setInterval(() => {
       if (
-        this.basicForm?.dirty &&
+        this.hasUnsavedChanges() &&
+        !this.showRecoveryBanner() &&
+        !this.isSaving() && !this.isAutoSaving() &&
         this.basicForm?.valid &&
         this.basicForm.get('title')?.value?.trim() &&
         this.isEditMode &&
@@ -573,7 +569,13 @@ export class CourseBuilderComponent implements OnInit, OnDestroy {
     }, 30000);
   }
 
+  @HostListener('window:pagehide')
+  persistDraftOnPageHide(): void {
+    if (this.hasUnsavedChanges() && !this.showRecoveryBanner()) this.saveDraftToLocalStorage();
+  }
+
   ngOnDestroy(): void {
+    this.persistDraftOnPageHide();
     if (this.autosaveInterval) {
       clearInterval(this.autosaveInterval);
     }
@@ -583,26 +585,24 @@ export class CourseBuilderComponent implements OnInit, OnDestroy {
   }
 
   private autoSave(): void {
-    if (!this.isEditMode || !this.courseId()) return;
+    if (!this.isEditMode || !this.courseId() || this.isSaving() || this.isAutoSaving()) return;
+    this.saveDraftToLocalStorage();
+    const snapshot = this.draftSnapshot();
     this.isAutoSaving.set(true);
     const payload = this.assemblePayload();
 
-    this.api.put<any>(`/courses/${this.courseId()}`, payload).subscribe({
+    this.api.put<any>(`/courses/${this.courseId()}`, payload).pipe(timeout(30000)).subscribe({
       next: async () => {
         try {
           await this.syncSectionsAndLectures(this.courseId()!);
+          this.lastSaved.set(new Date());
+          this.markSavedIfUnchanged(snapshot);
         } catch (e) {
           console.warn('Auto-save section sync failed:', e);
+          this.showToast('ذخیره خودکار کامل نشد؛ نسخه محلی حفظ شد.', 'error');
+        } finally {
+          this.isAutoSaving.set(false);
         }
-        this.isAutoSaving.set(false);
-        this.lastSaved.set(new Date());
-        this.basicForm.markAsPristine();
-        this.curriculumForm.markAsPristine();
-        this.pricingForm.markAsPristine();
-        this.mediaForm.markAsPristine();
-        this.seoForm.markAsPristine();
-        this.hasUnsavedChanges.set(false);
-        this.clearLocalStorageDraft();
       },
       error: () => this.isAutoSaving.set(false),
     });
@@ -610,8 +610,8 @@ export class CourseBuilderComponent implements OnInit, OnDestroy {
 
   // LocalStorage draft management
   private saveDraftToLocalStorage(): void {
-    if (!this.isBrowser()) return;
-    
+    if (!this.isBrowser() || !this.draftKey) return;
+
     try {
       const draft = {
         basicForm: this.basicForm?.getRawValue(),
@@ -623,7 +623,7 @@ export class CourseBuilderComponent implements OnInit, OnDestroy {
         isEditMode: this.isEditMode,
         timestamp: Date.now(),
       };
-      localStorage.setItem(this.AUTOSAVE_KEY, JSON.stringify(draft));
+      localStorage.setItem(this.draftKey, JSON.stringify(draft));
       this.hasUnsavedChanges.set(true);
     } catch (e) {
       console.warn('Failed to save draft to localStorage:', e);
@@ -631,15 +631,15 @@ export class CourseBuilderComponent implements OnInit, OnDestroy {
   }
 
   private checkForDraftRecovery(): void {
-    if (!this.isBrowser()) return;
-    
+    if (!this.isBrowser() || !this.draftKey) return;
+
     try {
-      const saved = localStorage.getItem(this.AUTOSAVE_KEY);
+      const saved = localStorage.getItem(this.draftKey);
       if (saved) {
         const draft = JSON.parse(saved);
         // Only show recovery if draft is recent (within 24 hours) and has content
         const isRecent = Date.now() - draft.timestamp < 24 * 60 * 60 * 1000;
-        const hasContent = draft.basicForm?.title?.trim();
+        const hasContent = !!draft.basicForm || !!draft.curriculumForm;
         
         if (isRecent && hasContent && (!this.isEditMode || draft.courseId === this.courseId())) {
           this.showRecoveryBanner.set(true);
@@ -651,29 +651,58 @@ export class CourseBuilderComponent implements OnInit, OnDestroy {
   }
 
   recoverDraft(): void {
-    if (!this.isBrowser()) return;
-    
+    if (!this.isBrowser() || !this.draftKey) return;
+
     try {
-      const saved = localStorage.getItem(this.AUTOSAVE_KEY);
+      const saved = localStorage.getItem(this.draftKey);
       if (saved) {
         const draft = JSON.parse(saved);
         
-        if (draft.basicForm) {
-          this.basicForm.patchValue(draft.basicForm, { emitEvent: false });
+        this.restoredDraft = true;
+        // FormArray.patchValue does not create missing controls: rebuild every nested array first.
+        const restoreArray = (array: FormArray, values: any[]) => {
+          array.clear({ emitEvent: false });
+          (values || []).forEach(value => array.push(this.fb.control(value), { emitEvent: false }));
+        };
+        for (const name of ['tags', 'requirements', 'learningOutcomes', 'targetAudience']) {
+          restoreArray(this.basicForm.get(name) as FormArray, draft.basicForm?.[name]);
         }
-        if (draft.mediaForm) {
-          this.mediaForm.patchValue(draft.mediaForm, { emitEvent: false });
+        restoreArray(this.keywords, draft.seoForm?.keywords);
+        this.sections.clear({ emitEvent: false });
+        for (const section of draft.curriculumForm?.sections || []) {
+          const lectures = this.fb.array<FormGroup>([]);
+          for (const lecture of section.lectures || []) {
+            const items = this.fb.array<FormGroup>([]);
+            for (const item of lecture.contentItems || []) {
+              const controls: Record<string, any> = {};
+              for (const [key, value] of Object.entries(item)) controls[key] = [value];
+              items.push(this.fb.group(controls), { emitEvent: false });
+            }
+            const controls: Record<string, any> = {};
+            for (const [key, value] of Object.entries(lecture)) {
+              if (key !== 'contentItems') controls[key] = [value];
+            }
+            controls['contentItems'] = items;
+            lectures.push(this.fb.group(controls), { emitEvent: false });
+          }
+          this.sections.push(this.fb.group({
+            title: [section.title || '', Validators.required],
+            description: [section.description || ''],
+            lectures,
+          }), { emitEvent: false });
         }
-        if (draft.curriculumForm) {
-          this.curriculumForm.patchValue(draft.curriculumForm, { emitEvent: false });
+        if (draft.basicForm) this.basicForm.patchValue(draft.basicForm, { emitEvent: false });
+        if (draft.mediaForm) this.mediaForm.patchValue(draft.mediaForm, { emitEvent: false });
+        if (draft.pricingForm) this.pricingForm.patchValue(draft.pricingForm, { emitEvent: false });
+        if (draft.seoForm) this.seoForm.patchValue(draft.seoForm, { emitEvent: false });
+        if (!this.isEditMode && draft.courseId) {
+          this.courseId.set(draft.courseId);
+          this.isEditMode = true;
         }
-        if (draft.pricingForm) {
-          this.pricingForm.patchValue(draft.pricingForm, { emitEvent: false });
-        }
-        if (draft.seoForm) {
-          this.seoForm.patchValue(draft.seoForm, { emitEvent: false });
-        }
-        
+        this.thumbnailPreview.set(draft.mediaForm?.thumbnailUrl || '');
+        this.promoVideoPreview.set(draft.mediaForm?.promoVideoUrl || '');
+        if (draft.basicForm?.category) this.onCategoryChange(draft.basicForm.category);
+        this.hasUnsavedChanges.set(true);
         this.triggerFormTick();
         this.showRecoveryBanner.set(false);
         this.showToast('پیش‌نویس بازیابی شد ✅', 'success');
@@ -691,8 +720,25 @@ export class CourseBuilderComponent implements OnInit, OnDestroy {
 
   private clearLocalStorageDraft(): void {
     if (!this.isBrowser()) return;
-    localStorage.removeItem(this.AUTOSAVE_KEY);
+    if (this.draftKey) localStorage.removeItem(this.draftKey);
     this.hasUnsavedChanges.set(false);
+  }
+
+  private draftSnapshot(): string {
+    return JSON.stringify([this.basicForm.getRawValue(), this.mediaForm.getRawValue(),
+      this.curriculumForm.getRawValue(), this.pricingForm.getRawValue(), this.seoForm.getRawValue()]);
+  }
+
+  private markSavedIfUnchanged(snapshot: string): void {
+    if (snapshot !== this.draftSnapshot()) {
+      this.saveDraftToLocalStorage();
+      return;
+    }
+    clearTimeout(this.autosaveDebounceTimer);
+    for (const form of [this.basicForm, this.mediaForm, this.curriculumForm, this.pricingForm, this.seoForm]) {
+      form.markAsPristine();
+    }
+    this.clearLocalStorageDraft();
   }
 
   initForms(): void {
@@ -951,6 +997,7 @@ export class CourseBuilderComponent implements OnInit, OnDestroy {
   private loadCourse(id: string): void {
     this.api.get<any>(`/courses/${id}`).subscribe({
       next: (res) => {
+        if (this.restoredDraft) { this.hydratingCourse = false; return; }
         if (res.success && res.data) {
           const course = res.data;
           const catId = course.category?._id || course.category;
@@ -1126,7 +1173,9 @@ export class CourseBuilderComponent implements OnInit, OnDestroy {
 
           this.triggerFormTick();
         }
+        this.hydratingCourse = false;
       },
+      error: () => { this.hydratingCourse = false; },
     });
   }
 
@@ -1709,6 +1758,7 @@ export class CourseBuilderComponent implements OnInit, OnDestroy {
           if (res.success && res.data) {
             this.courseId.set(res.data._id);
             this.isEditMode = true;
+            this.saveDraftToLocalStorage();
             resolve(res.data._id);
           } else {
             resolve(null);
@@ -2729,16 +2779,18 @@ async onContentItemFileSelected(
     return step.id;
   }
 
+  private firstValueFromWithTimeout<T>(source: Observable<T>): Promise<T> {
+    return firstValueFrom(source.pipe(timeout(30000)));
+  }
+
   private async syncSectionsAndLectures(courseId: string): Promise<void> {
     const freeCourse = this.isFreeCourse();
 
     let existingSections: any[] = [];
     try {
-      const res = await firstValueFrom(this.sectionService.getSections(courseId));
+      const res = await this.firstValueFromWithTimeout(this.sectionService.getSections(courseId));
       existingSections = res.data || [];
-    } catch {
-      /* no sections yet */
-    }
+    } catch (error) { throw error; }
 
     const existingByOrder = new Map<number, any>();
     existingSections.forEach((s: any) => existingByOrder.set(s.order, s));
@@ -2758,7 +2810,7 @@ async onContentItemFileSelected(
           serverSection.description !== secDesc
         ) {
           try {
-            await firstValueFrom(
+            await this.firstValueFromWithTimeout(
               this.sectionService.updateSection(courseId, serverSection._id, {
                 title: secTitle,
                 description: secDesc,
@@ -2766,11 +2818,12 @@ async onContentItemFileSelected(
             );
           } catch (e) {
             console.warn('Section update failed:', e);
+            throw e;
           }
         }
       } else {
         try {
-          const res = await firstValueFrom(
+          const res = await this.firstValueFromWithTimeout(
             this.sectionService.createSection(courseId, {
               title: secTitle,
               description: secDesc,
@@ -2779,10 +2832,10 @@ async onContentItemFileSelected(
           serverSection = res.data;
         } catch (e) {
           console.warn('Section create failed:', e);
-          continue;
+          throw e;
         }
       }
-      if (!serverSection) continue;
+      if (!serverSection) throw new Error('پاسخ ساخت فصل معتبر نیست');
       existingSectionOrders.add(secIdx);
 
       const lecturesControl = sec.get('lectures');
@@ -2792,13 +2845,11 @@ async onContentItemFileSelected(
 
       let existingLectures: any[] = [];
       try {
-        const res = await firstValueFrom(
+        const res = await this.firstValueFromWithTimeout(
           this.lectureService.getLectures(courseId, serverSection._id)
         );
         existingLectures = res.data || [];
-      } catch {
-        /* no lectures yet */
-      }
+      } catch (error) { throw error; }
 
       const existingLecturesByOrder = new Map<number, any>();
       existingLectures.forEach((l: any) =>
@@ -2833,7 +2884,7 @@ async onContentItemFileSelected(
 
         if (serverLecture) {
           try {
-            await firstValueFrom(
+            await this.firstValueFromWithTimeout(
               this.lectureService.updateLecture(
                 courseId,
                 serverSection._id,
@@ -2843,10 +2894,11 @@ async onContentItemFileSelected(
             );
           } catch (e) {
             console.warn('Lecture update failed:', e);
+            throw e;
           }
         } else {
           try {
-            const res = await firstValueFrom(
+            const res = await this.firstValueFromWithTimeout(
               this.lectureService.createLecture(
                 courseId,
                 serverSection._id,
@@ -2856,8 +2908,10 @@ async onContentItemFileSelected(
             serverLecture = res.data;
           } catch (e) {
             console.warn('Lecture create failed:', e);
+            throw e;
           }
         }
+        if (!serverLecture) throw new Error('پاسخ ساخت جلسه معتبر نیست');
         existingLectureOrders.add(lecIdx);
 
         // Sync content items for this lecture
@@ -2869,7 +2923,7 @@ async onContentItemFileSelected(
       for (const existingLec of existingLectures) {
         if (!existingLectureOrders.has(existingLec.order)) {
           try {
-            await firstValueFrom(
+            await this.firstValueFromWithTimeout(
               this.lectureService.deleteLecture(
                 courseId,
                 serverSection._id,
@@ -2878,6 +2932,7 @@ async onContentItemFileSelected(
             );
           } catch (e) {
             console.warn('Lecture delete failed:', e);
+          throw e;
           }
         }
       }
@@ -2886,11 +2941,12 @@ async onContentItemFileSelected(
     for (let i = existingSections.length - 1; i >= 0; i--) {
       if (!existingSectionOrders.has(existingSections[i].order)) {
         try {
-          await firstValueFrom(
+          await this.firstValueFromWithTimeout(
             this.sectionService.deleteSection(courseId, existingSections[i]._id)
           );
         } catch (e) {
           console.warn('Section delete failed:', e);
+          throw e;
         }
       }
     }
@@ -2914,16 +2970,14 @@ async onContentItemFileSelected(
     let existingContentItems: any[] = [];
     try {
       // We'll need to fetch the lecture to get its content items
-      const lectureRes = await firstValueFrom(
+      const lectureRes = await this.firstValueFromWithTimeout(
         this.lectureService.getLectures(courseId, sectionId)
       );
       const lecture = lectureRes.data?.find((l: any) => l._id === lectureId);
       if (lecture) {
         existingContentItems = lecture.contentItems || [];
       }
-    } catch {
-      /* no content items yet */
-    }
+    } catch (error) { throw error; }
 
     const existingByOrder = new Map<number, any>();
     existingContentItems.forEach((item: any) => existingByOrder.set(item.order, item));
@@ -2966,7 +3020,7 @@ async onContentItemFileSelected(
 
       if (serverItem) {
         try {
-          await firstValueFrom(
+          await this.firstValueFromWithTimeout(
             this.lectureService.updateContentItem(
               courseId,
               sectionId,
@@ -2977,10 +3031,11 @@ async onContentItemFileSelected(
           );
         } catch (e) {
           console.warn('Content item update failed:', e);
+          throw e;
         }
       } else {
         try {
-          const res = await firstValueFrom(
+          const res = await this.firstValueFromWithTimeout(
             this.lectureService.addContentItem(
               courseId,
               sectionId,
@@ -2991,6 +3046,7 @@ async onContentItemFileSelected(
           serverItem = res.data;
         } catch (e) {
           console.warn('Content item create failed:', e);
+          throw e;
         }
       }
       existingContentItemOrders.add(ciIdx);
@@ -3000,7 +3056,7 @@ async onContentItemFileSelected(
     for (const existingItem of existingContentItems) {
       if (!existingContentItemOrders.has(existingItem.order)) {
         try {
-          await firstValueFrom(
+          await this.firstValueFromWithTimeout(
             this.lectureService.deleteContentItem(
               courseId,
               sectionId,
@@ -3010,6 +3066,7 @@ async onContentItemFileSelected(
           );
         } catch (e) {
           console.warn('Content item delete failed:', e);
+          throw e;
         }
       }
     }
@@ -3495,6 +3552,8 @@ async onContentItemFileSelected(
   }
 
   saveDraft(): void {
+    if (this.isSaving() || this.isAutoSaving()) return;
+    if (this.showRecoveryBanner()) { this.showToast('ابتدا پیش‌نویس قبلی را بازیابی یا رد کنید.', 'error'); return; }
     if (!this.basicForm.get('title')?.value?.trim()) {
       this.showToast('لطفاً حداقل عنوان دوره را وارد کنید', 'error');
       return;
@@ -3502,6 +3561,8 @@ async onContentItemFileSelected(
 
     if (this.isFreeCourse()) this.unlockAllLectures();
 
+    this.saveDraftToLocalStorage();
+    const snapshot = this.draftSnapshot();
     this.isSaving.set(true);
     const payload = this.assemblePayload();
 
@@ -3510,10 +3571,15 @@ async onContentItemFileSelected(
         const cid = res.data._id || this.courseId();
         this.courseId.set(cid);
         this.isEditMode = true;
+        this.saveDraftToLocalStorage();
         try {
           await this.syncSectionsAndLectures(cid);
         } catch (e) {
           console.warn('Section sync warning:', e);
+          this.saveDraftToLocalStorage();
+          this.isSaving.set(false);
+          this.showToast('ذخیره سرفصل‌ها کامل نشد؛ نسخه محلی حفظ شد.', 'error');
+          return;
         }
 
         // ✅ NEW: انتساب دوره به مسیر یادگیری (فقط ادمین)
@@ -3539,13 +3605,7 @@ async onContentItemFileSelected(
         if (!this.isAdminUser || this.learningPathMode() === 'none' || pathAssignmentOk || !this.isPathAssignmentValid()) {
           this.showToast('✅ پیش‌نویس با موفقیت ذخیره شد', 'success');
         }
-        this.basicForm.markAsPristine();
-        this.curriculumForm.markAsPristine();
-        this.pricingForm.markAsPristine();
-        this.mediaForm.markAsPristine();
-        this.seoForm.markAsPristine();
-        this.hasUnsavedChanges.set(false);
-        this.clearLocalStorageDraft();
+        this.markSavedIfUnchanged(snapshot);
       }
       this.isSaving.set(false);
     };
@@ -3556,12 +3616,12 @@ async onContentItemFileSelected(
     };
 
     if (this.isEditMode && this.courseId()) {
-      this.api.put<any>(`/courses/${this.courseId()}`, payload).subscribe({
+      this.api.put<any>(`/courses/${this.courseId()}`, payload).pipe(timeout(30000)).subscribe({
         next: handleSuccess,
         error: handleError,
       });
     } else {
-      this.api.post<any>('/courses', payload).subscribe({
+      this.api.post<any>('/courses', payload).pipe(timeout(30000)).subscribe({
         next: handleSuccess,
         error: handleError,
       });
@@ -3569,6 +3629,8 @@ async onContentItemFileSelected(
   }
 
   submitForReview(): void {
+    if (this.isSaving() || this.isAutoSaving()) return;
+    if (this.showRecoveryBanner()) { this.showToast('ابتدا پیش‌نویس قبلی را بازیابی یا رد کنید.', 'error'); return; }
     if (this.sections.length === 0) {
       this.showToast('دوره باید حداقل دارای یک فصل آموزشی باشد', 'error');
       return;
@@ -3600,6 +3662,7 @@ async onContentItemFileSelected(
 
     if (this.isFreeCourse()) this.unlockAllLectures();
 
+    this.saveDraftToLocalStorage();
     this.isSaving.set(true);
     const payload = this.assemblePayload();
     const save$ =
@@ -3607,17 +3670,21 @@ async onContentItemFileSelected(
         ? this.api.put<any>(`/courses/${this.courseId()}`, payload)
         : this.api.post<any>('/courses', payload);
 
-    save$.subscribe({
+    save$.pipe(timeout(30000)).subscribe({
       next: async (saveRes) => {
         if (saveRes.success && saveRes.data) {
           const currentId = saveRes.data._id || this.courseId();
           this.courseId.set(currentId);
           this.isEditMode = true;
+          this.saveDraftToLocalStorage();
 
           try {
             await this.syncSectionsAndLectures(currentId);
           } catch (e) {
             console.warn('Section sync before submit failed:', e);
+            this.isSaving.set(false);
+            this.showToast('ارسال متوقف شد؛ ذخیره سرفصل‌ها کامل نشد و نسخه محلی حفظ شد.', 'error');
+            return;
           }
 
           // ✅ NEW: انتساب دوره به مسیر یادگیری قبل از submit (فقط ادمین)
@@ -3638,7 +3705,7 @@ async onContentItemFileSelected(
             }
           }
 
-          this.api.post<any>(`/courses/${currentId}/submit`, {}).subscribe({
+          this.api.post<any>(`/courses/${currentId}/submit`, {}).pipe(timeout(30000)).subscribe({
             next: () => {
               this.isSaving.set(false);
               // فقط برای مدرس پیام نمایش بده، نه برای ادمین
@@ -3655,6 +3722,9 @@ async onContentItemFileSelected(
               this.handleApiError(err, 'خطا در ارسال برای بازبینی');
             },
           });
+        } else {
+          this.isSaving.set(false);
+          this.showToast('ذخیره دوره کامل نشد؛ نسخه محلی حفظ شد.', 'error');
         }
       },
       error: (err) => {
