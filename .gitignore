@@ -1,0 +1,29 @@
+﻿# Dependencies
+**/node_modules/
+
+# Build outputs
+**/dist/
+**/out-tsc/
+**/tmp/
+**/.angular/
+
+# Environment and secrets
+**/.env
+**/.env.*
+!**/.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Tests and coverage
+**/coverage/
+
+# Uploads and user data
+**/uploads/*
+!**/uploads/.gitkeep
+
+# IDE and OS
+**/.DS_Store
+**/Thumbs.db
+**/.idea/

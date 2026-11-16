@@ -1,0 +1,584 @@
+<div class="page" dir="rtl">
+  <!-- ═══════════════════════════════════════════
+       LOADING / EMPTY
+       ═══════════════════════════════════════════ -->
+  @if (loading()) {
+    <div class="state-box">
+      <div class="spin-loader"></div>
+      <p>در حال بارگذاری مسیر یادگیری…</p>
+    </div>
+  } @else if (!path()) {
+    <div class="state-box">
+      <div class="state-icon"><mat-icon>error_outline</mat-icon></div>
+      <h2>مسیر یافت نشد</h2>
+      <p>مسیری که دنبالش بودید وجود ندارد یا منتشر نشده است.</p>
+      <a class="btn btn-primary" routerLink="/learning-paths">
+        <mat-icon>arrow_forward</mat-icon> بازگشت به لیست مسیرها
+      </a>
+    </div>
+  } @else {
+    <!-- ═══════════════════════════════════════════
+     HERO — Simplified
+     ═══════════════════════════════════════════ -->
+    <header class="hero">
+      <div class="hero__bg">
+        @if (path()!.coverImage) {
+          <img [src]="path()!.coverImage" alt="" class="hero__img" />
+        } @else {
+          <div class="hero__fallback" [style.--hero-c]="currentDifficulty.color"></div>
+        }
+        <div class="hero__scrim"></div>
+      </div>
+
+      <div class="hero__inner">
+        @if (!path()!.coverImage) {
+          <!-- Content for fallback mode (no cover image) -->
+          <!-- breadcrumb -->
+          <nav class="crumbs" aria-label="مسیر صفحه">
+            <a routerLink="/">خانه</a>
+            <mat-icon>chevron_left</mat-icon>
+            <a routerLink="/learning-paths">مسیرهای یادگیری</a>
+          </nav>
+
+          <!-- badges -->
+          <div class="hero__badges">
+            <span class="chip chip--diff" [style.background]="currentDifficulty.color">
+              <mat-icon>{{ currentDifficulty.icon }}</mat-icon>
+              {{ currentDifficulty.label }}
+            </span>
+            @if (path()!.hasCertificate) {
+              <span class="chip chip--cert">
+                <mat-icon>workspace_premium</mat-icon> گواهینامه
+              </span>
+            }
+          </div>
+
+          <!-- title -->
+          <div class="hero__title-row">
+            <span class="hero__emoji">{{ path()!.icon || '🛤️' }}</span>
+            <h1 class="hero__title">{{ path()!.title }}</h1>
+          </div>
+
+          @if (hasText(path()!.subtitle)) {
+            <p class="hero__sub">{{ plainText(path()!.subtitle) }}</p>
+          } @else if (hasText(path()!.shortDescription)) {
+            <p class="hero__sub">{{ plainText(path()!.shortDescription) }}</p>
+          }
+
+          <!-- stats -->
+          <div class="hero__stats">
+            <div class="stat">
+              <span class="stat__v">{{ path()!.stages.length | faNum }}</span>
+              <span class="stat__l"><mat-icon>layers</mat-icon> مرحله</span>
+            </div>
+            <div class="stat">
+              <span class="stat__v">{{ totalCoursesCount() | faNum }}</span>
+              <span class="stat__l"><mat-icon>school</mat-icon> دوره</span>
+            </div>
+            <div class="stat">
+              <span class="stat__v">{{ path()!.estimatedTotalDuration | duration }}</span>
+              <span class="stat__l"><mat-icon>schedule</mat-icon> محتوا</span>
+            </div>
+          </div>
+        } @else {
+          <!-- Minimal content for cover image mode -->
+          <div class="hero__title-row hero__title-row--cover">
+            <span class="hero__emoji">{{ path()!.icon || '🛤️' }}</span>
+            <h1 class="hero__title">{{ path()!.title }}</h1>
+          </div>
+        }
+
+        <!-- CTA - single primary action -->
+        <div class="hero__cta">
+          @if (enrollment()) {
+            <a class="btn btn-primary btn-lg" routerLink="/dashboard/learning-paths">
+              <mat-icon>play_arrow</mat-icon> ادامه یادگیری
+            </a>
+          } @else {
+            <button class="btn btn-primary btn-lg" (click)="enroll()" [disabled]="enrolling()">
+              @if (enrolling()) {
+                <span class="spin-loader-sm"></span>
+              } @else {
+                <mat-icon>rocket_launch</mat-icon>
+              }
+              شروع رایگان مسیر
+            </button>
+          }
+        </div>
+
+        <!-- progress (enrolled) - compact -->
+        @if (enrollment()) {
+          <div class="hero__progress">
+            <div class="hp__top">
+              <span><mat-icon>trending_up</mat-icon> پیشرفت شما</span>
+              <strong>{{ overallProgress() | faNum }}٪</strong>
+            </div>
+            <div class="hp__bar">
+              <div class="hp__fill" [style.width.%]="overallProgress()"></div>
+            </div>
+          </div>
+        }
+      </div>
+    </header>
+
+    <!-- ═══════════════════════════════════════════
+         STICKY STAGE NAV
+         ═══════════════════════════════════════════ -->
+    <div class="stage-nav" [class.is-visible]="showStickyNav()">
+      <div class="stage-nav__inner">
+        <span class="stage-nav__label"><mat-icon>route</mat-icon> نقشه راه</span>
+        <div class="stage-nav__scroll">
+          @for (s of path()!.stages; track trackStage($index, s); let i = $index) {
+            <button
+              class="snav"
+              [class.is-active]="activeStageIndex() === i"
+              [class.is-done]="isStageCompleted(s)"
+              [style.--snav-c]="s.color || '#a435f0'"
+              (click)="scrollToStage(i)"
+              [attr.aria-current]="activeStageIndex() === i ? 'true' : null">
+              <span class="snav__dot">
+                @if (isStageCompleted(s)) {
+                  <mat-icon>check</mat-icon>
+                } @else {
+                  {{ i + 1 | faNum }}
+                }
+              </span>
+              <span class="snav__txt">{{ s.title }}</span>
+            </button>
+          }
+        </div>
+        @if (!enrollment()) {
+          <button class="btn btn-primary btn-sm stage-nav__cta" (click)="enroll()" [disabled]="enrolling()">
+            <mat-icon>rocket_launch</mat-icon> شروع
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         MAIN
+         ═══════════════════════════════════════════ -->
+    <div class="layout">
+      <main class="col-main">
+        <!-- ── درباره ── -->
+        @if (hasText(path()!.description)) {
+          <section class="card">
+            <header class="card__head">
+              <span class="card__ico ico-accent"><mat-icon>article</mat-icon></span>
+              <h2>درباره این مسیر</h2>
+            </header>
+            <div class="rich" [innerHTML]="path()!.description | markdown"></div>
+          </section>
+        }
+
+        <!-- ── اهداف / مخاطبان ── -->
+        <section class="duo">
+          <div class="card">
+            <header class="card__head">
+              <span class="card__ico ico-violet"><mat-icon>flag</mat-icon></span>
+              <h2>چه چیزهایی یاد می‌گیرید</h2>
+            </header>
+            @if (path()!.learningOutcomes.length) {
+              <ul class="checks">
+                @for (item of path()!.learningOutcomes; track item) {
+                  <li>
+                    <mat-icon>check_circle</mat-icon>
+                    <span>{{ plainText(item) }}</span>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="muted">اهداف یادگیری هنوز ثبت نشده است.</p>
+            }
+          </div>
+
+          <div class="card">
+            <header class="card__head">
+              <span class="card__ico ico-teal"><mat-icon>groups</mat-icon></span>
+              <h2>مناسب چه کسانی است</h2>
+            </header>
+            @if (path()!.targetAudience.length) {
+              <div class="tags">
+                @for (item of path()!.targetAudience; track item) {
+                  <span class="tag"><mat-icon>person</mat-icon>{{ plainText(item) }}</span>
+                }
+              </div>
+            } @else {
+              <p class="muted">مخاطب خاصی ثبت نشده است.</p>
+            }
+          </div>
+        </section>
+
+        <!-- ═══════════ ROADMAP ═══════════ -->
+        <section id="roadmap-section" class="roadmap">
+          <header class="roadmap__head">
+            <div>
+              <span class="eyebrow"><mat-icon>route</mat-icon> نقشه راه</span>
+              <h2>مسیر قدم‌به‌قدم تا تسلط</h2>
+              <p>
+                {{ path()!.stages.length | faNum }} مرحله ·
+                {{ totalCoursesCount() | faNum }} دوره ·
+                {{ path()!.estimatedTotalDuration | duration }}
+              </p>
+            </div>
+            <button class="btn btn-soft btn-sm" (click)="allCollapsed() ? expandAll() : collapseAll()">
+              <mat-icon>{{ allCollapsed() ? 'unfold_more' : 'unfold_less' }}</mat-icon>
+              {{ allCollapsed() ? 'باز کردن همه' : 'بستن همه' }}
+            </button>
+          </header>
+
+          <div class="tl">
+            <span class="tl__line" aria-hidden="true"></span>
+
+            @for (stage of path()!.stages; track trackStage($index, stage); let i = $index; let last = $last) {
+              <article
+                class="tl__item"
+                [id]="'stage-' + i"
+                [style.--stage-c]="stage.color || '#a435f0'"
+                [class.is-done]="isStageCompleted(stage)"
+                [class.is-active]="activeStageIndex() === i">
+
+                <!-- node -->
+                <div class="node">
+                  <svg class="node__ring" viewBox="0 0 36 36" aria-hidden="true">
+                    <circle class="ring-bg" cx="18" cy="18" r="15.9" />
+                    <circle
+                      class="ring-fill"
+                      cx="18" cy="18" r="15.9"
+                      pathLength="100"
+                      [attr.stroke-dasharray]="100"
+                      [attr.stroke-dashoffset]="ringOffset(getStageProgress(stage))" />
+                  </svg>
+                  <span class="node__core">
+                    <span class="node__emoji">{{ stage.icon || '📚' }}</span>
+                  </span>
+                  <span class="node__num">{{ i + 1 | faNum }}</span>
+                  @if (isStageCompleted(stage)) {
+                    <span class="node__check"><mat-icon>check</mat-icon></span>
+                  }
+                </div>
+
+                <!-- card -->
+                <div class="stage">
+                  <button class="stage__head" (click)="toggleStage(i)" [attr.aria-expanded]="!isStageCollapsed(i)">
+                    <div class="stage__head-main">
+                      <div class="stage__title-row">
+                        <h3>{{ stage.title }}</h3>
+                        @if (enrollment() && getStageProgress(stage) > 0) {
+                          <span class="stage__pct">{{ getStageProgress(stage) | faNum }}٪</span>
+                        }
+                      </div>
+                      <div class="stage__meta">
+                        <span><mat-icon>school</mat-icon>{{ stage.courses.length | faNum }} دوره</span>
+                        <span><mat-icon>schedule</mat-icon>{{ getStageDuration(stage) | duration }}</span>
+                        @if (stage.milestone) {
+                          <span class="ms-tag"><mat-icon>emoji_events</mat-icon>نقطه عطف</span>
+                        }
+                      </div>
+                    </div>
+                    <span class="stage__toggle" [class.is-open]="!isStageCollapsed(i)">
+                      <mat-icon>expand_more</mat-icon>
+                    </span>
+                  </button>
+
+                  @if (!isStageCollapsed(i)) {
+                    <div class="stage__body">
+                      <!-- ✅ باگ رفع شد: HTML به‌جای متن خام رندر می‌شود -->
+                      @if (hasText(stage.description)) {
+                        <div class="stage__desc rich" [innerHTML]="stage.description | markdown"></div>
+                      }
+
+                      @if (stage.courses.length) {
+                        <ol class="clist">
+                          @for (cn of stage.courses; track trackCourse($index, cn); let j = $index) {
+                            <li>
+                              <a
+                                class="crow"
+                                [class.is-done]="isCourseCompleted(cn)"
+                                [class.is-link]="!!getCourseSlug(cn)"
+                                [routerLink]="getCourseSlug(cn) ? ['/course', getCourseSlug(cn)] : null">
+
+                                <span class="crow__idx">{{ j + 1 | faNum }}</span>
+
+                                <span
+                                  class="crow__thumb"
+                                  [style.background]="
+                                    'linear-gradient(135deg, hsl(' + getCourseHue(cn) + ' 68% 54%), hsl(' +
+                                    (getCourseHue(cn) + 38) + ' 70% 40%))'">
+                                  @if (getCourseThumb(cn)) {
+                                    <img [src]="getCourseThumb(cn)" alt="" loading="lazy" />
+                                  } @else {
+                                    <span class="crow__emoji">{{ getCourseIcon(cn) }}</span>
+                                  }
+                                </span>
+
+                                <span class="crow__main">
+                                  <span class="crow__title">
+                                    {{ getCourseTitle(cn) }}
+                                    @if (!cn.isRequired) {
+                                      <span class="pill pill--opt">اختیاری</span>
+                                    }
+                                  </span>
+                                  <span class="crow__meta">
+                                    @if (getInstructorName(cn)) {
+                                      <span><mat-icon>person</mat-icon>{{ getInstructorName(cn) }}</span>
+                                    }
+                                    <span><mat-icon>schedule</mat-icon>{{ getCourseDuration(cn) | duration }}</span>
+                                    @if (getCourseLectures(cn)) {
+                                      <span><mat-icon>play_circle</mat-icon>{{ getCourseLectures(cn) | faNum }} درس</span>
+                                    }
+                                    @if (getCourseRating(cn)) {
+                                      <span class="is-amber"><mat-icon>star</mat-icon>{{ getCourseRating(cn) | faNum }}</span>
+                                    }
+                                  </span>
+                                </span>
+
+                                <span class="crow__end">
+                                  @if (isCourseCompleted(cn)) {
+                                    <mat-icon class="ok">check_circle</mat-icon>
+                                  } @else if (getCourseSlug(cn)) {
+                                    <mat-icon class="go">arrow_back</mat-icon>
+                                  }
+                                </span>
+                              </a>
+                            </li>
+                          }
+                        </ol>
+                      } @else {
+                        <p class="muted small">دوره‌ای برای این مرحله ثبت نشده است.</p>
+                      }
+
+                      <!-- milestone -->
+                      @if (stage.milestone) {
+                        <div class="ms">
+                          <span class="ms__badge">{{ stage.milestone.badge || '🏆' }}</span>
+                          <div class="ms__body">
+                            <span class="ms__label"><mat-icon>emoji_events</mat-icon> نقطه عطف این مرحله</span>
+                            <h4>{{ plainText(stage.milestone.title) }}</h4>
+                            @if (hasText(stage.milestone.description)) {
+                              <p>{{ plainText(stage.milestone.description) }}</p>
+                            }
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              </article>
+            }
+
+            <!-- finish node -->
+            <div class="tl__finish">
+              <div class="node node--finish">
+                <span class="node__core"><mat-icon>emoji_events</mat-icon></span>
+              </div>
+              <div class="finish-card">
+                <h3>🎉 پایان مسیر</h3>
+                <p>
+                  @if (path()!.hasCertificate) {
+                    با تکمیل همهٔ دوره‌های اجباری، گواهینامهٔ
+                    «{{ plainText(path()!.certificateTitle) || path()!.title }}» را دریافت می‌کنید.
+                  } @else {
+                    با تکمیل این مسیر، مهارت‌های لازم برای ورود به بازار کار را خواهید داشت.
+                  }
+                </p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <!-- ═══════════ SIDEBAR ═══════════ -->
+      <aside class="col-side">
+        <div class="sticky">
+          <div class="buy">
+            <div class="buy__head">
+              <span class="buy__tag">سرمایه‌گذاری روی آینده</span>
+              <strong class="buy__price">رایگان</strong>
+              <span class="buy__note">دسترسی کامل و همیشگی</span>
+            </div>
+
+            <div class="buy__body">
+              @if (enrollment()) {
+                <div class="ring-box">
+                  <svg viewBox="0 0 36 36" class="big-ring">
+                    <circle class="ring-bg" cx="18" cy="18" r="15.9" />
+                    <circle
+                      class="ring-fill"
+                      cx="18" cy="18" r="15.9"
+                      pathLength="100"
+                      [attr.stroke-dasharray]="100"
+                      [attr.stroke-dashoffset]="ringOffset(overallProgress())" />
+                  </svg>
+                  <div class="ring-box__txt">
+                    <strong>{{ overallProgress() | faNum }}٪</strong>
+                    <span>پیشرفت</span>
+                  </div>
+                </div>
+                <a class="btn btn-primary btn-block" routerLink="/dashboard/learning-paths">
+                  <mat-icon>play_arrow</mat-icon> ادامه یادگیری
+                </a>
+              } @else {
+                <button class="btn btn-primary btn-block" (click)="enroll()" [disabled]="enrolling()">
+                  @if (enrolling()) {
+                    <span class="spin-loader-sm"></span>
+                  } @else {
+                    <mat-icon>rocket_launch</mat-icon>
+                  }
+                  شروع رایگان مسیر
+                </button>
+              }
+
+              <button class="btn btn-outline btn-block" (click)="scrollToRoadmap()">
+                <mat-icon>list_alt</mat-icon> مشاهده سرفصل‌ها
+              </button>
+
+              <ul class="feats">
+                <li>
+                  <span class="f-ico"><mat-icon>layers</mat-icon></span>
+                  <span>{{ path()!.stages.length | faNum }} مرحلهٔ ساختاریافته</span>
+                </li>
+                <li>
+                  <span class="f-ico"><mat-icon>school</mat-icon></span>
+                  <span>{{ totalCoursesCount() | faNum }} دورهٔ تخصصی</span>
+                </li>
+                <li>
+                  <span class="f-ico"><mat-icon>schedule</mat-icon></span>
+                  <span>{{ path()!.estimatedTotalDuration | duration }} محتوای ویدیویی</span>
+                </li>
+                <li>
+                  <span class="f-ico"><mat-icon>all_inclusive</mat-icon></span>
+                  <span>دسترسی مادام‌العمر</span>
+                </li>
+                <li>
+                  <span class="f-ico"><mat-icon>devices</mat-icon></span>
+                  <span>موبایل، تبلت و دسکتاپ</span>
+                </li>
+                @if (path()!.hasCertificate) {
+                  <li>
+                    <span class="f-ico is-amber"><mat-icon>workspace_premium</mat-icon></span>
+                    <span>گواهینامهٔ پایان مسیر</span>
+                  </li>
+                }
+              </ul>
+            </div>
+          </div>
+
+          @if (path()!.hasCertificate) {
+            <div class="certc">
+              <div class="certc__ico"><mat-icon>workspace_premium</mat-icon></div>
+              <div class="certc__txt">
+                <h4>{{ plainText(path()!.certificateTitle) || 'گواهینامهٔ تکمیل مسیر' }}</h4>
+                <p>پس از گذراندن دوره‌های اجباری، گواهینامهٔ معتبر دریافت می‌کنید.</p>
+              </div>
+            </div>
+          }
+
+          @if (path()!.tags.length) {
+            <div class="tagc">
+              <h4><mat-icon>local_offer</mat-icon> برچسب‌ها</h4>
+              <div class="tags">
+                @for (t of path()!.tags; track t) {
+                  <span class="tag tag--sm">{{ plainText(t) }}</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      </aside>
+    </div>
+
+    <!-- ═══════════════════════════════════════════
+         SUGGESTIONS
+         ═══════════════════════════════════════════ -->
+    @if (relatedLoading()) {
+      <section class="sug" aria-busy="true">
+        <div class="sug__head">
+          <div><div class="sh sh--t"></div><div class="sh sh--s"></div></div>
+        </div>
+        <div class="sug__grid">
+          @for (i of [1,2,3,4]; track i) {
+            <div class="sugc sugc--sk">
+              <div class="sh sh--cover"></div>
+              <div class="sugc__body">
+                <div class="sh sh--l"></div>
+                <div class="sh sh--l sh--short"></div>
+                <div class="sh sh--m"></div>
+              </div>
+            </div>
+          }
+        </div>
+      </section>
+    } @else if (hasSuggestions()) {
+      <section class="sug">
+        <header class="sug__head">
+          <div>
+            <span class="eyebrow"><mat-icon>auto_awesome</mat-icon> پیشنهاد ما</span>
+            <h2>مسیرهای مرتبط</h2>
+            <p>مسیرهایی که کاربران دیگر هم انتخاب کرده‌اند</p>
+          </div>
+          <a routerLink="/learning-paths" class="btn btn-soft btn-sm">
+            همه مسیرها <mat-icon>arrow_back</mat-icon>
+          </a>
+        </header>
+
+        <div class="sug__grid">
+          @for (p of suggestions(); track trackPath($index, p)) {
+            <a
+              class="sugc"
+              [routerLink]="['/learning-paths', p.slug]"
+              [style.--c]="diffMeta(p.difficulty).color"
+              [style.--c-soft]="diffMeta(p.difficulty).bg">
+              <div class="sugc__cover">
+                @if (p.coverImage) {
+                  <img [src]="p.coverImage" [alt]="p.title" loading="lazy" />
+                } @else {
+                  <span class="sugc__fallback">{{ p.icon || '🛤️' }}</span>
+                }
+                <span class="sugc__diff">{{ diffMeta(p.difficulty).label }}</span>
+              </div>
+              <div class="sugc__body">
+                <h3>{{ p.title }}</h3>
+                <p>{{ plainText(p.shortDescription) }}</p>
+                <div class="sugc__rail" aria-hidden="true">
+                  @for (c of stageColors(p); track $index) {
+                    <span [style.background]="c"></span>
+                  }
+                </div>
+                <div class="sugc__meta">
+                  <span><mat-icon>layers</mat-icon>{{ stagesOf(p) | faNum }}</span>
+                  <span><mat-icon>school</mat-icon>{{ coursesOf(p) | faNum }}</span>
+                  <span><mat-icon>schedule</mat-icon>{{ p.estimatedTotalDuration | duration }}</span>
+                </div>
+              </div>
+            </a>
+          }
+        </div>
+      </section>
+    }
+
+    <!-- ═══════════════════════════════════════════
+         MOBILE FLOATING CTA
+         ═══════════════════════════════════════════ -->
+    <div class="mbar">
+      <div class="mbar__info">
+        <strong>رایگان</strong>
+        <span>{{ totalCoursesCount() | faNum }} دوره · {{ path()!.estimatedTotalDuration | duration }}</span>
+      </div>
+      @if (enrollment()) {
+        <a class="btn btn-primary" routerLink="/dashboard/learning-paths">
+          <mat-icon>play_arrow</mat-icon> ادامه
+        </a>
+      } @else {
+        <button class="btn btn-primary" (click)="enroll()" [disabled]="enrolling()">
+          @if (enrolling()) {
+            <span class="spin-loader-sm"></span>
+          } @else {
+            <mat-icon>rocket_launch</mat-icon>
+          }
+          شروع رایگان
+        </button>
+      }
+    </div>
+  }
+</div>

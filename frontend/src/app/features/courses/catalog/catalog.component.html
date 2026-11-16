@@ -1,0 +1,754 @@
+<div class="catalog-page" dir="rtl">
+  <!-- Scroll Progress -->
+  <div class="scroll-progress" *ngIf="isBrowser">
+    <div class="scroll-progress-bar" [style.width.%]="scrollPercent"></div>
+  </div>
+
+  <!-- ========== Hero Section ========== -->
+  <section class="catalog-hero">
+    <div class="hero-bg">
+      <div class="gradient-orb orb-1"></div>
+      <div class="gradient-orb orb-2"></div>
+      <div class="gradient-orb orb-3"></div>
+      <div class="grid-pattern"></div>
+    </div>
+
+    <div class="hero-inner">
+      <nav class="breadcrumb" aria-label="مسیر صفحه">
+        <a routerLink="/" class="breadcrumb-link">
+          <mat-icon>home</mat-icon>
+          خانه
+        </a>
+        <mat-icon class="breadcrumb-sep">chevron_left</mat-icon>
+        <span class="breadcrumb-current">کاتالوگ دوره‌ها</span>
+      </nav>
+
+      <h1 class="hero-title">
+        <span class="title-line">دوره‌ای که دنبالشی</span>
+        <span class="title-gradient">اینجا پیداش کن</span>
+      </h1>
+
+      <p class="hero-desc">
+        از بین
+        <strong class="highlight-number">{{ totalCourses || '۵۰۰+' }}</strong>
+        دوره تخصصی، مسیر یادگیری خودت رو انتخاب کن
+      </p>
+
+      <!-- Hero Search -->
+      <div class="search-box">
+        <div class="search-input-wrap">
+          <mat-icon class="search-icon">search</mat-icon>
+          <input
+            id="catalog-search"
+            type="text"
+            placeholder="جستجوی دوره، مدرس یا مهارت..."
+            [(ngModel)]="filters.search"
+            (input)="onSearchInput()"
+            (focus)="onSearchFocus()"
+            (blur)="onSearchBlur()"
+            (keyup.enter)="applyFilter()"
+            autocomplete="off"
+          />
+          <div class="search-kbd" aria-hidden="true">
+            <kbd>Ctrl</kbd>
+            <span>+</span>
+            <kbd>K</kbd>
+          </div>
+          <button class="search-btn" (click)="applyFilter()" aria-label="جستجو">
+            <mat-icon>arrow_back</mat-icon>
+            <span>جستجو</span>
+          </button>
+        </div>
+
+        <!-- Search Suggestions -->
+        <div class="search-suggestions" *ngIf="showSearchSuggestions">
+          <div class="suggestion-group" *ngIf="recentSearches.length">
+            <div class="suggestion-head">
+              <span><mat-icon>history</mat-icon> جستجوهای اخیر</span>
+              <button (mousedown)="clearRecentSearches($event)">پاک کردن</button>
+            </div>
+            <button
+              class="suggestion-item"
+              *ngFor="let term of recentSearches"
+              (mousedown)="selectSearchTerm(term)"
+            >
+              <mat-icon>history</mat-icon>
+              {{ term }}
+            </button>
+          </div>
+          <div class="suggestion-group">
+            <div class="suggestion-head">
+              <span><mat-icon>trending_up</mat-icon> پیشنهادی</span>
+            </div>
+            @if (isLoadingPopularSearches()) {
+              @for (_ of [1, 2, 3, 4, 5]; track $index) {
+                <span class="suggestion-item suggestion-item--sk"><span class="sh shim"></span></span>
+              }
+            } @else {
+              <button
+                class="suggestion-item"
+                *ngFor="let term of popularSearches()"
+                (mousedown)="selectSearchTerm(term)"
+              >
+                <mat-icon>north_west</mat-icon>
+                {{ term }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="hero-stats">
+        @if (isLoadingStats()) {
+          @for (_ of [1, 2, 3, 4]; track $index) {
+            <div class="stat-item stat-item--sk">
+              <span class="sh" style="width:24px;height:24px;border-radius:50%"></span>
+              <div class="stat-info">
+                <span class="sh" style="width:60px;height:20px;border-radius:6px"></span>
+                <span class="sh" style="width:80px;height:14px;border-radius:6px"></span>
+              </div>
+            </div>
+          }
+        } @else {
+          <div class="stat-item" *ngFor="let stat of stats()">
+            <mat-icon>{{ stat.icon }}</mat-icon>
+            <div class="stat-info">
+              <span class="stat-value">{{ stat.value }}</span>
+              <span class="stat-label">{{ stat.label }}</span>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== Main Layout ========== -->
+  <div class="catalog-body">
+    <!-- ====== Sidebar ====== -->
+    <aside
+      class="sidebar"
+      [class.is-open]="isMobileFilterOpen"
+      role="complementary"
+      aria-label="فیلترها"
+    >
+      <div class="sidebar-mobile-head">
+        <h3>
+          <mat-icon>tune</mat-icon>
+          فیلترها
+        </h3>
+        <button class="btn-icon" (click)="toggleMobileFilter()" aria-label="بستن فیلترها">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="sidebar-body">
+        <div class="sidebar-head">
+          <div class="sidebar-title">
+            <mat-icon>tune</mat-icon>
+            <h3>فیلترها</h3>
+          </div>
+          <button *ngIf="hasActiveFilters()" class="btn-text-danger" (click)="clearAllFilters()">
+            <mat-icon>delete_sweep</mat-icon>
+            پاک‌سازی
+          </button>
+        </div>
+
+        <div class="sidebar-search">
+          <mat-icon>search</mat-icon>
+          <input
+            type="text"
+            placeholder="جستجو..."
+            [(ngModel)]="filters.search"
+            (keyup.enter)="applyFilter()"
+          />
+        </div>
+
+        <!-- Category Accordion -->
+        <div class="filter-accordion">
+          <button
+            class="accordion-header"
+            (click)="toggleSection('category')"
+            [attr.aria-expanded]="openSections['category']"
+          >
+            <div class="header-left">
+              <mat-icon>category</mat-icon>
+              <span>دسته‌بندی</span>
+              <span class="mini-badge" *ngIf="filters.category">۱</span>
+            </div>
+            <mat-icon class="chevron" [class.rotated]="openSections['category']">
+              expand_more
+            </mat-icon>
+          </button>
+          <div class="accordion-body" [class.open]="openSections['category']">
+            <div class="custom-select">
+              <select [(ngModel)]="filters.category" (change)="onCategoryChange()">
+                <option value="">همه دسته‌بندی‌ها</option>
+                <option *ngFor="let cat of parentCategories" [value]="cat._id">
+                  {{ cat.name }}
+                </option>
+              </select>
+              <mat-icon class="select-chevron">expand_more</mat-icon>
+            </div>
+
+            <div class="sub-block" *ngIf="subcategories.length > 0 || isLoadingSubcategories">
+              <div class="filter-label sub-label">
+                <mat-icon>subdirectory_arrow_right</mat-icon>
+                <span>زیردسته</span>
+              </div>
+              <div class="custom-select">
+                <select [(ngModel)]="filters.subCategory" (change)="onSubCategoryChange()">
+                  <option value="">همه زیردسته‌ها</option>
+                  <option *ngFor="let sub of subcategories" [value]="sub._id">
+                    {{ sub.name }}
+                  </option>
+                </select>
+                <mat-icon class="select-chevron">expand_more</mat-icon>
+              </div>
+              <div class="loading-hint" *ngIf="isLoadingSubcategories">
+                <span class="spinner-sm"></span>
+                در حال بارگذاری...
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Level Accordion -->
+        <div class="filter-accordion">
+          <button
+            class="accordion-header"
+            (click)="toggleSection('level')"
+            [attr.aria-expanded]="openSections['level']"
+          >
+            <div class="header-left">
+              <mat-icon>signal_cellular_alt</mat-icon>
+              <span>سطح دوره</span>
+              <span class="mini-badge" *ngIf="filters.level">۱</span>
+            </div>
+            <mat-icon class="chevron" [class.rotated]="openSections['level']">
+              expand_more
+            </mat-icon>
+          </button>
+          <div class="accordion-body" [class.open]="openSections['level']">
+            <div class="level-options">
+              <button
+                class="level-btn"
+                [class.active]="filters.level === ''"
+                (click)="filters.level = ''; applyFilter()"
+              >
+                <mat-icon>apps</mat-icon>
+                همه
+              </button>
+              <button
+                class="level-btn"
+                [class.active]="filters.level === 'beginner'"
+                (click)="filters.level = 'beginner'; applyFilter()"
+              >
+                <mat-icon>looks_one</mat-icon>
+                مقدماتی
+              </button>
+              <button
+                class="level-btn"
+                [class.active]="filters.level === 'intermediate'"
+                (click)="filters.level = 'intermediate'; applyFilter()"
+              >
+                <mat-icon>looks_two</mat-icon>
+                متوسط
+              </button>
+              <button
+                class="level-btn"
+                [class.active]="filters.level === 'advanced'"
+                (click)="filters.level = 'advanced'; applyFilter()"
+              >
+                <mat-icon>looks_3</mat-icon>
+                پیشرفته
+              </button>
+              <button
+                class="level-btn"
+                [class.active]="filters.level === 'all-levels'"
+                (click)="filters.level = 'all-levels'; applyFilter()"
+              >
+                <mat-icon>all_inclusive</mat-icon>
+                همه سطح‌ها
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Price Accordion -->
+        <div class="filter-accordion">
+          <button
+            class="accordion-header"
+            (click)="toggleSection('price')"
+            [attr.aria-expanded]="openSections['price']"
+          >
+            <div class="header-left">
+              <mat-icon>payments</mat-icon>
+              <span>قیمت</span>
+              <span class="mini-badge" *ngIf="filters.minPrice || filters.maxPrice || filters.isFree">۱</span>
+            </div>
+            <mat-icon class="chevron" [class.rotated]="openSections['price']">
+              expand_more
+            </mat-icon>
+          </button>
+          <div class="accordion-body" [class.open]="openSections['price']">
+            <label class="checkbox-row">
+              <input
+                type="checkbox"
+                [(ngModel)]="filters.isFree"
+                (change)="onFreeToggle()"
+              />
+              <span>فقط دوره‌های رایگان</span>
+            </label>
+
+            <div class="price-inputs" *ngIf="!filters.isFree">
+              <div class="price-field">
+                <label>حداقل (تومان)</label>
+                <input
+                  type="number"
+                  min="0"
+                  [(ngModel)]="filters.minPrice"
+                  (change)="applyPriceFilter()"
+                  placeholder="۰"
+                />
+              </div>
+              <span class="price-sep">تا</span>
+              <div class="price-field">
+                <label>حداکثر (تومان)</label>
+                <input
+                  type="number"
+                  min="0"
+                  [(ngModel)]="filters.maxPrice"
+                  (change)="applyPriceFilter()"
+                  placeholder="نامحدود"
+                />
+              </div>
+            </div>
+
+            <div class="price-presets" *ngIf="!filters.isFree">
+              <button class="preset-chip" (click)="setPricePreset('', '500000')">
+                زیر ۵۰۰ هزار
+              </button>
+              <button class="preset-chip" (click)="setPricePreset('500000', '1500000')">
+                ۵۰۰ هزار تا ۱.۵ میلیون
+              </button>
+              <button class="preset-chip" (click)="setPricePreset('1500000', '')">
+                بالای ۱.۵ میلیون
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rating Accordion -->
+        <div class="filter-accordion">
+          <button
+            class="accordion-header"
+            (click)="toggleSection('rating')"
+            [attr.aria-expanded]="openSections['rating']"
+          >
+            <div class="header-left">
+              <mat-icon>star_rate</mat-icon>
+              <span>امتیاز دوره</span>
+              <span class="mini-badge" *ngIf="filters.rating">۱</span>
+            </div>
+            <mat-icon class="chevron" [class.rotated]="openSections['rating']">
+              expand_more
+            </mat-icon>
+          </button>
+          <div class="accordion-body" [class.open]="openSections['rating']">
+            <button
+              class="rating-btn"
+              *ngFor="let r of ratingOptions"
+              [class.active]="filters.rating === r"
+              (click)="selectRating(r)"
+            >
+              <span class="stars">
+                <mat-icon *ngFor="let s of [1, 2, 3, 4, 5]" [class.filled]="s <= r">
+                  star
+                </mat-icon>
+              </span>
+              <span class="rating-text">{{ faNum(r) }} به بالا</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Promo Card -->
+        <div class="sidebar-promo">
+          <div class="promo-icon">
+            <mat-icon>support_agent</mat-icon>
+          </div>
+          <h4>کمک می‌خوای؟</h4>
+          <p>مشاور ما بهت کمک می‌کنه بهترین دوره رو انتخاب کنی.</p>
+          <a routerLink="/support" class="promo-link">
+            صحبت با مشاور
+            <mat-icon>arrow_back</mat-icon>
+          </a>
+        </div>
+      </div>
+
+      <div class="sidebar-mobile-footer">
+        <button class="btn-apply" (click)="toggleMobileFilter()">
+          مشاهده نتایج
+          <span *ngIf="totalCourses">({{ faNum(totalCourses) }})</span>
+        </button>
+      </div>
+    </aside>
+
+    <div
+      class="sidebar-overlay"
+      [class.visible]="isMobileFilterOpen"
+      (click)="toggleMobileFilter()"
+    ></div>
+
+    <!-- ====== Content ====== -->
+    <main class="content">
+      <!-- Quick Filter Pills -->
+      <div class="quick-filters">
+        <button
+          class="quick-chip"
+          *ngFor="let qf of quickFilters"
+          [class.active]="isQuickFilterActive(qf)"
+          (click)="toggleQuickFilter(qf)"
+        >
+          <mat-icon>{{ qf.icon }}</mat-icon>
+          {{ qf.label }}
+        </button>
+      </div>
+
+      <!-- Toolbar -->
+      <div class="toolbar" [class.sticky]="isScrolled">
+        <div class="toolbar-right">
+          <button class="btn-filter-mobile" (click)="toggleMobileFilter()">
+            <mat-icon>tune</mat-icon>
+            <span>فیلتر</span>
+            <span class="badge" *ngIf="getActiveFilterCount() > 0">
+              {{ faNum(getActiveFilterCount()) }}
+            </span>
+          </button>
+
+          <div class="results-count" *ngIf="!isLoading" aria-live="polite">
+            <span class="count">{{ faNum(totalCourses) }}</span>
+            <span class="label">دوره یافت شد</span>
+          </div>
+          <div class="results-count skeleton-pulse" *ngIf="isLoading">
+            <span class="skel-text"></span>
+          </div>
+        </div>
+
+        <div class="toolbar-left">
+          <!-- Custom Sort Dropdown -->
+          <div class="sort-dropdown">
+            <button class="sort-trigger" (click)="toggleSortMenu($event)">
+              <mat-icon>{{ getCurrentSortIcon() }}</mat-icon>
+              <span>{{ getCurrentSortLabel() }}</span>
+              <mat-icon class="chevron" [class.rotated]="isSortMenuOpen">expand_more</mat-icon>
+            </button>
+            <div class="sort-menu" *ngIf="isSortMenuOpen">
+              <button
+                class="sort-option"
+                *ngFor="let opt of sortOptions"
+                [class.active]="filters.sort === opt.value"
+                (click)="selectSort(opt.value)"
+              >
+                <mat-icon>{{ opt.icon }}</mat-icon>
+                <span>{{ opt.label }}</span>
+                <mat-icon class="check" *ngIf="filters.sort === opt.value">check</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <!-- View Toggle -->
+          <div class="view-switch">
+            <button
+              [class.active]="viewMode === 'grid'"
+              (click)="setViewMode('grid')"
+              title="نمایش شبکه‌ای"
+            >
+              <mat-icon>grid_view</mat-icon>
+            </button>
+            <button
+              [class.active]="viewMode === 'list'"
+              (click)="setViewMode('list')"
+              title="نمایش لیستی"
+            >
+              <mat-icon>view_list</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Filter Chips -->
+      <div class="filter-chips" *ngIf="hasActiveFilters()">
+        <span class="chips-label">فیلترهای فعال:</span>
+
+        <div class="chip" *ngIf="filters.search">
+          <mat-icon>search</mat-icon>
+          <span>{{ filters.search }}</span>
+          <button (click)="clearFilter('search')" aria-label="حذف فیلتر">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="chip" *ngIf="filters.category">
+          <mat-icon>category</mat-icon>
+          <span>{{ getCategoryName(filters.category) }}</span>
+          <button (click)="clearFilter('category')" aria-label="حذف فیلتر">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="chip" *ngIf="filters.subCategory">
+          <mat-icon>subdirectory_arrow_right</mat-icon>
+          <span>{{ getCategoryName(filters.subCategory) }}</span>
+          <button (click)="clearFilter('subCategory')" aria-label="حذف فیلتر">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="chip" *ngIf="filters.level">
+          <mat-icon>signal_cellular_alt</mat-icon>
+          <span>{{ levelLabels[filters.level] }}</span>
+          <button (click)="clearFilter('level')" aria-label="حذف فیلتر">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="chip" *ngIf="filters.isFree">
+          <mat-icon>money_off</mat-icon>
+          <span>رایگان</span>
+          <button (click)="clearFilter('isFree')" aria-label="حذف فیلتر">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="chip" *ngIf="filters.minPrice || filters.maxPrice">
+          <mat-icon>payments</mat-icon>
+          <span>
+            {{ filters.minPrice ? faNum(filters.minPrice) : '۰' }}
+            تا
+            {{ filters.maxPrice ? faNum(filters.maxPrice) : '∞' }}
+          </span>
+          <button (click)="clearFilter('price')" aria-label="حذف فیلتر">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="chip" *ngIf="filters.rating">
+          <mat-icon>star_rate</mat-icon>
+          <span>{{ faNum(filters.rating) }} به بالا</span>
+          <button (click)="clearFilter('rating')" aria-label="حذف فیلتر">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <button class="chip chip-clear" (click)="clearAllFilters()">
+          <mat-icon>delete_sweep</mat-icon>
+          <span>پاک کردن همه</span>
+        </button>
+      </div>
+
+      <!-- ====== Loading Skeletons - Grid ====== -->
+      <div class="course-grid" *ngIf="isLoading && viewMode === 'grid'">
+        <div
+          class="skeleton-card"
+          *ngFor="let s of skeletonArray; let i = index"
+          [style.animation-delay]="i * 80 + 'ms'"
+        >
+          <div class="skel-image shimmer"></div>
+          <div class="skel-content">
+            <div class="skel-line lg shimmer"></div>
+            <div class="skel-line md shimmer"></div>
+            <div class="skel-line sm shimmer"></div>
+            <div class="skel-row">
+              <div class="skel-line xs shimmer"></div>
+              <div class="skel-line xs shimmer"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====== Loading Skeletons - List ====== -->
+      <div class="course-list" *ngIf="isLoading && viewMode === 'list'">
+        <div
+          class="skeleton-list-card"
+          *ngFor="let s of skeletonArray; let i = index"
+          [style.animation-delay]="i * 80 + 'ms'"
+        >
+          <div class="skel-media shimmer"></div>
+          <div class="skel-body">
+            <div class="skel-line xs shimmer" style="width: 25%"></div>
+            <div class="skel-line lg shimmer"></div>
+            <div class="skel-line md shimmer"></div>
+            <div class="skel-line sm shimmer"></div>
+            <div class="skel-row">
+              <div class="skel-line xs shimmer"></div>
+              <div class="skel-line xs shimmer"></div>
+              <div class="skel-line xs shimmer"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ====== Empty State ====== -->
+      <div class="empty-state" *ngIf="!isLoading && courses.length === 0">
+        <div class="empty-illustration">
+          <div class="empty-circle">
+            <mat-icon>manage_search</mat-icon>
+          </div>
+          <div class="empty-dots"><span></span><span></span><span></span></div>
+        </div>
+        <h2>نتیجه‌ای یافت نشد</h2>
+        <p>
+          متأسفانه با فیلترهای انتخابی دوره‌ای پیدا نکردیم. فیلترها رو تغییر بده یا عبارت دیگه‌ای
+          جستجو کن.
+        </p>
+        <div class="empty-actions">
+          <button class="btn-primary" (click)="clearAllFilters()">
+            <mat-icon>refresh</mat-icon>
+            پاک کردن فیلترها
+          </button>
+          <a routerLink="/" class="btn-outline">
+            <mat-icon>home</mat-icon>
+            صفحه اصلی
+          </a>
+        </div>
+        <div class="empty-suggestions">
+          <span>شاید این‌ها به کارت بیاد:</span>
+          <div class="suggestion-pills">
+            @if (isLoadingPopularSearches()) {
+              @for (_ of [1, 2, 3, 4, 5]; track $index) {
+                <span class="preset-chip preset-chip--sk"><span class="sh shim"></span></span>
+              }
+            } @else {
+              <button
+                class="preset-chip"
+                *ngFor="let term of popularSearches()"
+                (click)="selectSearchTerm(term)"
+              >
+                {{ term }}
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- ====== Course Grid View ====== -->
+      <div class="course-grid" *ngIf="!isLoading && courses.length > 0 && viewMode === 'grid'">
+        <app-course-card
+          *ngFor="let course of courses; trackBy: trackByCourse; let i = index"
+          [course]="course"
+          [index]="i"
+          class="card-animate"
+          [style.animation-delay]="i * 60 + 'ms'"
+        ></app-course-card>
+      </div>
+
+      <!-- ====== Course List View ====== -->
+      <div class="course-list" *ngIf="!isLoading && courses.length > 0 && viewMode === 'list'">
+        <article
+          class="course-list-card card-animate"
+          *ngFor="let course of courses; trackBy: trackByCourse; let i = index"
+          [style.animation-delay]="i * 60 + 'ms'"
+        >
+          <!-- Media -->
+          <div class="list-card-media">
+            <a [routerLink]="getCourseUrl(course)" class="media-link" tabindex="-1">
+              <img [src]="getCourseImage(course)" [alt]="course.title" loading="lazy" />
+            </a>
+            <span class="media-badge badge-level" *ngIf="getLevelLabel(course)">
+              {{ getLevelLabel(course) }}
+            </span>
+            <span class="media-badge badge-new" *ngIf="isCourseNew(course)">
+              <mat-icon>add</mat-icon>
+              جدید
+            </span>
+          </div>
+
+          <!-- Content -->
+          <div class="list-card-content">
+            <div class="content-head" *ngIf="getCourseCategoryName(course)">
+              <span class="content-category">
+                <mat-icon>category</mat-icon>
+                {{ getCourseCategoryName(course) }}
+              </span>
+            </div>
+
+            <h3 class="content-title">
+              <a [routerLink]="getCourseUrl(course)">{{ course.title }}</a>
+            </h3>
+
+            <p class="content-desc" *ngIf="getCourseDescription(course)">
+              {{ getCourseDescription(course) }}
+            </p>
+
+            <div class="content-instructor" *ngIf="getInstructorName(course)">
+              <img [src]="getInstructorAvatar(course)" [alt]="getInstructorName(course)" />
+              <span>{{ getInstructorName(course) }}</span>
+            </div>
+
+            <div class="content-rating">
+              <app-rating-stars
+                [rating]="getRating(course)"
+                size="small"
+              ></app-rating-stars>
+              <span class="rating-value">{{ faNum(getRating(course)) }}</span>
+              <span class="rating-count" *ngIf="getReviewsCount(course) > 0">
+                ({{ faNum(getReviewsCount(course)) }} نظر)
+              </span>
+            </div>
+
+            <div class="content-stats">
+              <span class="stat" *ngIf="getStudentsCount(course)">
+                <mat-icon>group</mat-icon>
+                {{ compactFa(getStudentsCount(course)) }} دانشجو
+              </span>
+              <span class="stat" *ngIf="getLessonsCount(course)">
+                <mat-icon>play_circle</mat-icon>
+                {{ faNum(getLessonsCount(course)) }} جلسه
+              </span>
+              <span class="stat" *ngIf="course.totalDuration">
+                <mat-icon>schedule</mat-icon>
+                {{ course.totalDuration | faDurationSeconds }}
+              </span>
+            </div>
+
+            <div class="content-footer">
+              <div class="footer-price">
+                <ng-container *ngIf="!isFreeCourse(course); else freeTpl">
+                  <span class="price-old" *ngIf="getDiscountPercent(course) > 0">{{ getOriginalPrice(course) | toman }}</span>
+                  <span class="price-value">{{ getPrice(course) | toman }}</span>
+                </ng-container>
+                <ng-template #freeTpl>
+                  <span class="price-free">رایگان</span>
+                </ng-template>
+              </div>
+              <span class="discount-badge" *ngIf="getDiscountPercent(course) > 0">
+                {{ getDiscountPercent(course) }}٪
+              </span>
+              <a [routerLink]="getCourseUrl(course)" class="footer-btn">مشاهده دوره</a>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <!-- ====== Pagination ====== -->
+      <div class="pagination-area" *ngIf="!isLoading && totalPages > 1">
+        <app-pagination
+          [currentPage]="currentPage"
+          [totalPages]="totalPages"
+          (pageChange)="onPageChange($event)"
+        ></app-pagination>
+      </div>
+    </main>
+  </div>
+
+  <!-- Back To Top -->
+  <button
+    class="back-to-top"
+    *ngIf="showBackToTop"
+    (click)="scrollToTop()"
+    aria-label="بازگشت به بالا"
+  >
+    <mat-icon>keyboard_arrow_up</mat-icon>
+  </button>
+</div>

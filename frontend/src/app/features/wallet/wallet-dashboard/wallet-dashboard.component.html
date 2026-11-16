@@ -1,0 +1,286 @@
+<div class="wallet-container" dir="rtl">
+  <!-- ==================== PAGE HEADER ==================== -->
+  <header class="page-header">
+    <div class="header-icon">
+      <mat-icon>account_balance_wallet</mat-icon>
+    </div>
+    <div class="header-text">
+      <h1>کیف پول</h1>
+      <p>موجودی، تاریخچه تراکنش‌ها، شارژ و برداشت وجه</p>
+    </div>
+  </header>
+
+  <!-- ==================== BALANCE CARD ==================== -->
+  <section class="balance-card" [class.loading]="loading">
+    <div class="balance-main">
+      <span class="balance-label">موجودی کیف پول</span>
+      <div class="balance-amount">
+        {{ (wallet?.wallet?.balance ?? 0) | toman }}
+        <span class="unit">تومان</span>
+      </div>
+    </div>
+    <div class="balance-actions">
+      <button class="btn-primary" (click)="setTab('topup')">
+        <mat-icon>add_circle</mat-icon>
+        شارژ کیف پول
+      </button>
+      <button class="btn-secondary" *ngIf="isInstructor" (click)="setTab('withdraw')">
+        <mat-icon>account_balance</mat-icon>
+        برداشت
+      </button>
+    </div>
+  </section>
+
+  <!-- ==================== STATS ==================== -->
+  <section class="stats-row">
+    <div class="stat">
+      <mat-icon>south_east</mat-icon>
+      <div>
+        <span class="stat-value">{{ (wallet?.wallet?.totalDeposited ?? 0) | toman }}</span>
+        <span class="stat-label">کل واریزی (تومان)</span>
+      </div>
+    </div>
+    <div class="stat">
+      <mat-icon>north_west</mat-icon>
+      <div>
+        <span class="stat-value">{{ (wallet?.wallet?.totalSpent ?? 0) | toman }}</span>
+        <span class="stat-label">کل خرج‌شده (تومان)</span>
+      </div>
+    </div>
+    <div class="stat">
+      <mat-icon>receipt_long</mat-icon>
+      <div>
+        <span class="stat-value">{{ (wallet?.wallet?.totalWithdrawn ?? 0) | toman }}</span>
+        <span class="stat-label">کل برداشت‌ها (تومان)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==================== MESSAGES ==================== -->
+  <div class="alert alert-error" *ngIf="errorMessage">
+    <mat-icon>error</mat-icon>
+    <span>{{ errorMessage }}</span>
+    <button class="alert-close" (click)="errorMessage = ''">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+  <div class="alert alert-success" *ngIf="successMessage">
+    <mat-icon>check_circle</mat-icon>
+    <span>{{ successMessage }}</span>
+    <button class="alert-close" (click)="successMessage = ''">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- ==================== TABS ==================== -->
+  <nav class="tabs">
+    <button
+      [class.active]="activeTab === 'overview'"
+      (click)="setTab('overview')"
+    >
+      <mat-icon>dashboard</mat-icon>
+      نمای کلی
+    </button>
+    <button
+      [class.active]="activeTab === 'transactions'"
+      (click)="setTab('transactions')"
+    >
+      <mat-icon>receipt_long</mat-icon>
+      تاریخچه
+    </button>
+    <button [class.active]="activeTab === 'topup'" (click)="setTab('topup')">
+      <mat-icon>add_circle</mat-icon>
+      شارژ
+    </button>
+    <button
+      *ngIf="isInstructor"
+      [class.active]="activeTab === 'withdraw'"
+      (click)="setTab('withdraw')"
+    >
+      <mat-icon>account_balance</mat-icon>
+      برداشت
+    </button>
+  </nav>
+
+  <!-- ==================== OVERVIEW TAB ==================== -->
+  <section *ngIf="activeTab === 'overview'" class="panel">
+    <h2 class="panel-title">آخرین تراکنش‌ها</h2>
+
+    <div class="tx-loading" *ngIf="loading">
+      <span class="spinner"></span> در حال بارگذاری...
+    </div>
+
+    <div
+      class="tx-empty"
+      *ngIf="!loading && (!wallet?.recentTransactions || wallet?.recentTransactions?.length === 0)"
+    >
+      <mat-icon>inbox</mat-icon>
+      <p>هنوز تراکنشی ثبت نشده است</p>
+    </div>
+
+    <div
+      class="tx-item"
+      *ngFor="let tx of wallet?.recentTransactions"
+      [attr.data-type]="tx.type"
+    >
+      <span class="tx-icon">
+        <mat-icon>{{ tx.type === 'credit' ? 'south_east' : 'north_west' }}</mat-icon>
+      </span>
+      <div class="tx-meta">
+        <span class="tx-reason">{{ reasonLabel(tx.reason) }}</span>
+        <span class="tx-date">{{ tx.createdAt | jalaliDate: 'YYYY/MM/DD HH:mm' }}</span>
+      </div>
+      <span class="tx-amount" [class.credit]="tx.type === 'credit'" [class.debit]="tx.type === 'debit'">
+        {{ tx.type === 'credit' ? '+' : '-' }}{{ tx.amount | toman }}
+      </span>
+    </div>
+
+    <button
+      class="btn-link"
+      *ngIf="(wallet?.recentTransactions?.length ?? 0) > 0"
+      (click)="setTab('transactions')"
+    >
+      مشاهده همه تراکنش‌ها
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+  </section>
+
+  <!-- ==================== TRANSACTIONS TAB ==================== -->
+  <section *ngIf="activeTab === 'transactions'" class="panel">
+    <div class="tx-loading" *ngIf="txLoading">
+      <span class="spinner"></span> در حال بارگذاری...
+    </div>
+
+    <div class="tx-empty" *ngIf="!txLoading && transactions.length === 0">
+      <mat-icon>receipt_long</mat-icon>
+      <p>تراکنشی یافت نشد</p>
+    </div>
+
+    <div class="tx-item" *ngFor="let tx of transactions" [attr.data-type]="tx.type">
+      <span class="tx-icon">
+        <mat-icon>{{ tx.type === 'credit' ? 'south_east' : 'north_west' }}</mat-icon>
+      </span>
+      <div class="tx-meta">
+        <span class="tx-reason">{{ reasonLabel(tx.reason) }}</span>
+        <span class="tx-desc" *ngIf="tx.description">{{ tx.description }}</span>
+        <span class="tx-date">{{ tx.createdAt | jalaliDate: 'YYYY/MM/DD HH:mm' }}</span>
+      </div>
+      <div class="tx-left">
+        <span
+          class="tx-amount"
+          [class.credit]="tx.type === 'credit'"
+          [class.debit]="tx.type === 'debit'"
+        >
+          {{ tx.type === 'credit' ? '+' : '-' }}{{ tx.amount | toman }}
+        </span>
+        <span class="tx-balance">موجودی: {{ tx.balanceAfter | toman }}</span>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" *ngIf="totalPages > 1">
+      <button class="btn-page" [disabled]="currentPage <= 1 || txLoading" (click)="prevPage()">
+        <mat-icon>chevron_right</mat-icon>
+        قبلی
+      </button>
+      <span class="page-info">صفحه {{ currentPage }} از {{ totalPages }}</span>
+      <button
+        class="btn-page"
+        [disabled]="currentPage >= totalPages || txLoading"
+        (click)="nextPage()"
+      >
+        بعدی
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+    </div>
+  </section>
+
+  <!-- ==================== TOPUP TAB ==================== -->
+  <section *ngIf="activeTab === 'topup'" class="panel">
+    <h2 class="panel-title">شارژ کیف پول از درگاه بانکی</h2>
+    <p class="panel-hint">
+      مبلغ از طریق درگاه NikPal پرداخت و بلافاصله به موجودی کیف پول افزوده می‌شود.
+    </p>
+
+    <div class="preset-row">
+      <button
+        class="btn-preset"
+        *ngFor="let p of topupPresets"
+        [class.active]="topupAmount === p"
+        (click)="selectTopupPreset(p)"
+      >
+        {{ p | toman }}
+      </button>
+    </div>
+
+    <label class="field">
+      <span>مبلغ شارژ (تومان)</span>
+      <input
+        type="number"
+        [(ngModel)]="topupAmount"
+        min="10000"
+        step="10000"
+        placeholder="حداقل ۱۰,۰۰۰"
+      />
+    </label>
+
+    <button
+      class="btn-primary btn-block"
+      [disabled]="submitting"
+      (click)="onTopup()"
+    >
+      <mat-icon>payment</mat-icon>
+      {{ submitting ? 'در حال ایجاد درخواست...' : 'پرداخت و شارژ' }}
+    </button>
+  </section>
+
+  <!-- ==================== WITHDRAW TAB (فقط مدرس) ==================== -->
+  <section *ngIf="activeTab === 'withdraw' && isInstructor" class="panel">
+    <h2 class="panel-title">درخواست برداشت وجه</h2>
+    <p class="panel-hint">
+      موجودی قابل برداشت: <strong>{{ (wallet?.wallet?.balance ?? 0) | toman }} تومان</strong>
+      — حداقل مبلغ برداشت ۵۰,۰۰۰ تومان است. تا بررسی درخواست توسط مدیر، مبلغ از موجودی
+      رزرو می‌شود.
+    </p>
+
+    <label class="field">
+      <span>مبلغ برداشت (تومان)</span>
+      <input
+        type="number"
+        [(ngModel)]="withdrawAmount"
+        min="50000"
+        step="10000"
+        placeholder="حداقل ۵۰,۰۰۰"
+      />
+    </label>
+
+    <label class="field">
+      <span>شماره شبا (اختیاری)</span>
+      <input
+        type="text"
+        [(ngModel)]="shebaNumber"
+        dir="ltr"
+        placeholder="IR123456789012345678901234"
+      />
+    </label>
+
+    <label class="field">
+      <span>شماره کارت (اختیاری)</span>
+      <input type="text" [(ngModel)]="cardNumber" dir="ltr" placeholder="6037XXXXXXXXXXXX" />
+    </label>
+
+    <label class="field">
+      <span>نام صاحب حساب *</span>
+      <input type="text" [(ngModel)]="accountHolder" placeholder="مثال: علی محمدی" />
+    </label>
+
+    <button
+      class="btn-primary btn-block"
+      [disabled]="submitting"
+      (click)="onWithdraw()"
+    >
+      <mat-icon>send</mat-icon>
+      {{ submitting ? 'در حال ثبت...' : 'ثبت درخواست برداشت' }}
+    </button>
+  </section>
+</div>

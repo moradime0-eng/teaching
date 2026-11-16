@@ -1,0 +1,418 @@
+<div class="admin-dashboard" dir="rtl">
+  <!-- LOADING -->
+  <div class="dashboard-loading" *ngIf="isLoading()">
+    <div class="skel-hero shimmer"></div>
+    <div class="skel-stats">
+      <div class="skel-card shimmer" *ngFor="let s of skeletonArray"></div>
+    </div>
+    <div class="skel-content">
+      <div class="skel-panel shimmer"></div>
+      <div class="skel-side shimmer"></div>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!isLoading()">
+    <!-- ==========================================
+         HERO BANNER
+         ========================================== -->
+    <section class="dashboard-hero">
+      <div class="hero-bg">
+        <div class="bg-blob blob-1"></div>
+        <div class="bg-blob blob-2"></div>
+        <div class="bg-grid"></div>
+      </div>
+
+      <div class="hero-content">
+        <div class="hero-left">
+          <div class="greeting-badge">
+            <span class="wave">👋</span>
+            <span>{{ currentTime() }}</span>
+          </div>
+
+          <h1 class="hero-title">
+            پنل مدیریت
+            <span class="hero-highlight">سیستم</span>
+          </h1>
+          <p class="hero-desc">
+            خوش آمدید
+            <strong>{{ authService.userName() || 'مدیر' }}</strong> — از اینجا می‌توانید کل پلتفرم
+            را مدیریت و نظارت کنید.
+          </p>
+
+          <div class="hero-actions">
+            <!-- ✅ دکمه اصلی: ایجاد دوره جدید (گرادینت متحرک + افکت درخشش) -->
+            <a routerLink="/admin/course-builder" class="btn-hero-primary has-gradient">
+              <span class="btn-icon-wrap">
+                <mat-icon>add_circle</mat-icon>
+              </span>
+              <span class="btn-text">ایجاد دوره جدید</span>
+              <span class="btn-shine"></span>
+            </a>
+
+            <a routerLink="/admin/courses" class="btn-hero-primary">
+              <mat-icon>rate_review</mat-icon>
+              <span class="btn-text">بررسی دوره‌ها</span>
+              <span class="hero-badge" *ngIf="displayStats().pendingCourses > 0">
+                {{ displayStats().pendingCourses }}
+              </span>
+            </a>
+
+            <a routerLink="/admin/users" class="btn-hero-ghost">
+              <mat-icon>group</mat-icon>
+              <span class="btn-text">مدیریت کاربران</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="hero-right">
+          <div class="hero-stats-float">
+            <div class="float-card fc-1">
+              <mat-icon>people</mat-icon>
+              <div>
+                <span class="fc-value">{{ displayStats().totalUsers | number }}</span>
+                <span class="fc-label">کاربر</span>
+              </div>
+            </div>
+            <div class="float-card fc-2">
+              <mat-icon>school</mat-icon>
+              <div>
+                <span class="fc-value">{{ displayStats().totalCourses }}</span>
+                <span class="fc-label">دوره</span>
+              </div>
+            </div>
+            <div class="float-card fc-3">
+              <mat-icon>payments</mat-icon>
+              <div>
+                <span class="fc-value">{{ displayStats().monthlyRevenue | toman }}</span>
+                <span class="fc-label">درآمد ماه</span>
+              </div>
+            </div>
+            <div class="float-orb"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ==========================================
+         MAIN CONTAINER
+         ========================================== -->
+    <div class="dashboard-container">
+      <!-- Alerts Banner -->
+      <section class="alerts-bar" *ngIf="alerts().length > 0">
+        <div class="alert-item" *ngFor="let alert of alerts()" [attr.data-color]="alert.color">
+          <div class="alert-icon">
+            <mat-icon>{{ alert.icon }}</mat-icon>
+          </div>
+          <div class="alert-text">
+            <strong>{{ alert.title }}</strong>
+            <span>{{ alert.desc }}</span>
+          </div>
+          <a [routerLink]="alert.route" class="alert-action">
+            بررسی
+            <mat-icon>arrow_back</mat-icon>
+          </a>
+        </div>
+      </section>
+
+      <!-- Period + Section Title -->
+      <div class="section-header">
+        <div class="section-title">
+          <mat-icon>analytics</mat-icon>
+          <h2>خلاصه عملکرد</h2>
+        </div>
+        <div class="period-tabs">
+          <button
+            *ngFor="let p of periods"
+            class="period-tab"
+            [class.active]="selectedPeriod() === p.value"
+            (click)="setPeriod(p.value)"
+          >
+            {{ p.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- ==========================================
+           STAT CARDS
+           ========================================== -->
+      <section class="stats-grid">
+        <!-- Users -->
+        <div class="stat-card" data-color="blue">
+          <div class="stat-top">
+            <div class="stat-icon">
+              <mat-icon>people</mat-icon>
+            </div>
+            <div class="stat-trend up" *ngIf="displayStats().newUsers > 0">
+              <mat-icon>trending_up</mat-icon>
+              <span>+{{ displayStats().newUsers }}</span>
+            </div>
+          </div>
+          <div class="stat-body">
+            <span class="stat-value">{{ displayStats().totalUsers | number }}</span>
+            <span class="stat-label">کل کاربران</span>
+          </div>
+          <div class="stat-footer">
+            <div class="footer-item">
+              <span class="dot green"></span>
+              <span>{{ displayStats().newUsers }} عضو جدید این ماه</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Courses -->
+        <div class="stat-card" data-color="purple">
+          <div class="stat-top">
+            <div class="stat-icon">
+              <mat-icon>school</mat-icon>
+            </div>
+            <div class="stat-badge warn" *ngIf="displayStats().pendingCourses > 0">
+              <mat-icon>priority_high</mat-icon>
+              {{ displayStats().pendingCourses }}
+            </div>
+          </div>
+          <div class="stat-body">
+            <span class="stat-value">{{ displayStats().totalCourses }}</span>
+            <span class="stat-label">کل دوره‌ها</span>
+          </div>
+          <div class="stat-footer">
+            <div class="footer-item">
+              <span class="dot green"></span>
+              <span>{{ displayStats().publishedCourses }} منتشر شده</span>
+            </div>
+            <div class="footer-item">
+              <span class="dot amber"></span>
+              <span>{{ displayStats().pendingCourses }} در انتظار</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Revenue -->
+        <div class="stat-card highlighted" data-color="green">
+          <div class="stat-top">
+            <div class="stat-icon">
+              <mat-icon>payments</mat-icon>
+            </div>
+            <div class="stat-trend up" *ngIf="revenueGrowth > 0">
+              <mat-icon>trending_up</mat-icon>
+              <span>+{{ revenueGrowth }}٪</span>
+            </div>
+          </div>
+          <div class="stat-body">
+            <span class="stat-value revenue">{{ displayStats().totalRevenue | toman }}</span>
+            <span class="stat-label">کل درآمد</span>
+          </div>
+          <div class="stat-footer">
+            <div class="footer-item">
+              <mat-icon class="footer-icon">calendar_month</mat-icon>
+              <span>این ماه: {{ displayStats().monthlyRevenue | toman }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tickets -->
+        <div class="stat-card" data-color="rose">
+          <div class="stat-top">
+            <div class="stat-icon">
+              <mat-icon>support_agent</mat-icon>
+            </div>
+            <div class="stat-badge danger" *ngIf="displayStats().openTickets > 0">
+              <mat-icon>notifications_active</mat-icon>
+              {{ displayStats().openTickets }}
+            </div>
+          </div>
+          <div class="stat-body">
+            <span class="stat-value">{{ displayStats().openTickets }}</span>
+            <span class="stat-label">تیکت‌های باز</span>
+          </div>
+          <div class="stat-footer">
+            <div class="footer-item">
+              <span class="dot rose"></span>
+              <span>نیاز به پاسخگویی</span>
+            </div>
+            <a routerLink="/support" class="footer-link">
+              مشاهده
+              <mat-icon>arrow_back</mat-icon>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           CONTENT GRID
+           ========================================== -->
+      <div class="content-grid">
+        <!-- LEFT: Quick Links -->
+        <section class="panel quick-links-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <mat-icon>bolt</mat-icon>
+              <h3>دسترسی سریع</h3>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="quick-links-grid">
+              <a
+                *ngFor="let link of quickLinks()"
+                [routerLink]="link.route"
+                class="quick-link-card"
+                [attr.data-color]="link.color"
+              >
+                <div class="ql-icon">
+                  <mat-icon>{{ link.icon }}</mat-icon>
+                </div>
+                <div class="ql-text">
+                  <span class="ql-label">
+                    {{ link.label }}
+                    <span class="ql-badge" *ngIf="link.badge">{{ link.badge }}</span>
+                  </span>
+                  <span class="ql-desc">{{ link.description }}</span>
+                </div>
+                <mat-icon class="ql-arrow">chevron_left</mat-icon>
+              </a>
+            </div>
+          </div>
+        </section>
+
+        <!-- RIGHT: Sidebar -->
+        <aside class="content-sidebar">
+          <!-- System Health -->
+          <div class="panel health-panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <mat-icon>monitor_heart</mat-icon>
+                <h3>وضعیت سیستم</h3>
+              </div>
+              <span class="health-status online">
+                <span class="status-dot"></span>
+                فعال
+              </span>
+            </div>
+            <div class="panel-body">
+              <div class="health-items">
+                <div class="health-item">
+                  <div class="health-info">
+                    <mat-icon>storage</mat-icon>
+                    <span>سرور اصلی</span>
+                  </div>
+                  <span class="health-badge ok">سالم</span>
+                </div>
+                <div class="health-item">
+                  <div class="health-info">
+                    <mat-icon>database</mat-icon>
+                    <span>پایگاه داده</span>
+                  </div>
+                  <span class="health-badge ok">سالم</span>
+                </div>
+                <div class="health-item">
+                  <div class="health-info">
+                    <mat-icon>cloud</mat-icon>
+                    <span>فضای ذخیره‌سازی</span>
+                  </div>
+                  <span class="health-badge ok">سالم</span>
+                </div>
+                <div class="health-item">
+                  <div class="health-info">
+                    <mat-icon>payment</mat-icon>
+                    <span>درگاه پرداخت</span>
+                  </div>
+                  <span class="health-badge ok">سالم</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Mini Stats -->
+          <div class="panel mini-stats-panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <mat-icon>insights</mat-icon>
+                <h3>آمار سریع</h3>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="mini-stat-row">
+                <div class="mini-stat">
+                  <mat-icon class="ms-icon blue">person_add</mat-icon>
+                  <div>
+                    <span class="ms-value">{{ displayStats().newUsers }}</span>
+                    <span class="ms-label">کاربر جدید</span>
+                  </div>
+                </div>
+                <div class="mini-stat">
+                  <mat-icon class="ms-icon purple">co_present</mat-icon>
+                  <div>
+                    <span class="ms-value">{{ displayStats().totalInstructors }}</span>
+                    <span class="ms-label">مدرس</span>
+                  </div>
+                </div>
+              </div>
+              <div class="mini-stat-row">
+                <div class="mini-stat">
+                  <mat-icon class="ms-icon green">shopping_cart</mat-icon>
+                  <div>
+                    <span class="ms-value">{{ displayStats().totalOrders }}</span>
+                    <span class="ms-label">سفارش</span>
+                  </div>
+                </div>
+                <div class="mini-stat">
+                  <mat-icon class="ms-icon amber">pending</mat-icon>
+                  <div>
+                    <span class="ms-value">{{ displayStats().pendingCourses }}</span>
+                    <span class="ms-label">در انتظار</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <!-- ==========================================
+           RECENT ACTIVITY
+           ========================================== -->
+      <section class="panel activity-panel">
+        <div class="panel-header">
+          <div class="panel-title">
+            <mat-icon>history</mat-icon>
+            <h3>فعالیت‌های اخیر</h3>
+          </div>
+          <button class="btn-view-all" (click)="loadDashboard()">
+            <mat-icon>refresh</mat-icon>
+            بروزرسانی
+          </button>
+        </div>
+
+        <div class="panel-body">
+          <!-- Empty -->
+          <div class="empty-activity" *ngIf="recentActivities().length === 0">
+            <div class="empty-icon-wrap">
+              <mat-icon>event_note</mat-icon>
+            </div>
+            <h4>فعالیت اخیری ثبت نشده</h4>
+            <p>فعالیت‌های سیستم و کاربران اینجا نمایش داده می‌شود</p>
+          </div>
+
+          <!-- List -->
+          <div class="activity-list" *ngIf="recentActivities().length > 0">
+            <div
+              class="activity-item"
+              *ngFor="let act of recentActivities()"
+              [attr.data-type]="act.type"
+            >
+              <div class="act-icon" [attr.data-color]="act.color">
+                <mat-icon>{{ act.icon }}</mat-icon>
+              </div>
+              <div class="act-content">
+                <div class="act-header">
+                  <h4>{{ act.title }}</h4>
+                  <span class="act-time">{{ act.time | jalaliDate: 'YYYY/MM/DD HH:mm' }}</span>
+                </div>
+                <p>{{ act.description }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </ng-container>
+</div>

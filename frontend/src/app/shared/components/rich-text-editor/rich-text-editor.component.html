@@ -1,0 +1,134 @@
+﻿<div
+  class="rich-text-wrapper"
+  [class.rtl-mode]="direction === 'rtl'"
+  [class.ltr-mode]="direction === 'ltr'"
+  [class.disabled]="isDisabled"
+  [class.compact-mode]="compact"
+>
+  <!-- ================================================================ -->
+  <!-- Custom Quill Toolbar -->
+  <!-- ================================================================ -->
+
+  <div [id]="toolbarId" class="ql-toolbar ql-snow custom-quill-toolbar">
+    <span class="ql-formats">
+      <button *ngIf="showToolbarButton('bold')" type="button" class="ql-bold" aria-label="ضخیم" title="ضخیم"></button>
+      <button *ngIf="showToolbarButton('italic')" type="button" class="ql-italic" aria-label="ایتالیک" title="ایتالیک"></button>
+      <button *ngIf="showToolbarButton('underline')" type="button" class="ql-underline" aria-label="زیرخط" title="زیرخط"></button>
+      <button *ngIf="showToolbarButton('strike')" type="button" class="ql-strike" aria-label="خط خورده" title="خط خورده"></button>
+    </span>
+
+    <span class="ql-formats" *ngIf="showToolbarButton('blockquote') || showToolbarButton('code-block')">
+      <button *ngIf="showToolbarButton('blockquote')" type="button" class="ql-blockquote" aria-label="نقل قول" title="نقل قول"></button>
+      <button *ngIf="showToolbarButton('code-block')" type="button" class="ql-code-block" aria-label="کد" title="کد"></button>
+    </span>
+
+    <span class="ql-formats" *ngIf="showToolbarButton('header')">
+      <select class="ql-header" aria-label="عنوان" title="عنوان">
+        <option selected></option>
+        <option value="1">عنوان ۱</option>
+        <option value="2">عنوان ۲</option>
+        <option value="3">عنوان ۳</option>
+      </select>
+    </span>
+
+    <span class="ql-formats" *ngIf="showToolbarButton('size')">
+      <select class="ql-size" aria-label="اندازه متن" title="اندازه متن">
+        <option value="small">کوچک</option>
+        <option selected></option>
+        <option value="large">بزرگ</option>
+        <option value="huge">خیلی بزرگ</option>
+      </select>
+    </span>
+
+    <span class="ql-formats">
+      <button *ngIf="showToolbarButton('list')" type="button" class="ql-list" value="ordered" aria-label="لیست شماره‌دار" title="لیست شماره‌دار"></button>
+      <button *ngIf="showToolbarButton('bullet')" type="button" class="ql-list" value="bullet" aria-label="لیست" title="لیست"></button>
+    </span>
+
+    <span class="ql-formats" *ngIf="showToolbarButton('indent')">
+      <button type="button" class="ql-indent" value="-1" aria-label="کاهش تورفتگی" title="کاهش تورفتگی"></button>
+      <button type="button" class="ql-indent" value="+1" aria-label="افزایش تورفتگی" title="افزایش تورفتگی"></button>
+    </span>
+
+    <span class="ql-formats direction-buttons-group" *ngIf="showToolbarButton('direction-rtl') || showToolbarButton('direction-ltr')">
+      <button *ngIf="showToolbarButton('direction-ltr')" type="button" class="ql-direction-ltr" aria-label="چپ‌چین" title="چپ‌چین" aria-pressed="false">
+        <span class="direction-icon ltr-icon">⇤</span>
+      </button>
+      <button *ngIf="showToolbarButton('direction-rtl')" type="button" class="ql-direction-rtl" aria-label="راست‌چین" title="راست‌چین" aria-pressed="false">
+        <span class="direction-icon rtl-icon">⇥</span>
+      </button>
+    </span>
+
+    <span class="ql-formats" *ngIf="showToolbarButton('color') || showToolbarButton('background')">
+      <select *ngIf="showToolbarButton('color')" class="ql-color" aria-label="رنگ متن" title="رنگ متن"></select>
+      <select *ngIf="showToolbarButton('background')" class="ql-background" aria-label="رنگ پس‌زمینه" title="رنگ پس‌زمینه"></select>
+    </span>
+
+    <span class="ql-formats">
+      <button *ngIf="showToolbarButton('link')" type="button" class="ql-link" aria-label="لینک" title="لینک"></button>
+      <button *ngIf="showToolbarButton('image')" type="button" class="ql-image" aria-label="تصویر" title="تصویر"></button>
+    </span>
+
+    <span class="ql-formats" *ngIf="showToolbarButton('emoji') && showEmojiButton">
+      <button type="button" class="ql-emoji" aria-label="ایموجی" title="ایموجی"></button>
+    </span>
+
+    <span class="ql-formats" *ngIf="showToolbarButton('clean')">
+      <button type="button" class="ql-clean" aria-label="پاک کردن قالب‌بندی" title="پاک کردن قالب‌بندی"></button>
+    </span>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- Editor & Loading Skeleton -->
+  <!-- ================================================================ -->
+
+  <!-- ⭐ فقط وقتی کویل کامل لود شد ادیتور اصلی را رندر کن -->
+  <ng-container *ngIf="isBrowser && isQuillLoaded && editorModules; else loadingTemplate">
+    <quill-editor
+      [modules]="editorModules"
+      [placeholder]="placeholder"
+      (onContentChanged)="onContentChange($event)"
+      (onEditorCreated)="onEditorCreated($event)"
+      (onBlur)="onEditorBlur()"
+      [styles]="{ minHeight: minHeight, maxHeight: autoExpand ? 'none' : maxHeight }"
+      [readOnly]="isDisabled"
+      [required]="required"
+      theme="snow"
+      class="custom-quill-editor"
+    >
+    </quill-editor>
+  </ng-container>
+
+  <!-- ⭐ در زمانی که کویل در حال دانلود است، این حالت لودینگ نشان داده می‌شود -->
+  <ng-template #loadingTemplate>
+    <div *ngIf="isBrowser" class="editor-skeleton" [style.minHeight]="minHeight">
+      <span class="pulse-text">در حال بارگذاری ویرایشگر...</span>
+    </div>
+  </ng-template>
+
+  <!-- ================================================================ -->
+  <!-- Emoji Picker -->
+  <!-- ================================================================ -->
+
+  <div class="ql-emoji-picker" *ngIf="showEmojiPicker" (click)="$event.stopPropagation()">
+    <div class="emoji-picker-header">
+      <span class="emoji-picker-title"> انتخاب ایموجی </span>
+      <button type="button" class="emoji-picker-close" (click)="showEmojiPicker = false" aria-label="بستن">✕</button>
+    </div>
+    <div class="emoji-grid">
+      <button type="button" *ngFor="let emoji of emojis" class="emoji-btn" (click)="insertEmoji(emoji)">
+        {{ emoji }}
+      </button>
+    </div>
+  </div>
+
+  <!-- ================================================================ -->
+  <!-- SSR Fallback -->
+  <!-- ================================================================ -->
+
+  <div *ngIf="!isBrowser" class="quill-placeholder-fallback" [style.minHeight]="minHeight">
+    <span class="placeholder-text">
+      {{ placeholder }}
+    </span>
+  </div>
+</div>

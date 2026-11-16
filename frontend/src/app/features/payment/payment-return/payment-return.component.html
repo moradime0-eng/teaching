@@ -1,0 +1,153 @@
+<div class="payment-page">
+  <div class="result-card animate-in" [attr.aria-live]="'polite'">
+
+    <!-- ════════════════ WORKING ════════════════ -->
+    @if (phase === 'working') {
+      <!-- Animated Spinner -->
+      <div class="spinner-wrapper" role="status">
+        <svg class="spinner-svg" viewBox="0 0 60 60" aria-hidden="true">
+          <circle class="spinner-track" cx="30" cy="30" r="26" />
+          <circle class="spinner-fill"  cx="30" cy="30" r="26" />
+        </svg>
+        <span class="sr-only">در حال پردازش پرداخت</span>
+      </div>
+
+      <h1 class="title working-title">در حال تکمیل پرداخت…</h1>
+      <p class="subtitle">لطفاً این صفحه را نبندید. فرآیند تأیید چند لحظه طول می‌کشد.</p>
+
+      <!-- Step Progress -->
+      <ol class="steps" aria-label="مراحل تأیید پرداخت">
+        @for (step of steps; track step.label; let i = $index) {
+          <li class="step" [class.step--done]="step.state === 'done'"
+              [class.step--active]="step.state === 'active'">
+            <span class="step-indicator">
+              @if (step.state === 'done') {
+                <svg viewBox="0 0 24 24" class="step-icon" aria-hidden="true">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+              } @else if (step.state === 'active') {
+                <span class="step-pulse"></span>
+              } @else {
+                <span class="step-dot"></span>
+              }
+            </span>
+            <span class="step-label">{{ step.label }}</span>
+            @if (i < steps.length - 1) {
+              <span class="step-connector"
+                    [class.step-connector--done]="step.state === 'done'"></span>
+            }
+          </li>
+        }
+      </ol>
+    }
+
+    <!-- ════════════════ SUCCESS ════════════════ -->
+    @if (phase === 'success') {
+      <div class="icon-wrapper">
+        <svg class="checkmark-svg" viewBox="0 0 80 80" aria-hidden="true">
+          <circle class="checkmark-circle" cx="40" cy="40" r="36" />
+          <path   class="checkmark-check"  d="M24 42 L35 53 L56 30" />
+        </svg>
+      </div>
+
+      <h1 class="title success-title">پرداخت تأیید شد</h1>
+      <p class="subtitle">
+        تراکنش شما با موفقیت نهایی شد.
+      </p>
+
+      <div class="countdown-badge" role="timer">
+        <svg viewBox="0 0 24 24" class="icon icon-timer" aria-hidden="true">
+          <path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61
+                   1.42-1.42a10 10 0 1 0 1.41 1.41l-1.42
+                   1.42A7.96 7.96 0 0 1 21 12a9 9 0 1
+                   1-9-9c2.12 0 4.07.74 5.61 1.97z"/>
+        </svg>
+        انتقال تا <strong>{{ countdown }}</strong> ثانیه دیگر…
+      </div>
+    }
+
+    <!-- ════════════════ ERROR ════════════════ -->
+    @if (phase === 'error') {
+      <div class="icon-wrapper">
+        <svg class="error-svg" viewBox="0 0 80 80" aria-hidden="true">
+          <circle class="error-circle" cx="40" cy="40" r="36" />
+          <line class="error-x1" x1="28" y1="28" x2="52" y2="52" />
+          <line class="error-x2" x1="52" y1="28" x2="28" y2="52" />
+        </svg>
+      </div>
+
+      <h1 class="title error-title">تکمیل پرداخت ناموفق بود</h1>
+      <p class="subtitle">{{ message }}</p>
+
+      <div class="hint-box" role="note">
+        <svg viewBox="0 0 24 24" class="icon icon-info" aria-hidden="true">
+          <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm1
+                   15h-2v-6h2v6zm0-8h-2V7h2v2z"/>
+        </svg>
+        <span>اگر مبلغی از حساب شما کسر شده، نگران نباشید. مبلغ طی ۷۲ ساعت به‌صورت خودکار بازمی‌گردد.</span>
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-primary" type="button" (click)="retry()">
+          <svg viewBox="0 0 24 24" class="icon" aria-hidden="true">
+            <path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 8
+                     8h-2a6 6 0 1 1-1.76-4.24L14 10h7V3l-3.35 3.35z"/>
+          </svg>
+          تلاش مجدد
+        </button>
+        <a routerLink="/dashboard/orders" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" class="icon" aria-hidden="true">
+            <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2
+                     2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-5
+                     14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+          </svg>
+          پرداخت‌های من
+        </a>
+      </div>
+    }
+
+    <!-- ════════════════ NOTHING ════════════════ -->
+    @if (phase === 'nothing') {
+      <div class="icon-wrapper">
+        <svg class="info-svg" viewBox="0 0 80 80" aria-hidden="true">
+          <circle class="info-circle" cx="40" cy="40" r="36" />
+          <line class="info-stem" x1="40" y1="36" x2="40" y2="54" />
+          <circle class="info-dot" cx="40" cy="27" r="3" />
+        </svg>
+      </div>
+
+      <h1 class="title info-title">پرداخت در انتظاری یافت نشد</h1>
+      <p class="subtitle">
+        اگر پرداختی انجام داده‌اید، نگران نباشید. فرآیند تطبیق خودکار سرور،
+        نهایتاً طی چند دقیقه تراکنش شما را نهایی می‌کند.
+      </p>
+
+      <div class="auto-verify-box">
+        <svg viewBox="0 0 24 24" class="icon icon-sync" aria-hidden="true">
+          <path d="M12 4V1L8 5l4 4V6a6 6 0 0 1 6 6 6 6 0 0
+                   1-6 6 6 6 0 0 1-6-6H4a8 8 0 0 0 8 8 8 8
+                   0 0 0 8-8 8 8 0 0 0-8-8z"/>
+        </svg>
+        <span>تطبیق خودکار فعال است</span>
+      </div>
+
+      <div class="actions">
+        <a routerLink="/dashboard/orders" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" class="icon" aria-hidden="true">
+            <path d="M19 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2
+                     2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2zm-5
+                     14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z"/>
+          </svg>
+          پرداخت‌های من
+        </a>
+        <a routerLink="/" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" class="icon" aria-hidden="true">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+          </svg>
+          صفحه اصلی
+        </a>
+      </div>
+    }
+
+  </div>
+</div>

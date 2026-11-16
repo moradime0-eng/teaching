@@ -1,0 +1,55 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     ❓ FAQ — سوالات متداول
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="faq-section block">
+  <header class="block__head">
+    <div>
+      <span class="eyebrow eyebrow--violet">
+        <mat-icon>help_outline</mat-icon> سوالات متداول
+      </span>
+      <h2 class="block__title">سوالات پرتکرار</h2>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <div class="faq-list">
+      @for (i of [1, 2, 3, 4, 5, 6]; track $index) {
+        <div class="faq-item faq-item--sk">
+          <span class="sh" style="width:80%;height:20px;border-radius:6px"></span>
+          <span class="sh" style="width:60%;height:16px;border-radius:6px;margin-top:0.5rem"></span>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="faq-list">
+      @for (faq of faqs(); track faq.question; let i = $index) {
+        <div
+          class="faq-item"
+          [class.faq-item--open]="openIndex() === i"
+          [style.animation-delay]="(i * 50) + 'ms'"
+        >
+          <button
+            type="button"
+            class="faq-item__trigger"
+            (click)="toggle(i)"
+            [attr.aria-expanded]="openIndex() === i"
+            [attr.aria-controls]="'faq-panel-' + i"
+          >
+            <span class="faq-item__question">{{ faq.question }}</span>
+            <mat-icon class="faq-item__chevron" [class.faq-item__chevron--open]="openIndex() === i">
+              expand_more
+            </mat-icon>
+          </button>
+          <div
+            class="faq-item__panel"
+            [id]="'faq-panel-' + i"
+            [class.faq-item__panel--open]="openIndex() === i"
+            [attr.aria-hidden]="openIndex() !== i"
+          >
+            <p class="faq-item__answer">{{ faq.answer }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</section>

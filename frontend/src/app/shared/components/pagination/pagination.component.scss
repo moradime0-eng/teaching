@@ -1,0 +1,183 @@
+// ==========================================================================
+// Variables & Design Tokens
+// ==========================================================================
+$brand-primary: var(--primary-color, #4f46e5);
+$brand-primary-hover: #4338ca;
+$bg-surface: var(--bg-surface, #ffffff);
+$bg-hover: var(--bg-hover, #f1f5f9);
+$border-color: var(--border-color, #e2e8f0);
+$text-main: var(--text-primary, #0f172a);
+$text-sub: var(--text-secondary, #64748b);
+$radius-md: 10px;
+
+// ==========================================================================
+// Host & Container
+// ==========================================================================
+.pagination-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.85rem;
+  margin: 2.5rem 0;
+  font-family: inherit;
+}
+
+.pagination-summary {
+  font-size: 0.86rem;
+  color: $text-sub;
+
+  strong {
+    color: $text-main;
+    font-weight: 700;
+  }
+
+  .total-count {
+    margin-inline-start: 4px;
+    font-size: 0.8rem;
+    color: #94a3b8;
+  }
+}
+
+// ==========================================================================
+// List & Items
+// ==========================================================================
+.pagination-list {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  list-style: none;
+  padding: 4px;
+  margin: 0;
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid $border-color;
+  border-radius: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.page-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// ==========================================================================
+// Page Number Buttons
+// ==========================================================================
+.page-number-btn {
+  min-width: 38px;
+  height: 38px;
+  padding: 0 6px;
+  border-radius: $radius-md;
+  background: transparent;
+  border: 1px solid transparent;
+  color: $text-main;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover:not(.active) {
+    background: $bg-hover;
+    color: $brand-primary;
+  }
+
+  &.active {
+    background: $brand-primary;
+    color: #ffffff;
+    border-color: $brand-primary;
+    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+    cursor: default;
+  }
+
+  &:active:not(.active) {
+    transform: scale(0.94);
+  }
+}
+
+// ==========================================================================
+// Nav Buttons (Prev, Next, First, Last)
+// ==========================================================================
+.nav-btn {
+  height: 38px;
+  min-width: 38px;
+  padding: 0 0.65rem;
+  border-radius: $radius-md;
+  background: transparent;
+  border: 1px solid transparent;
+  color: $text-sub;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  font-family: inherit;
+  transition: all 0.2s ease;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover:not(:disabled) {
+    background: $bg-hover;
+    color: $text-main;
+  }
+
+  &:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  &:active:not(:disabled) {
+    transform: scale(0.95);
+  }
+}
+
+// ==========================================================================
+// Dots Separator (...)
+// ==========================================================================
+.page-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-width: 28px;
+  height: 38px;
+
+  .dot {
+    width: 3.5px;
+    height: 3.5px;
+    border-radius: 50%;
+    background: #94a3b8;
+  }
+}
+
+// ==========================================================================
+// Responsive Adjustments
+// ==========================================================================
+@media (max-width: 600px) {
+  .pagination-list {
+    gap: 0.2rem;
+    padding: 3px;
+  }
+
+  .nav-btn {
+    padding: 0 4px;
+    .btn-label {
+      display: none; // Hides "قبلی" / "بعدی" text on mobile to preserve layout
+    }
+  }
+
+  .page-number-btn {
+    min-width: 34px;
+    height: 34px;
+    font-size: 0.85rem;
+  }
+}

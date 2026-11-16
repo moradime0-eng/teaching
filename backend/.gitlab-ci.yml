@@ -1,0 +1,9 @@
+include:
+  - project: mihanrayan/ci-templates
+    file: swarm-publish-deploy.yml
+    ref: main
+
+variables:
+  IMAGE_BASE: $HARBOR_HOST/$HARBOR_PROJECT/api
+  TRIGGER_APP: olp
+  TRIGGER_SERVICE: api

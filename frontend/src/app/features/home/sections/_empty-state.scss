@@ -1,0 +1,56 @@
+// ==========================================================================
+// 🧩 Shared Empty State — استفاده مشترک در همه سکشن‌های صفحه اصلی
+//
+// ساختار HTML مورد انتظار:
+//   <div class="empty">
+//     <div class="empty__icon-wrap"><mat-icon>icon_name</mat-icon></div>
+//     <h3>عنوان</h3>
+//     <p>توضیح</p>
+//   </div>
+//
+// برای هماهنگی کامل با سکشن «مسیر یادگیری» (مرجع طراحی).
+// ==========================================================================
+
+@mixin empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 56px 24px;
+  border: 1.5px dashed var(--border, #e5e7eb);
+  border-radius: 20px;
+  background: var(--card, rgba(255, 255, 255, 0.9));
+
+  .empty__icon-wrap {
+    width: 72px;
+    height: 72px;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(52, 211, 153, 0.1));
+    border-radius: 20px;
+    margin-bottom: 16px;
+
+    mat-icon {
+      font-size: 36px;
+      width: 36px;
+      height: 36px;
+      color: var(--brand, #7c3aed);
+    }
+  }
+
+  h3 {
+    margin: 0 0 8px;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text, #374151);
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.88rem;
+    color: var(--text-3, #9ca3af);
+    line-height: 1.9;
+    max-width: 320px;
+  }
+}

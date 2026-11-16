@@ -1,0 +1,463 @@
+<div class="admin-payments" dir="rtl">
+  <!-- ==========================================
+       PAGE HEADER
+       ========================================== -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="breadcrumb">
+        <a routerLink="/admin/dashboard">
+          <mat-icon>dashboard</mat-icon>
+          پنل مدیریت
+        </a>
+        <mat-icon class="breadcrumb-sep">chevron_left</mat-icon>
+        <span>تراکنش‌های مالی</span>
+      </div>
+
+      <div class="header-main">
+        <div class="header-title-wrap">
+          <div class="header-icon">
+            <mat-icon>account_balance_wallet</mat-icon>
+          </div>
+          <div>
+            <h1>تراکنش‌های مالی</h1>
+            <p>مدیریت و نظارت بر کلیه پرداخت‌ها، خریده‌ها و تراکنش‌های بانکی</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button class="btn-action-ghost" (click)="exportToCsv()" title="خروجی اکسل / CSV">
+            <mat-icon>file_download</mat-icon>
+            <span>خروجی CSV</span>
+          </button>
+          <button class="btn-action-primary" (click)="loadPayments()">
+            <mat-icon>refresh</mat-icon>
+            <span>بروزرسانی</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       STATS CARDS
+       ========================================== -->
+  <section class="stats-grid">
+    <div class="stat-card" data-color="green">
+      <div class="stat-icon">
+        <mat-icon>payments</mat-icon>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value revenue">{{ stats().totalAmount | toman }}</span>
+        <span class="stat-label">مجموع پرداخت‌های موفق</span>
+      </div>
+      <div class="stat-trend">
+        <mat-icon>trending_up</mat-icon>
+      </div>
+    </div>
+
+    <div
+      class="stat-card"
+      data-color="blue"
+      [class.active]="statusFilter() === 'success'"
+      (click)="setStatusFilter('success')"
+    >
+      <div class="stat-icon">
+        <mat-icon>check_circle</mat-icon>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats().successCount }}</span>
+        <span class="stat-label">تراکنش‌های موفق</span>
+      </div>
+    </div>
+
+    <div
+      class="stat-card"
+      data-color="amber"
+      [class.active]="statusFilter() === 'pending'"
+      (click)="setStatusFilter('pending')"
+    >
+      <div class="stat-icon">
+        <mat-icon>schedule</mat-icon>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats().pendingCount }}</span>
+        <span class="stat-label">در انتظار پرداخت</span>
+      </div>
+      <div class="stat-pulse" *ngIf="stats().pendingCount > 0"></div>
+    </div>
+
+    <div
+      class="stat-card"
+      data-color="red"
+      [class.active]="statusFilter() === 'failed'"
+      (click)="setStatusFilter('failed')"
+    >
+      <div class="stat-icon">
+        <mat-icon>cancel</mat-icon>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats().failedCount }}</span>
+        <span class="stat-label">تراکنش‌های ناموفق</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       TOOLBAR (Filters & Search)
+       ========================================== -->
+  <section class="toolbar">
+    <!-- Filter Tabs -->
+    <div class="filter-tabs">
+      <button
+        *ngFor="let status of statusList"
+        class="filter-tab"
+        [class.active]="statusFilter() === status.value"
+        [attr.data-color]="status.color"
+        (click)="setStatusFilter(status.value)"
+      >
+        <mat-icon>{{ status.icon }}</mat-icon>
+        <span>{{ status.label }}</span>
+      </button>
+    </div>
+
+    <!-- Search & Method Filter -->
+    <div class="toolbar-right">
+      <div class="method-select-wrap">
+        <mat-icon>tune</mat-icon>
+        <select [ngModel]="methodFilter()" (ngModelChange)="setMethodFilter($event)">
+          <option *ngFor="let method of methodList" [value]="method.value">
+            {{ method.label }}
+          </option>
+        </select>
+        <mat-icon class="arrow">expand_more</mat-icon>
+      </div>
+
+      <div class="search-box">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input
+          type="text"
+          placeholder="جستجو با کد سفارش، پیگیری یا نام کاربر..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+        />
+        <button class="btn-clear-search" *ngIf="searchQuery()" (click)="searchQuery.set('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       TABLE CONTAINER
+       ========================================== -->
+  <section class="table-container">
+    <!-- Loading Skeleton -->
+    <div class="skeleton-table" *ngIf="isLoading()">
+      <div class="skel-row shimmer" *ngFor="let s of skeletonArray"></div>
+    </div>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="!isLoading() && filteredPayments().length === 0">
+      <div class="empty-illustration">
+        <div class="empty-circle-bg"></div>
+        <mat-icon>receipt_long</mat-icon>
+      </div>
+      <h3>تراکنشی یافت نشد</h3>
+      <p>
+        <ng-container *ngIf="searchQuery()">
+          هیچ تراکنشی مطابق با عبارت «{{ searchQuery() }}» پیدا نشد.
+        </ng-container>
+        <ng-container *ngIf="!searchQuery()">
+          هنوز تراکنشی در این دسته‌بندی ثبت نشده است.
+        </ng-container>
+      </p>
+      <button
+        class="btn-reset-filters"
+        *ngIf="searchQuery() || statusFilter() !== 'all'"
+        (click)="searchQuery.set(''); setStatusFilter('all')"
+      >
+        <mat-icon>refresh</mat-icon>
+        پاک‌سازی فیلترها
+      </button>
+    </div>
+
+    <!-- Payments Table (Desktop) -->
+    <div class="table-responsive" *ngIf="!isLoading() && filteredPayments().length > 0">
+      <table class="payments-table">
+        <thead>
+          <tr>
+            <th>کد سفارش</th>
+            <th>کاربر</th>
+            <th>مبلغ (تومان)</th>
+            <th>روش پرداخت</th>
+            <th>کد پیگیری</th>
+            <th>وضعیت</th>
+            <th>تاریخ و زمان</th>
+            <th>عملیات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let payment of filteredPayments(); trackBy: trackByPaymentId"
+            [attr.data-status]="payment.status"
+          >
+            <!-- Order Number -->
+            <td class="col-order">
+              <div class="order-code-wrap">
+                <mat-icon class="code-icon">qr_code_2</mat-icon>
+                <span class="code font-mono">{{ payment.orderNumber || '—' }}</span>
+                <button
+                  class="btn-copy"
+                  (click)="copyCode(payment.orderNumber)"
+                  title="کپی کد سفارش"
+                >
+                  <mat-icon>{{
+                    copiedCode() === payment.orderNumber ? 'check' : 'content_copy'
+                  }}</mat-icon>
+                </button>
+              </div>
+            </td>
+
+            <!-- User Info -->
+            <td class="col-user">
+              <div class="user-cell" *ngIf="payment.user">
+                <div class="user-avatar">
+                  <img
+                    *ngIf="payment.user.avatar"
+                    [src]="payment.user.avatar"
+                    [alt]="payment.user.fullName"
+                    appImageFallback
+                  />
+                  <div class="avatar-placeholder" *ngIf="!payment.user.avatar">
+                    {{ payment.user.fullName?.[0] || 'ک' }}
+                  </div>
+                </div>
+                <div class="user-meta">
+                  <span class="user-name">{{ payment.user.fullName || 'کاربر سیستم' }}</span>
+                  <span class="user-contact">{{
+                    payment.user.mobile || payment.user.email || '—'
+                  }}</span>
+                </div>
+              </div>
+              <span class="text-muted" *ngIf="!payment.user">—</span>
+            </td>
+
+            <!-- Amount -->
+            <td class="col-amount">
+              <div class="amount-cell">
+                <span class="amount-val">{{
+                  payment.finalAmount || payment.amount || 0 | toman
+                }}</span>
+                <span class="discount-badge" *ngIf="payment.discountAmount > 0">
+                  -{{ payment.discountAmount | toman }} تخفیف
+                </span>
+              </div>
+            </td>
+
+            <!-- Method -->
+            <td class="col-method">
+              <div class="method-chip">
+                <mat-icon>payment</mat-icon>
+                <span>{{ getMethodLabel(payment.paymentMethod) }}</span>
+              </div>
+            </td>
+
+            <!-- Ref ID -->
+            <td class="col-ref">
+              <span class="ref-code font-mono" *ngIf="payment.refId">{{ payment.refId }}</span>
+              <span class="text-muted" *ngIf="!payment.refId">—</span>
+            </td>
+
+            <!-- Status -->
+            <td class="col-status">
+              <span class="status-badge" [attr.data-status]="payment.status">
+                <mat-icon>{{ getStatusIcon(payment.status) }}</mat-icon>
+
+                <span>{{ getStatusLabel(payment.status) }}</span>
+              </span>
+            </td>
+
+            <!-- Date -->
+            <td class="col-date">
+              <div class="date-cell">
+                <span class="jalali-date">{{ payment.createdAt | jalaliDate }}</span>
+                <span class="jalali-time">{{ payment.createdAt | jalaliDate: 'HH:mm' }}</span>
+              </div>
+            </td>
+
+            <!-- Actions -->
+            <td class="col-actions">
+              <div class="actions-wrap">
+                <button class="btn-detail" (click)="openDetail(payment)" title="مشاهده جزئیات">
+                  <mat-icon>visibility</mat-icon>
+                  <span>جزئیات</span>
+                </button>
+                <!-- بازپرداخت — سرویس واحد مالی بک‌اند (فقط پرداخت موفقِ بازپرداخت‌نشده) -->
+                <button
+                  *ngIf="payment.status === 'success' && !payment.isRefunded"
+                  class="btn-refund"
+                  [disabled]="refundingId() === payment._id"
+                  (click)="refundPayment(payment._id)"
+                  title="بازپرداخت (سرویس واحد مالی)"
+                >
+                  <mat-icon>{{
+                    refundingId() === payment._id ? 'hourglass_top' : 'assignment_return'
+                  }}</mat-icon>
+                  <span>بازپرداخت</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Table Footer / Summary Count -->
+    <footer class="table-footer" *ngIf="!isLoading() && filteredPayments().length > 0">
+      <span class="footer-count">
+        نمایش <strong>{{ filteredPayments().length }}</strong> از
+        <strong>{{ totalCount() }}</strong> تراکنش
+      </span>
+    </footer>
+  </section>
+
+  <!-- ==========================================
+       DETAIL MODAL
+       ========================================== -->
+  <div class="modal-backdrop" *ngIf="showDetailModal()" (click)="closeDetail()">
+    <div class="modal-container" (click)="$event.stopPropagation()" *ngIf="selectedPayment() as p">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon" [attr.data-status]="p.status">
+            <mat-icon>{{ getStatusIcon(p.status) }}</mat-icon>
+          </div>
+          <div>
+            <h2>جزئیات تراکنش #{{ p.orderNumber }}</h2>
+            <span class="modal-subtitle"
+              >ثبت شده در {{ p.createdAt | jalaliDate }} -
+              {{ p.createdAt | jalaliDate: 'HH:mm' }}</span
+            >
+          </div>
+        </div>
+        <button class="btn-close" (click)="closeDetail()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <!-- Status Banner -->
+        <div class="status-banner" [attr.data-status]="p.status">
+          <div class="banner-left">
+            <mat-icon>{{ getStatusIcon(p.status) }}</mat-icon>
+            <div>
+              <strong>وضعیت: {{ getStatusLabel(p.status) }}</strong>
+              <span *ngIf="p.status === 'success'">پرداخت با موفقیت توسط درگاه تایید شد.</span>
+              <span *ngIf="p.status === 'pending'"
+                >تراکنش در انتظار تایید نهایی درگاه می‌باشد.</span
+              >
+              <span *ngIf="p.status === 'failed'">پرداخت توسط کاربر یا بانک ناموفق بود.</span>
+              <span *ngIf="p.status === 'refunded'">مبلغ پرداختی به حساب کاربر مسترد گردید.</span>
+            </div>
+          </div>
+          <span class="banner-amount">{{ p.finalAmount || p.amount || 0 | toman }}</span>
+        </div>
+
+        <!-- Info Grid -->
+        <div class="info-grid">
+          <!-- User Card -->
+          <div class="info-box">
+            <div class="box-title">
+              <mat-icon>person</mat-icon>
+              اطلاعات خریدار
+            </div>
+            <div class="box-body" *ngIf="p.user">
+              <div class="info-row">
+                <span class="lbl">نام کامل:</span>
+                <span class="val font-bold">{{ p.user.fullName || '—' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="lbl">موبایل:</span>
+                <span class="val font-mono">{{ p.user.mobile || '—' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="lbl">ایمیل:</span>
+                <span class="val font-mono">{{ p.user.email || '—' }}</span>
+              </div>
+            </div>
+            <div class="box-body" *ngIf="!p.user">
+              <span class="text-muted">اطلاعات کاربر یافت نشد</span>
+            </div>
+          </div>
+
+          <!-- Payment Card -->
+          <div class="info-box">
+            <div class="box-title">
+              <mat-icon>receipt</mat-icon>
+              اطلاعات درگاه
+            </div>
+            <div class="box-body">
+              <div class="info-row">
+                <span class="lbl">درگاه پرداخت:</span>
+                <span class="val font-bold">{{ getMethodLabel(p.paymentMethod) }}</span>
+              </div>
+              <div class="info-row">
+                <span class="lbl">کد پیگیری (RefID):</span>
+                <span class="val font-mono highlight">{{ p.refId || 'ثبت نشده' }}</span>
+              </div>
+              <div class="info-row">
+                <span class="lbl">کد ارجاع بانک:</span>
+                <span class="val font-mono">{{ p.cardPan || p.trackingCode || '—' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Financial Summary -->
+        <div class="financial-summary">
+          <div class="fin-row">
+            <span>مبلغ اولیه:</span>
+            <span>{{ p.amount || p.finalAmount || 0 | toman }}</span>
+          </div>
+          <div class="fin-row discount" *ngIf="p.discountAmount > 0">
+            <span>تخفیف اعمال شده:</span>
+            <span>-{{ p.discountAmount | toman }}</span>
+          </div>
+          <div class="fin-row total">
+            <span>مبلغ نهایی پرداختی:</span>
+            <span class="total-val">{{ p.finalAmount || p.amount || 0 | toman }}</span>
+          </div>
+        </div>
+
+        <!-- Order Items if any -->
+        <div class="items-box" *ngIf="p.items && p.items.length > 0">
+          <div class="box-title">
+            <mat-icon>local_mall</mat-icon>
+            آیتم‌های خریداری شده ({{ p.items.length }})
+          </div>
+          <div class="items-list">
+            <div class="item-row" *ngFor="let item of p.items">
+              <img
+                [src]="item.course?.thumbnail || item.thumbnail"
+                [appImageFallback]="'course'"
+                class="item-img"
+              />
+              <div class="item-meta">
+                <span class="item-name">{{
+                  item.course?.title || item.title || 'دوره آموزشی'
+                }}</span>
+                <span class="item-price">{{ item.price || 0 | toman }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeDetail()">بستن</button>
+      </div>
+    </div>
+  </div>
+</div>

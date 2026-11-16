@@ -1,0 +1,2515 @@
+<div class="builder-page" dir="rtl">
+  <!-- Dynamic Animated Blobs Background -->
+  <div class="bg-decoration">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="grid-pattern"></div>
+  </div>
+
+  <!-- ==================== STICKY TOP BAR ==================== -->
+  <header class="builder-topbar" @fadeSlide>
+    <div class="topbar-main">
+      <div class="topbar-left">
+        <a class="topbar-back" routerLink="/instructor/dashboard" title="بازگشت به داشبورد">
+          <mat-icon>arrow_forward</mat-icon>
+        </a>
+        <div class="topbar-icon">
+          <mat-icon>{{ isEditMode ? 'edit' : 'add_circle' }}</mat-icon>
+        </div>
+        <div class="topbar-text">
+          <h1>{{ isEditMode ? 'ویرایش دوره آموزشی' : 'ساخت دوره جدید' }}</h1>
+          <p class="topbar-sub">
+            <span class="status-chip" [class]="'status-' + courseStatus()">{{
+              statusLabel()
+            }}</span>
+            <span class="dot">•</span>
+            <span
+              >مرحله {{ currentStep() }} از {{ steps.length }} —
+              {{ steps[currentStep() - 1].title }}</span
+            >
+            <ng-container *ngIf="isFreeCourse()">
+              <span class="dot">•</span>
+              <span class="free-topbar-chip"><mat-icon>lock_open</mat-icon> دوره رایگان</span>
+            </ng-container>
+          </p>
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <div class="autosave-status" *ngIf="lastSaved() || isAutoSaving()">
+          <mat-icon *ngIf="isAutoSaving()" class="rotating">sync</mat-icon>
+          <mat-icon *ngIf="!isAutoSaving()">cloud_done</mat-icon>
+          <span *ngIf="isAutoSaving()" class="desktop-only">در حال حفظ تغییرات...</span>
+          <span *ngIf="!isAutoSaving() && lastSaved()" class="desktop-only"
+            >ذخیره خودکار: {{ formatLastSaved() }}</span
+          >
+        </div>
+
+        <button
+          class="icon-btn"
+          (click)="saveDraft()"
+          [disabled]="isSaving()"
+          title="ذخیره سریع (Ctrl+S)"
+        >
+          <mat-icon>save</mat-icon>
+        </button>
+
+        <button class="icon-btn preview-btn" (click)="openPreview()" title="پیش‌نمایش آنلاین دوره">
+          <mat-icon>visibility</mat-icon>
+        </button>
+
+        <div class="progress-badge">
+          <mat-icon>bolt</mat-icon>
+          <span>{{ overallProgress() }}٪</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="topbar-progress-line">
+      <div class="fill" [style.width.%]="overallProgress()"></div>
+    </div>
+  </header>
+
+  <!-- Toast Notifications -->
+  <div class="toast toast-success" *ngIf="successMessage()" @slideIn>
+    <mat-icon>check_circle</mat-icon>
+    <span>{{ successMessage() }}</span>
+  </div>
+  <div class="toast toast-error" *ngIf="errorMessage()" @slideIn>
+    <mat-icon>error</mat-icon>
+    <span>{{ errorMessage() }}</span>
+  </div>
+
+  <!-- ⚠️ بنر دلیل رد دوره توسط مدیر -->
+  <div class="banner-wrap" *ngIf="courseStatus() === 'rejected' && rejectionReason()">
+    <div class="rejection-banner" @slideIn>
+      <div class="rejection-banner-icon">
+        <mat-icon>error_outline</mat-icon>
+      </div>
+      <div class="rejection-banner-content">
+        <h3>❌ دوره شما توسط مدیر تأیید نشد</h3>
+        <div class="rejection-banner-reason" [innerHTML]="rejectionReason() | sanitizeHtml"></div>
+        <p class="rejection-banner-hint">
+          لطفاً پس از اعمال تغییرات لازم، دوره را مجدداً برای بازبینی ارسال کنید.
+        </p>
+      </div>
+      <button class="rejection-banner-close" (click)="rejectionReason.set(null)">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- 🔄 بنر بازیابی پیش‌نویس -->
+  <div class="banner-wrap" *ngIf="showRecoveryBanner()">
+    <div class="recovery-banner" @slideIn>
+      <div class="recovery-banner-icon">
+        <mat-icon>restore</mat-icon>
+      </div>
+      <div class="recovery-banner-content">
+        <h3>پیش‌نویس ذخیره‌شده یافت شد</h3>
+        <p>یک پیش‌نویس از جلسه قبل وجود دارد. آیا می‌خواهید آن را بازیابی کنید؟</p>
+      </div>
+      <div class="recovery-banner-actions">
+        <button class="btn btn-primary" (click)="recoverDraft()">
+          <mat-icon>restore</mat-icon>
+          بازیابی پیش‌نویس
+        </button>
+        <button class="btn btn-secondary" (click)="dismissRecovery()">
+          <mat-icon>delete</mat-icon>
+          نادیده بگیر
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== SHELL: SIDEBAR + MAIN ==================== -->
+  <div class="builder-shell">
+    <!-- ====== DESKTOP SIDEBAR (Vertical Stepper) ====== -->
+    <aside class="builder-sidebar" @fadeSlide>
+      <div class="sidebar-progress-card">
+        <svg class="progress-ring" viewBox="0 0 120 120">
+          <circle class="ring-track" cx="60" cy="60" r="52"></circle>
+          <circle
+            class="ring-fill"
+            cx="60"
+            cy="60"
+            r="52"
+            [attr.stroke-dasharray]="progressCircumference"
+            [style.stroke-dashoffset]="
+              progressCircumference - (overallProgress() / 100) * progressCircumference
+            "
+          ></circle>
+        </svg>
+        <div class="ring-center">
+          <strong>{{ overallProgress() }}٪</strong>
+          <span>پیشرفت کلی</span>
+        </div>
+      </div>
+
+      <nav class="vertical-steps">
+        <button
+          type="button"
+          class="v-step"
+          *ngFor="let step of steps; let i = index; let last = last; trackBy: trackByStepId"
+          [class.active]="currentStep() === step.id"
+          [class.completed]="currentStep() > step.id"
+          (click)="goToStep(step.id)"
+        >
+          <span class="v-step-indicator">
+            <span class="v-step-circle">
+              <mat-icon *ngIf="currentStep() > step.id">check</mat-icon>
+              <mat-icon *ngIf="currentStep() <= step.id">{{ step.icon }}</mat-icon>
+            </span>
+            <span class="v-step-line" *ngIf="!last" [class.filled]="currentStep() > step.id"></span>
+          </span>
+          <span class="v-step-body">
+            <strong>{{ step.title }}</strong>
+            <small>{{ step.description }}</small>
+            <div class="v-step-bar" *ngIf="currentStep() >= step.id">
+              <div class="v-step-bar-fill" [style.width.%]="getStepProgress(step.id)"></div>
+            </div>
+          </span>
+        </button>
+      </nav>
+
+      <div class="sidebar-help-card">
+        <mat-icon>tips_and_updates</mat-icon>
+        <p>
+          با کلید‌های <strong>Ctrl+S</strong> ذخیره سریع و با <strong>Ctrl + فلش</strong> بین مراحل
+          جابجا شوید.
+        </p>
+      </div>
+    </aside>
+
+    <!-- ====== MAIN CONTENT ====== -->
+    <main class="builder-main">
+      <!-- ====== MOBILE / TABLET STEPPER (Horizontal) ====== -->
+      <div class="mobile-stepper" @fadeSlide>
+        <div class="mobile-stepper-track">
+          <ng-container *ngFor="let step of steps; let last = last; trackBy: trackByStepId">
+            <button
+              type="button"
+              class="m-step"
+              [class.active]="currentStep() === step.id"
+              [class.completed]="currentStep() > step.id"
+              (click)="goToStep(step.id)"
+            >
+              <span class="m-step-circle">
+                <mat-icon *ngIf="currentStep() > step.id">check</mat-icon>
+                <mat-icon *ngIf="currentStep() <= step.id">{{ step.icon }}</mat-icon>
+              </span>
+              <span class="m-step-title">{{ step.title }}</span>
+            </button>
+            <span
+              class="m-step-connector"
+              *ngIf="!last"
+              [class.filled]="currentStep() > step.id"
+            ></span>
+          </ng-container>
+        </div>
+      </div>
+
+      <!-- ==================== STEP 1: BASIC INFO ==================== -->
+      <div class="step-panel" *ngIf="currentStep() === 1" @fadeSlide>
+        <form [formGroup]="basicForm" class="form-container">
+          <div class="section-header">
+            <mat-icon>info</mat-icon>
+            <div>
+              <h2>مشخصات کلی دوره</h2>
+              <p>عنوان، جزییات، اهداف و تگ‌های موضوعی دوره را وارد کنید</p>
+            </div>
+          </div>
+
+          <!-- Course Title -->
+          <div class="form-group">
+            <label>
+              <mat-icon>title</mat-icon>
+              عنوان دوره آموزشی <span class="required">*</span>
+            </label>
+            <input
+              type="text"
+              formControlName="title"
+              placeholder="مثال: آموزش جامع توسعه وب با Angular و NestJS"
+              [class.invalid]="basicForm.get('title')?.touched && basicForm.get('title')?.invalid"
+            />
+            <div class="input-hint">
+              <span class="hint-text">حداقل ۱۰ کاراکتر - عنوانی جذاب و سئو محور انتخاب کنید</span>
+              <!-- ⭐ استفاده از سیگنال زنده -->
+              <span class="char-count" [class.valid]="titleLength() >= 10">
+                {{ titleLength() }} / 150
+              </span>
+            </div>
+          </div>
+
+          <!-- Course Subtitle -->
+          <div class="form-group">
+            <label><mat-icon>subtitles</mat-icon> زیرعنوان دوره</label>
+            <input
+              type="text"
+              formControlName="subtitle"
+              placeholder="جمله یا عبارتی کوتاه که مزیت اصلی دوره را بیان کند"
+            />
+          </div>
+
+          <!-- Course Short Description -->
+          <div class="form-group">
+            <label>
+              <mat-icon>short_text</mat-icon>
+              توضیح کوتاه دوره <span class="required">*</span>
+            </label>
+            <ng-container *ngIf="isBrowser(); else shortDescPlaceholder">
+              <app-rich-text-editor
+                formControlName="shortDescription"
+                placeholder="توضیحی فشرده در ۲ یا ۳ خط جهت استفاده در نتایج گوگل و کارت‌های سایت... (پشتیبانی از مارک‌داون)"
+                minHeight="80px"
+                maxHeight="200px"
+                [markdownMode]="true"
+                [autoExpand]="true"
+              ></app-rich-text-editor>
+            </ng-container>
+            <ng-template #shortDescPlaceholder>
+              <div class="editor-placeholder"></div>
+            </ng-template>
+            <div class="input-hint">
+              <span class="hint-text">حداکثر ۳۰۰ کاراکتر - توضیح مختصری از دوره بنویسید</span>
+              <!-- ⭐ استفاده از سیگنال زنده با محاسبه متن خالص -->
+              <span
+                class="char-count"
+                [class.valid]="shortDescLength() > 0 && shortDescLength() <= 300"
+                [style.color]="shortDescLength() > 300 ? '#ef4444' : ''"
+              >
+                {{ shortDescLength() }} / 300
+              </span>
+            </div>
+          </div>
+
+          <!-- Course Full Description -->
+          <div class="form-group">
+            <label>
+              <mat-icon>description</mat-icon>
+              توضیحات و معرفی کامل دوره <span class="required">*</span>
+            </label>
+            <ng-container *ngIf="isBrowser(); else descPlaceholder">
+              <app-rich-text-editor
+                formControlName="description"
+                placeholder="توضیح کامل مباحث دوره، اهداف و هر آنچه دانشجو در این مسیر به دست خواهد آورد... (پشتیبانی از مارک‌داون)"
+                minHeight="250px"
+                [markdownMode]="true"
+                [autoExpand]="true"
+                [class.invalid]="
+                  basicForm.get('description')?.touched && basicForm.get('description')?.invalid
+                "
+              ></app-rich-text-editor>
+            </ng-container>
+            <ng-template #descPlaceholder>
+              <div class="editor-placeholder tall"></div>
+            </ng-template>
+            <div class="input-hint">
+              <span class="hint-text">حداقل ۱۰۰ کاراکتر</span>
+              <!-- ⭐ استفاده از سیگنال زنده با محاسبه متن خالص -->
+              <span class="char-count" [class.valid]="descLength() >= 100">
+                {{ descLength() }} / حداقل ۱۰۰
+              </span>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>
+                <mat-icon>category</mat-icon> دسته‌بندی دوره
+                <span class="required">*</span>
+              </label>
+              <select formControlName="category">
+                <option value="">انتخاب دسته‌بندی...</option>
+                <option *ngFor="let cat of categories()" [value]="cat._id">{{ cat.name }}</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label><mat-icon>grid_view</mat-icon> زیردسته‌بندی (تخصصی)</label>
+              <select formControlName="subcategory">
+                <option value="">انتخاب زیردسته‌بندی...</option>
+                <option *ngIf="isLoadingSubcategories()" disabled>در حال بارگذاری...</option>
+                <option *ngFor="let sub of subcategories()" [value]="sub._id">
+                  {{ sub.name }}
+                </option>
+              </select>
+              <div
+                class="input-hint"
+                *ngIf="subcategories().length === 0 && !isLoadingSubcategories()"
+              >
+                <span class="hint-text">هیچ زیردسته‌بندی برای این دسته وجود ندارد</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label><mat-icon>trending_up</mat-icon> سطح علمی دوره</label>
+              <select formControlName="level">
+                <option value="beginner">🌱 مقدماتی (صفرکیلومتر)</option>
+                <option value="intermediate">🚀 متوسط (آماده رشد)</option>
+                <option value="advanced">⚡ پیشرفته (فول‌استک)</option>
+                <option value="all-levels">🎯 همه سطوح آموزشی</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label><mat-icon>language</mat-icon> زبان تدریس</label>
+              <select formControlName="language">
+                <option value="fa">🇮🇷 فارسی روان</option>
+                <option value="en">🇺🇸 انگلیسی</option>
+                <option value="ar">🇸🇦 عربی</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Highly Dynamic Chip-based Tag Input -->
+          <div class="form-group">
+            <label><mat-icon>tag</mat-icon> برچسب‌های دوره (حداکثر ۱۰ مورد)</label>
+            <div class="tags-input-wrapper">
+              <div class="tags-display">
+                <span *ngFor="let tag of tags.controls; let i = index" class="tag-chip">
+                  {{ tag.value }}
+                  <button type="button" (click)="removeTag(i)"><mat-icon>close</mat-icon></button>
+                </span>
+                <input
+                  type="text"
+                  [value]="tagInput()"
+                  (input)="tagInput.set($any($event.target).value)"
+                  (keydown)="onTagKeydown($event)"
+                  [placeholder]="
+                    tags.length === 0
+                      ? 'کلماتی مثل ری‌اکت، وب، فرانت‌اند را وارد کرده و Enter بزنید...'
+                      : ''
+                  "
+                  [disabled]="tags.length >= 10"
+                />
+              </div>
+            </div>
+            <div class="input-hint">
+              <span class="hint-text"
+                >با استفاده از دکمه Enter یا کامای انگلیسی (,) برچسب بسازید</span
+              >
+              <span class="char-count">{{ tags.length }} / 10</span>
+            </div>
+          </div>
+
+          <!-- Dynamic Requirements List — Course Autocomplete -->
+          <div class="form-group">
+            <label><mat-icon>checklist</mat-icon> پیش‌نیازهای ورود به دوره</label>
+            <div class="tags-input-wrapper">
+              <div class="tags-display">
+                <span
+                  *ngFor="let req of requirements.controls; let i = index"
+                  class="tag-chip prereq-chip"
+                >
+                  <mat-icon class="chip-icon">local_offer</mat-icon>
+                  {{ req.value }}
+                  <button type="button" (click)="removeRequirementTag(i)">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </span>
+                <div class="req-autocomplete-wrap">
+                  <input
+                    type="text"
+                    [value]="reqInput()"
+                    (input)="onReqInput($event)"
+                    (keydown)="onReqKeydown($event)"
+                    (blur)="onReqInputBlur()"
+                    (focus)="reqInput() && filterReqCourses(reqInput())"
+                    placeholder="نام دوره را تایپ کنید تا پیش‌نیاز اضافه شود..."
+                    [disabled]="requirements.length >= 10"
+                  />
+                  <!-- Dropdown نتایج جستجو -->
+                  <div
+                    class="req-dropdown"
+                    *ngIf="showReqDropdown() && filteredReqCourses().length > 0"
+                  >
+                    <div
+                      *ngFor="let course of filteredReqCourses()"
+                      class="req-dropdown-item"
+                      (mousedown)="selectReqCourse(course)"
+                    >
+                      <img
+                        [src]="course.thumbnail || 'assets/images/course-placeholder.svg'"
+                        class="req-course-thumb"
+                      />
+                      <div class="req-course-info">
+                        <span class="req-course-title">{{ course.title }}</span>
+                        <span class="req-course-meta">
+                          {{ course.category?.name || 'بدون دسته‌بندی' }}
+                          <span *ngIf="course.totalStudents">
+                            · {{ course.totalStudents }} دانشجو</span
+                          >
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="input-hint">
+              <span class="hint-text"
+                >نام دوره مورد نظر را تایپ کنید و از لیست انتخاب کنید، یا متن دلخواه تایپ کرده و
+                Enter بزنید</span
+              >
+              <span class="char-count">{{ requirements.length }} / 10</span>
+            </div>
+          </div>
+
+          <!-- Dynamic Learning Outcomes List -->
+          <div class="dynamic-list-section outcome-section">
+            <div class="list-header">
+              <div>
+                <label
+                  ><mat-icon>emoji_events</mat-icon> در پایان این دوره، چه مهارت‌ها و توانمندی‌هایی
+                  به دست می‌آورید؟</label
+                >
+                <p class="list-desc">
+                  دانشجو پس از گذراندن موفقیت‌آمیز دوره به چه مهارتی مجهز می‌شود؟
+                </p>
+              </div>
+              <button type="button" class="btn-add" (click)="addOutcome()">
+                <mat-icon>add</mat-icon> افزودن اهداف دوره
+              </button>
+            </div>
+            <div class="dynamic-items" [@listAnimation]="learningOutcomes.length">
+              <div
+                *ngFor="let outcome of learningOutcomes.controls; let i = index"
+                class="dynamic-item"
+              >
+                <div class="item-number outcome-number">{{ i + 1 }}</div>
+                <input
+                  [formControl]="getAsFormControl(outcome)"
+                  [placeholder]="'اهداف دوره شماره ' + (i + 1)"
+                />
+                <button type="button" class="btn-remove" (click)="removeOutcome(i)">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+              <div *ngIf="learningOutcomes.length === 0" class="empty-state">
+                <mat-icon>emoji_events</mat-icon>
+                <p>
+                  لطفاً برای معرفی بهتر دستاوردهای دوره، حداقل ۳ هدف یا مهارت قابل کسب را وارد کنید.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Dynamic Target Audience List -->
+          <div class="dynamic-list-section audience-section">
+            <div class="list-header">
+              <div>
+                <label><mat-icon>groups</mat-icon> مخاطبان هدف این دوره</label>
+                <p class="list-desc">
+                  این آموزش دقیقاً برای چه گروه از افراد طراحی و تولید شده است؟
+                </p>
+              </div>
+              <button type="button" class="btn-add" (click)="addAudience()">
+                <mat-icon>add</mat-icon> افزودن گروه
+              </button>
+            </div>
+            <div class="dynamic-items" [@listAnimation]="targetAudience.length">
+              <div *ngFor="let aud of targetAudience.controls; let i = index" class="dynamic-item">
+                <div class="item-number audience-number">{{ i + 1 }}</div>
+                <input
+                  [formControl]="getAsFormControl(aud)"
+                  [placeholder]="'مخاطب هدف شماره ' + (i + 1)"
+                />
+                <button type="button" class="btn-remove" (click)="removeAudience(i)">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+              <div *ngIf="targetAudience.length === 0" class="empty-state">
+                <mat-icon>groups</mat-icon>
+                <p>مخاطبی تعریف نشده (مناسب برای همه علاقه‌مندان)</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ═══════════════════════════════════════════════════════ -->
+          <!-- ✅ NEW: انتساب دوره به مسیر یادگیری (فقط ادمین) -->
+          <!-- ═══════════════════════════════════════════════════════ -->
+          <div class="learning-path-assignment" *ngIf="isAdminUser" @fadeSlide>
+            <div class="section-header lp-header">
+              <mat-icon>route</mat-icon>
+              <div>
+                <h2>🛤️ انتساب به مسیر یادگیری</h2>
+                <p>این دوره را به یک مسیر یادگیری موجود اضافه کنید یا مسیر جدید بسازید</p>
+              </div>
+              <span class="admin-badge">فقط ادمین</span>
+            </div>
+
+            <!-- Mode Selector -->
+            <div class="lp-mode-selector">
+              <label
+                class="lp-mode-option"
+                [class.active]="learningPathMode() === 'none'"
+                (click)="setLearningPathMode('none')"
+              >
+                <input type="radio" name="lpMode" [checked]="learningPathMode() === 'none'" />
+                <div class="lp-mode-content">
+                  <mat-icon>block</mat-icon>
+                  <span class="lp-mode-title">بدون مسیر</span>
+                  <span class="lp-mode-desc">پیش‌فرض — فقط ذخیره دوره</span>
+                </div>
+              </label>
+              <label
+                class="lp-mode-option"
+                [class.active]="learningPathMode() === 'existing'"
+                (click)="setLearningPathMode('existing')"
+              >
+                <input type="radio" name="lpMode" [checked]="learningPathMode() === 'existing'" />
+                <div class="lp-mode-content">
+                  <mat-icon>add_link</mat-icon>
+                  <span class="lp-mode-title">اضافه به مسیر موجود</span>
+                  <span class="lp-mode-desc">انتخاب مسیر و مرحله مقصد</span>
+                </div>
+              </label>
+              <label
+                class="lp-mode-option"
+                [class.active]="learningPathMode() === 'new'"
+                (click)="setLearningPathMode('new')"
+              >
+                <input type="radio" name="lpMode" [checked]="learningPathMode() === 'new'" />
+                <div class="lp-mode-content">
+                  <mat-icon>add_circle</mat-icon>
+                  <span class="lp-mode-title">ساخت مسیر جدید</span>
+                  <span class="lp-mode-desc">ایجاد مسیر با یک مرحله</span>
+                </div>
+              </label>
+            </div>
+
+            <!-- ═══ Mode: Assign to Existing Path ═══ -->
+            <div class="lp-mode-panel" *ngIf="learningPathMode() === 'existing'" @fadeSlide>
+              <!-- Path Search -->
+              <div class="form-group">
+                <label><mat-icon>search</mat-icon> جستجوی مسیر یادگیری</label>
+                <div class="lp-search-wrapper">
+                  <input
+                    type="text"
+                    [value]="pathSearchQuery()"
+                    (input)="searchPaths($any($event.target).value)"
+                    placeholder="نام مسیر یادگیری را تایپ کنید..."
+                  />
+                  <div class="lp-search-spinner" *ngIf="pathSearchLoading()">
+                    <mat-icon class="spin">autorenew</mat-icon>
+                  </div>
+                </div>
+
+                <!-- Search Results Dropdown -->
+                <div class="lp-search-results" *ngIf="pathSearchResults().length > 0">
+                  <div
+                    *ngFor="let p of pathSearchResults()"
+                    class="lp-search-item"
+                    (click)="selectPath(p)"
+                  >
+                    <span class="lp-item-icon">{{ p.icon || '📚' }}</span>
+                    <div class="lp-item-info">
+                      <span class="lp-item-title">{{ p.title }}</span>
+                      <span class="lp-item-meta">
+                        {{ p.stages.length || 0 }} مرحله · {{ p.totalCourses || 0 }} دوره
+                        <span class="lp-status-badge" [class]="'status-' + p.status">
+                          {{
+                            p.status === 'published'
+                              ? 'منتشرشده'
+                              : p.status === 'draft'
+                                ? 'پیش‌نویس'
+                                : p.status
+                          }}
+                        </span>
+                      </span>
+                    </div>
+                    <mat-icon class="lp-item-arrow">chevron_left</mat-icon>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Selected Path Display -->
+              <div class="lp-selected-path" *ngIf="selectedPath()">
+                <div class="lp-selected-header">
+                  <span class="lp-selected-icon">{{ selectedPath()?.icon || '📚' }}</span>
+                  <div>
+                    <h4>{{ selectedPath()?.title }}</h4>
+                    <span>{{ selectedPath()?.stages?.length || 0 }} مرحله</span>
+                  </div>
+                  <button class="btn-clear-selection" (click)="setLearningPathMode('existing')">
+                    <mat-icon>close</mat-icon>
+                  </button>
+                </div>
+
+                <!-- Stage Selector -->
+                <div class="form-group">
+                  <label><mat-icon>flag</mat-icon> مرحله مقصد *</label>
+                  <div class="lp-stages-list">
+                    <div
+                      *ngFor="let stage of selectedPath()?.stages; let i = index"
+                      class="lp-stage-item"
+                      [class.active]="selectedStageId() === stage._id"
+                      [class.has-course]="isCourseInSelectedStage()"
+                      (click)="selectStage(stage._id)"
+                    >
+                      <div
+                        class="lp-stage-color"
+                        [style.background]="stage.color || '#a435f0'"
+                      ></div>
+                      <div class="lp-stage-info">
+                        <span class="lp-stage-title">{{ stage.title }}</span>
+                        <span class="lp-stage-meta"
+                          >{{ stage.courses.length || 0 }} دوره موجود</span
+                        >
+                      </div>
+                      <mat-icon *ngIf="selectedStageId() === stage._id" class="lp-check"
+                        >check_circle</mat-icon
+                      >
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Warning if course already in this stage -->
+                <div class="lp-warning" *ngIf="isCourseInSelectedStage()">
+                  <mat-icon>warning</mat-icon>
+                  <span
+                    >این دوره قبلاً در این مرحله موجود است. با ذخیره، دوباره اضافه نخواهد شد.</span
+                  >
+                </div>
+
+                <!-- Course Settings in Path -->
+                <div
+                  class="lp-course-settings"
+                  *ngIf="selectedStageId() && !isCourseInSelectedStage()"
+                >
+                  <h4>تنظیمات دوره در مسیر</h4>
+                  <div class="lp-settings-row">
+                    <label class="lp-checkbox">
+                      <input
+                        type="checkbox"
+                        [checked]="courseInPathSettings().isRequired"
+                        (change)="
+                          updateCourseInPathSetting('isRequired', $any($event.target).checked)
+                        "
+                      />
+                      <span>الزامی (isRequired)</span>
+                    </label>
+                  </div>
+                  <div class="lp-settings-row">
+                    <div class="form-group compact">
+                      <label>عنوان سفارشی</label>
+                      <input
+                        type="text"
+                        [value]="courseInPathSettings().customTitle"
+                        (input)="
+                          updateCourseInPathSetting('customTitle', $any($event.target).value)
+                        "
+                        placeholder="اختیاری"
+                      />
+                    </div>
+                    <div class="form-group compact">
+                      <label>مدت تقریبی (ساعت)</label>
+                      <input
+                        type="number"
+                        [value]="courseInPathSettings().estimatedDuration"
+                        (input)="
+                          updateCourseInPathSetting(
+                            'estimatedDuration',
+                            +$any($event.target).value || null
+                          )
+                        "
+                        placeholder="اختیاری"
+                        min="0"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ═══ Mode: Create New Path ═══ -->
+            <div class="lp-mode-panel" *ngIf="learningPathMode() === 'new'" @fadeSlide>
+              <div class="lp-new-path-form">
+                <div class="form-row">
+                  <div class="form-group">
+                    <label><mat-icon>title</mat-icon> عنوان مسیر *</label>
+                    <input
+                      type="text"
+                      [value]="newPathTitle()"
+                      (input)="newPathTitle.set($any($event.target).value)"
+                      placeholder="مثال: مسیر توسعه وب"
+                    />
+                  </div>
+                  <div class="form-group">
+                    <label><mat-icon>subtitles</mat-icon> زیرعنوان</label>
+                    <input
+                      type="text"
+                      [value]="newPathSubtitle()"
+                      (input)="newPathSubtitle.set($any($event.target).value)"
+                      placeholder="اختیاری"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label><mat-icon>emoji_emotions</mat-icon> آیکون</label>
+                    <div class="lp-icon-grid">
+                      <button
+                        *ngFor="
+                          let emoji of [
+                            '📚',
+                            '🎯',
+                            '🚀',
+                            '💡',
+                            '🎓',
+                            '🔬',
+                            '💻',
+                            '🎨',
+                            '📊',
+                            '🤖',
+                            '🌐',
+                            '⭐',
+                            '📈',
+                            '🧠',
+                            '📝',
+                            '🏆',
+                          ]
+                        "
+                        type="button"
+                        class="lp-emoji-btn"
+                        [class.active]="newPathIcon() === emoji"
+                        (click)="newPathIcon.set(emoji)"
+                      >
+                        {{ emoji }}
+                      </button>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label><mat-icon>trending_up</mat-icon> سطح</label>
+                    <select
+                      [value]="newPathDifficulty()"
+                      (change)="newPathDifficulty.set($any($event.target).value)"
+                    >
+                      <option value="beginner">مبتدی</option>
+                      <option value="intermediate">متوسط</option>
+                      <option value="advanced">پیشرفته</option>
+                      <option value="mixed">ترکیبی</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label><mat-icon>short_text</mat-icon> توضیحات کوتاه</label>
+                  <input
+                    type="text"
+                    [value]="newPathShortDesc()"
+                    (input)="newPathShortDesc.set($any($event.target).value)"
+                    placeholder="توضیح کوتاه مسیر (اختیاری)"
+                  />
+                </div>
+
+                <!-- First Stage -->
+                <div class="lp-first-stage">
+                  <h4><mat-icon>flag</mat-icon> مرحله اول</h4>
+                  <div class="form-row">
+                    <div class="form-group">
+                      <label>عنوان مرحله *</label>
+                      <input
+                        type="text"
+                        [value]="newFirstStageTitle()"
+                        (input)="newFirstStageTitle.set($any($event.target).value)"
+                        placeholder="مثال: پایه‌های وب"
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label>آیکون مرحله</label>
+                      <input
+                        type="text"
+                        [value]="newFirstStageIcon()"
+                        (input)="newFirstStageIcon.set($any($event.target).value)"
+                        placeholder="📚"
+                        maxlength="4"
+                      />
+                    </div>
+                    <div class="form-group">
+                      <label>رنگ مرحله</label>
+                      <input
+                        type="color"
+                        [value]="newFirstStageColor()"
+                        (input)="newFirstStageColor.set($any($event.target).value)"
+                        class="lp-color-input"
+                      />
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label>توضیحات مرحله</label>
+                    <input
+                      type="text"
+                      [value]="newFirstStageDesc()"
+                      (input)="newFirstStageDesc.set($any($event.target).value)"
+                      placeholder="توضیحات مرحله (اختیاری)"
+                    />
+                  </div>
+                </div>
+
+                <!-- Course Settings for New Path -->
+                <div class="lp-course-settings">
+                  <h4>تنظیمات دوره در مسیر</h4>
+                  <div class="lp-settings-row">
+                    <label class="lp-checkbox">
+                      <input
+                        type="checkbox"
+                        [checked]="courseInPathSettings().isRequired"
+                        (change)="
+                          updateCourseInPathSetting('isRequired', $any($event.target).checked)
+                        "
+                      />
+                      <span>الزامی</span>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="lp-info-box">
+                  <mat-icon>info</mat-icon>
+                  <span
+                    >دوره فعلی به صورت خودکار به مرحله اول اضافه خواهد شد. پس از ذخیره دوره،
+                    می‌توانید مسیر را از پنل مدیریت ویرایش و تکمیل کنید.</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- ==================== STEP 2: MEDIA ==================== -->
+      <div class="step-panel" *ngIf="currentStep() === 2" @fadeSlide>
+        <form [formGroup]="mediaForm" class="form-container">
+          <div class="section-header">
+            <mat-icon>perm_media</mat-icon>
+            <div>
+              <h2>مستندات و رسانه‌های دوره</h2>
+              <p>تصویر شاخص و ویدیو جذاب دمو یا تیزر معرفی دوره خود را آپلود کنید</p>
+            </div>
+          </div>
+
+          <!-- Thumbnail Upload Area (With Drag & Drop) -->
+          <div class="media-section">
+            <label class="media-label">
+              <mat-icon>image</mat-icon>
+              تصویر کاور (پوستر) دوره آموزشی <span class="required">*</span>
+            </label>
+            <p class="media-hint">
+              ابعاد پیشنهادی: ۱۶:۹ (۱۲۸۰×۷۲۰ پیکسل) • پسوند مجاز: JPG, PNG • حداکثر حجم: ۲ مگابایت
+            </p>
+
+            <div
+              class="upload-zone"
+              *ngIf="!thumbnailPreview()"
+              (click)="triggerThumbnailUpload()"
+              (dragover)="onDragOver($event)"
+              (dragleave)="onDragLeave($event)"
+              (drop)="onThumbnailDrop($event)"
+            >
+              <mat-icon class="upload-icon">cloud_upload</mat-icon>
+              <h3>تصویر موردنظر را آپلود کنید</h3>
+              <p>فایل را به اینجا بکشید یا برای انتخاب کلیک کنید</p>
+              <input
+                #thumbnailInput
+                type="file"
+                accept="image/*"
+                (change)="onThumbnailSelected($event)"
+                hidden
+              />
+            </div>
+
+            <div class="media-preview" *ngIf="thumbnailPreview()">
+              <img [src]="getFullMediaUrl(thumbnailPreview())" alt="Thumbnail preview" />
+              <div class="media-actions">
+                <button
+                  type="button"
+                  class="btn-media-change"
+                  (click)="triggerThumbnailUpload()"
+                  [disabled]="isUploadingThumbnail()"
+                >
+                  <mat-icon>swap_horiz</mat-icon> تعویض عکس
+                </button>
+                <button
+                  type="button"
+                  class="btn-media-remove"
+                  (click)="removeThumbnail()"
+                  [disabled]="isUploadingThumbnail()"
+                >
+                  <mat-icon>delete</mat-icon> حذف پوستر
+                </button>
+              </div>
+              <div class="upload-progress" *ngIf="isUploadingThumbnail()">
+                <div class="progress-header">
+                  <mat-spinner diameter="20"></mat-spinner>
+                  <span>در حال آپلود تصویر...</span>
+                  <strong>{{ thumbnailUploadProgress() }}%</strong>
+                </div>
+                <div class="progress-track">
+                  <div class="progress-fill" [style.width.%]="thumbnailUploadProgress()"></div>
+                </div>
+              </div>
+              <input
+                #thumbnailInput
+                type="file"
+                accept="image/*"
+                (change)="onThumbnailSelected($event)"
+                hidden
+              />
+            </div>
+          </div>
+
+          <!-- Multi-source Promo Video Area -->
+          <div class="media-section">
+            <label class="media-label">
+              <mat-icon>videocam</mat-icon>
+              ویدیو معرفی یا تیزر دمو دوره
+            </label>
+            <p class="media-hint">
+              آپلود ویدیو در سرور یا قرار دادن لینک یوتیوب/آپارات شانس فروش دوره را تا ۳ برابر
+              افزایش می‌دهد
+            </p>
+
+            <div class="video-type-tabs">
+              <label
+                class="tab-radio"
+                [class.active]="mediaForm.get('promoVideoType')?.value === 'upload'"
+              >
+                <input type="radio" formControlName="promoVideoType" value="upload" />
+                <mat-icon>upload_file</mat-icon>
+                <span>آپلود مستقیم ویدیو</span>
+              </label>
+              <label
+                class="tab-radio"
+                [class.active]="mediaForm.get('promoVideoType')?.value === 'youtube'"
+              >
+                <input type="radio" formControlName="promoVideoType" value="youtube" />
+                <mat-icon>smart_display</mat-icon>
+                <span>کانال یوتیوب</span>
+              </label>
+              <label
+                class="tab-radio"
+                [class.active]="mediaForm.get('promoVideoType')?.value === 'vimeo'"
+              >
+                <input type="radio" formControlName="promoVideoType" value="vimeo" />
+                <mat-icon>ondemand_video</mat-icon>
+                <span>تیزر آپارات / Vimeo</span>
+              </label>
+            </div>
+
+            <!-- Video File Upload Area -->
+            <div *ngIf="mediaForm.get('promoVideoType')?.value === 'upload'">
+              <div
+                class="upload-zone small"
+                *ngIf="!promoVideoPreview()"
+                (click)="triggerPromoUpload()"
+              >
+                <mat-icon class="upload-icon">movie</mat-icon>
+                <h3>آپلود تیزر ویدیویی</h3>
+                <p>حداکثر حجم فایل: ۵۰۰ مگابایت • پسوند: MP4, WebM</p>
+                <input
+                  #promoVideoInput
+                  type="file"
+                  accept="video/mp4,video/webm,video/quicktime"
+                  (change)="onPromoVideoSelected($event)"
+                  hidden
+                />
+              </div>
+              <div class="media-preview video" *ngIf="promoVideoPreview()">
+                <video [src]="getFullMediaUrl(promoVideoPreview())" controls></video>
+                <div class="media-actions">
+                  <button
+                    type="button"
+                    class="btn-media-remove"
+                    (click)="removePromoVideo()"
+                    [disabled]="isUploadingVideo()"
+                  >
+                    <mat-icon>delete</mat-icon> حذف فایل ویدیو
+                  </button>
+                </div>
+                <div class="upload-progress" *ngIf="isUploadingVideo()">
+                  <div class="progress-header">
+                    <mat-spinner diameter="20"></mat-spinner>
+                    <span>در حال آپلود ویدیو...</span>
+                    <strong>{{ promoUploadProgress() }}%</strong>
+                  </div>
+                  <div class="progress-track">
+                    <div class="progress-fill" [style.width.%]="promoUploadProgress()"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Video Link Field -->
+            <div *ngIf="mediaForm.get('promoVideoType')?.value !== 'upload'" class="form-group">
+              <input
+                type="url"
+                formControlName="promoVideoUrl"
+                [placeholder]="
+                  mediaForm.get('promoVideoType')?.value === 'youtube'
+                    ? 'https://youtube.com/watch?v=...'
+                    : 'https://aparat.com/v/...'
+                "
+              />
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- ==================== STEP 3: PRICING ==================== -->
+      <div class="step-panel" *ngIf="currentStep() === 3" @fadeSlide>
+        <form [formGroup]="pricingForm" class="form-container">
+          <div class="section-header">
+            <mat-icon>sell</mat-icon>
+            <div>
+              <h2>شرایط قیمت‌گذاری و نوع دسترسی</h2>
+              <p>ابتدا مشخص کنید دوره رایگان است یا پولی؛ سپس در مرحله بعد سرفصل‌ها را بسازید</p>
+            </div>
+          </div>
+
+          <!-- Plan Switching Cards -->
+          <div class="pricing-cards">
+            <label class="pricing-card" [class.selected]="pricingForm.get('isFree')?.value">
+              <input
+                type="radio"
+                [checked]="pricingForm.get('isFree')?.value"
+                (change)="pricingForm.get('isFree')?.setValue(true)"
+              />
+              <div class="pricing-card-content">
+                <div class="pricing-icon free"><mat-icon>volunteer_activism</mat-icon></div>
+                <h3>دوره کاملاً رایگان</h3>
+                <p>
+                  تمام دروس، ویدیوها و فایل‌های این دوره بدون هیچ قفلی برای همه کاربران باز خواهد
+                  بود
+                </p>
+                <div class="pricing-badge free-badge">عمومی و بدون قفل</div>
+              </div>
+            </label>
+            <label class="pricing-card" [class.selected]="!pricingForm.get('isFree')?.value">
+              <input
+                type="radio"
+                [checked]="!pricingForm.get('isFree')?.value"
+                (change)="pricingForm.get('isFree')?.setValue(false)"
+              />
+              <div class="pricing-card-content">
+                <div class="pricing-icon paid"><mat-icon>diamond</mat-icon></div>
+                <h3>دوره نقدی و پولی</h3>
+                <p>فروش مستقیم محتوای دوره آموزشی و کسب درآمد ارزی یا ریالی</p>
+                <div class="pricing-badge paid-badge">ویژه (Premium)</div>
+              </div>
+            </label>
+          </div>
+
+          <!-- ⭐⭐ بنر اطلاع‌رسانی دوره رایگان ⭐⭐ -->
+          <div class="free-course-banner" *ngIf="isFreeCourse()" @slideIn>
+            <div class="fcb-icon"><mat-icon>lock_open</mat-icon></div>
+            <div class="fcb-body">
+              <h4>این دوره به‌صورت کاملاً رایگان منتشر می‌شود</h4>
+              <ul>
+                <li>
+                  <mat-icon>check_circle</mat-icon> تمام درس‌ها، ویدیوها و فایل‌ها بدون قفل و برای
+                  همه قابل مشاهده است
+                </li>
+                <li>
+                  <mat-icon>check_circle</mat-icon> نیازی به تعیین وضعیت «پیش‌نمایش رایگان» برای هیچ
+                  درسی نیست
+                </li>
+                <li>
+                  <mat-icon>check_circle</mat-icon> تخفیف، اقساط و محدودیت ظرفیت به‌صورت خودکار
+                  غیرفعال می‌شود
+                </li>
+                <li>
+                  <mat-icon>check_circle</mat-icon> دسترسی دانشجویان دائمی و بدون انقضا خواهد بود
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <!-- Dynamic Detailed Price Fields (فقط دوره پولی) -->
+          <div class="price-inputs" *ngIf="!isFreeCourse()" @slideIn>
+            <div class="form-row">
+              <div class="form-group">
+                <label><mat-icon>attach_money</mat-icon> قیمت اصلی دوره (تومان)</label>
+                <div class="currency-input">
+                  <input type="number" formControlName="price" placeholder="مثال: ۷۵۰,۰۰۰" />
+                  <span class="currency-label">تومان</span>
+                </div>
+              </div>
+              <div class="form-group">
+                <label
+                  ><mat-icon>group</mat-icon> محدودیت ثبت‌نام (ظرفیت دانشجویان - اختیاری)</label
+                >
+                <input
+                  type="number"
+                  formControlName="maxStudents"
+                  placeholder="مثال: ۱۰۰ (یا نامحدود)"
+                />
+              </div>
+            </div>
+
+            <!-- Dynamic Live Calculator Preview -->
+            <div class="price-preview" *ngIf="pricingForm.get('price')?.value > 0">
+              <div class="preview-item">
+                <span>هزینه اصلی دوره بدون تغییرات:</span>
+                <strong>{{ pricingForm.get('price')?.value | number }} تومان</strong>
+              </div>
+              <div
+                class="preview-item"
+                *ngIf="
+                  pricingForm.get('discountPrice')?.value > 0 &&
+                  pricingForm.get('discountType')?.value === 'manual'
+                "
+              >
+                <span>قیمت فروش با اعمال تخفیف دستی:</span>
+                <strong class="discount-price"
+                  >{{ pricingForm.get('discountPrice')?.value | number }} تومان</strong
+                >
+              </div>
+              <div
+                class="preview-item"
+                *ngIf="
+                  getDiscountPercent() > 0 && pricingForm.get('discountType')?.value === 'manual'
+                "
+              >
+                <span>میزان درصد تخفیف فعال:</span>
+                <strong class="discount-percent">{{ getDiscountPercent() }}٪ تخفیف واقعی</strong>
+              </div>
+            </div>
+
+            <!-- ==================== DISCOUNT TYPE SELECTOR ==================== -->
+            <div class="discount-type-section">
+              <label class="section-label"><mat-icon>local_offer</mat-icon> نوع تخفیف</label>
+              <div class="discount-type-cards">
+                <label
+                  class="discount-type-card"
+                  [class.selected]="pricingForm.get('discountType')?.value === 'none'"
+                >
+                  <input type="radio" formControlName="discountType" value="none" />
+                  <div class="dtc-content">
+                    <mat-icon>block</mat-icon>
+                    <span>بدون تخفیف</span>
+                  </div>
+                </label>
+                <label
+                  class="discount-type-card"
+                  [class.selected]="pricingForm.get('discountType')?.value === 'manual'"
+                >
+                  <input type="radio" formControlName="discountType" value="manual" />
+                  <div class="dtc-content">
+                    <mat-icon>local_offer</mat-icon>
+                    <span>تخفیف دستی</span>
+                  </div>
+                </label>
+                <label
+                  class="discount-type-card"
+                  [class.selected]="pricingForm.get('discountType')?.value === 'countdown'"
+                >
+                  <input type="radio" formControlName="discountType" value="countdown" />
+                  <div class="dtc-content">
+                    <mat-icon>timer</mat-icon>
+                    <span>تخفیف معکوس زمان‌دار</span>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            <!-- Manual Discount Fields -->
+            <div
+              class="manual-discount-fields"
+              *ngIf="pricingForm.get('discountType')?.value === 'manual'"
+              @slideIn
+            >
+              <div class="form-row">
+                <div class="form-group">
+                  <label
+                    ><mat-icon>local_offer</mat-icon> قیمت نهایی با اعمال تخفیف (اختیاری)</label
+                  >
+                  <div class="currency-input">
+                    <input
+                      type="number"
+                      formControlName="discountPrice"
+                      placeholder="مثال: ۴۹۰,۰۰۰"
+                    />
+                    <span class="currency-label">تومان</span>
+                  </div>
+                </div>
+                <div class="form-group jalali-picker-group" *ngIf="isBrowser()">
+                  <label><mat-icon>event</mat-icon> تاریخ پایان مهلت تخفیف ویژه</label>
+                  <mat-form-field appearance="outline" class="jalali-datepicker-field">
+                    <input
+                      matInput
+                      [matDatepicker]="manualDiscountDatePicker"
+                      formControlName="discountEndDate"
+                      placeholder="انتخاب تاریخ"
+                    />
+                    <mat-datepicker-toggle
+                      matIconSuffix
+                      [for]="manualDiscountDatePicker"
+                    ></mat-datepicker-toggle>
+                    <mat-datepicker #manualDiscountDatePicker></mat-datepicker>
+                  </mat-form-field>
+                </div>
+              </div>
+            </div>
+
+            <!-- ==================== COUNTDOWN DISCOUNT FIELDS ==================== -->
+            <div
+              class="countdown-discount-fields"
+              *ngIf="pricingForm.get('discountType')?.value === 'countdown'"
+              @slideIn
+            >
+              <div class="countdown-notice">
+                <mat-icon>info</mat-icon>
+                <span
+                  >تخفیف به‌مرور زمان کاهش می‌یابد. قیمت نهایی در لحظه خرید توسط سرور محاسبه
+                  می‌شود.</span
+                >
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label><mat-icon>trending_up</mat-icon> درصد تخفیف اولیه</label>
+                  <div class="percent-input">
+                    <input
+                      type="number"
+                      formControlName="cdInitialPercent"
+                      placeholder="مثال: ۱۰۰"
+                      min="0"
+                      max="100"
+                    />
+                    <span class="percent-label">٪</span>
+                  </div>
+                  <div class="input-hint">درصد تخفیف در شروع کمپین</div>
+                </div>
+                <div class="form-group">
+                  <label><mat-icon>trending_down</mat-icon> درصد تخفیف نهایی</label>
+                  <div class="percent-input">
+                    <input
+                      type="number"
+                      formControlName="cdFinalPercent"
+                      placeholder="مثال: ۰"
+                      min="0"
+                      max="100"
+                    />
+                    <span class="percent-label">٪</span>
+                  </div>
+                  <div class="input-hint">درصد تخفیف در پایان کمپین (معمولاً ۰)</div>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group jalali-picker-group" *ngIf="isBrowser()">
+                  <label><mat-icon>play_arrow</mat-icon> تاریخ شروع (شمسی)</label>
+                  <mat-form-field appearance="outline" class="jalali-datepicker-field">
+                    <input
+                      matInput
+                      [matDatepicker]="cdStartDatePicker"
+                      formControlName="cdStartDate"
+                      placeholder="انتخاب تاریخ"
+                    />
+                    <mat-datepicker-toggle
+                      matIconSuffix
+                      [for]="cdStartDatePicker"
+                    ></mat-datepicker-toggle>
+                    <mat-datepicker #cdStartDatePicker></mat-datepicker>
+                  </mat-form-field>
+                </div>
+                <div class="form-group">
+                  <label><mat-icon>schedule</mat-icon> ساعت شروع</label>
+                  <input type="time" formControlName="cdStartTime" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group jalali-picker-group" *ngIf="isBrowser()">
+                  <label><mat-icon>stop</mat-icon> تاریخ پایان (شمسی)</label>
+                  <mat-form-field appearance="outline" class="jalali-datepicker-field">
+                    <input
+                      matInput
+                      [matDatepicker]="cdEndDatePicker"
+                      formControlName="cdEndDate"
+                      placeholder="انتخاب تاریخ"
+                    />
+                    <mat-datepicker-toggle
+                      matIconSuffix
+                      [for]="cdEndDatePicker"
+                    ></mat-datepicker-toggle>
+                    <mat-datepicker #cdEndDatePicker></mat-datepicker>
+                  </mat-form-field>
+                </div>
+                <div class="form-group">
+                  <label><mat-icon>schedule</mat-icon> ساعت پایان</label>
+                  <input type="time" formControlName="cdEndTime" />
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group">
+                  <label><mat-icon>linear_scale</mat-icon> روش کاهش</label>
+                  <div class="mode-cards">
+                    <label
+                      class="mode-card"
+                      [class.selected]="pricingForm.get('cdMode')?.value === 'linear'"
+                    >
+                      <input type="radio" formControlName="cdMode" value="linear" />
+                      <div class="mode-card-content">
+                        <mat-icon>trending_down</mat-icon>
+                        <span>پیوسته (خطی)</span>
+                      </div>
+                    </label>
+                    <label
+                      class="mode-card"
+                      [class.selected]="pricingForm.get('cdMode')?.value === 'step'"
+                    >
+                      <input type="radio" formControlName="cdMode" value="step" />
+                      <div class="mode-card-content">
+                        <mat-icon>stairs</mat-icon>
+                        <span>مرحله‌ای</span>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Step Mode Extra Fields -->
+              <div class="step-fields" *ngIf="pricingForm.get('cdMode')?.value === 'step'" @slideIn>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label><mat-icon>stairs</mat-icon> مقدار کاهش هر مرحله (٪)</label>
+                    <div class="percent-input">
+                      <input
+                        type="number"
+                        formControlName="cdStepPercent"
+                        placeholder="مثال: ۱۰"
+                        min="1"
+                        max="100"
+                      />
+                      <span class="percent-label">٪</span>
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label><mat-icon>schedule</mat-icon> فاصله هر مرحله (دقیقه)</label>
+                    <input
+                      type="number"
+                      formControlName="cdStepInterval"
+                      placeholder="مثال: ۳۰"
+                      min="1"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Countdown Preview -->
+              <div
+                class="countdown-preview"
+                *ngIf="pricingForm.get('cdStartDate')?.value && pricingForm.get('cdEndDate')?.value"
+              >
+                <div class="cp-header">
+                  <mat-icon>preview</mat-icon>
+                  <span>پیش‌نمایش روند کاهش تخفیف</span>
+                </div>
+                <div class="cp-bar">
+                  <div class="cp-bar-fill" [style.width.%]="getCountdownPreviewPercent()"></div>
+                </div>
+                <div class="cp-labels">
+                  <span>{{ pricingForm.get('cdInitialPercent')?.value || 0 }}٪</span>
+                  <span>{{ pricingForm.get('cdFinalPercent')?.value || 0 }}٪</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Installments Setup Section -->
+            <div class="toggle-mini">
+              <label class="mini-toggle">
+                <input type="checkbox" formControlName="installmentEnabled" />
+                <span class="toggle-switch-mini"><span class="switch-slider-mini"></span></span>
+                <div>
+                  <strong>امکان ثبت‌نام قسطی</strong>
+                  <p>فعال‌سازی درگاه پرداخت اقساطی به ویژه برای دوره‌های گران‌قیمت</p>
+                </div>
+              </label>
+              <div
+                class="installment-count"
+                *ngIf="pricingForm.get('installmentEnabled')?.value"
+                @slideIn
+              >
+                <label>تعداد سررسید اقساط:</label>
+                <select formControlName="installmentCount">
+                  <option value="2">۲ مرحله‌ای</option>
+                  <option value="3">۳ مرحله‌ای</option>
+                  <option value="6">۶ مرحله‌ای</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Master Features Switch Cards -->
+          <div class="toggle-section">
+            <label class="toggle-card">
+              <input type="checkbox" formControlName="hasCertificate" />
+              <div class="toggle-content">
+                <div class="toggle-icon certificate-icon">
+                  <mat-icon>workspace_premium</mat-icon>
+                </div>
+                <div class="toggle-text">
+                  <h4>ارائه گواهینامه پایان دوره آکادمیک</h4>
+                  <p>
+                    صدور خودکار و دیجیتال مدرک برای دانشجویانی که تمامی دروس را با موفقیت تمام
+                    کرده‌اند
+                  </p>
+                </div>
+                <div class="toggle-switch"><span class="switch-slider"></span></div>
+              </div>
+            </label>
+
+            <label class="toggle-card">
+              <input type="checkbox" formControlName="hasLifetimeAccess" />
+              <div class="toggle-content">
+                <div class="toggle-icon lifetime-icon"><mat-icon>all_inclusive</mat-icon></div>
+                <div class="toggle-text">
+                  <h4>دسترسی همیشگی و دائمی به محتوا</h4>
+                  <p>عدم اعمال هرگونه زمان یا انقضا برای دانلود یا تماشای درس‌های خریداری شده</p>
+                </div>
+                <div class="toggle-switch"><span class="switch-slider"></span></div>
+              </div>
+            </label>
+
+            <label class="toggle-card">
+              <input type="checkbox" formControlName="hasSupport" />
+              <div class="toggle-content">
+                <div class="toggle-icon support-icon"><mat-icon>support_agent</mat-icon></div>
+                <div class="toggle-text">
+                  <h4>پشتیبانی منتورینگ و تخصصی مدرس</h4>
+                  <p>
+                    پاسخ‌گویی مستقیم و مستمر به اشکالات دانشجویان در تالار گفتگو و کانال تلگرامی
+                  </p>
+                </div>
+                <div class="toggle-switch"><span class="switch-slider"></span></div>
+              </div>
+            </label>
+          </div>
+        </form>
+      </div>
+
+      <!-- ==================== STEP 4: CURRICULUM ==================== -->
+      <div class="step-panel" *ngIf="currentStep() === 4" @fadeSlide>
+        <form [formGroup]="curriculumForm" class="form-container">
+          <div class="section-header">
+            <mat-icon>menu_book</mat-icon>
+            <div>
+              <h2>ساختار سرفصل‌ها و دروس</h2>
+              <p>سرفصل‌های آموزشی را به همراه جلسات هر فصل سازماندهی کنید</p>
+            </div>
+          </div>
+
+          <!-- ⭐⭐ بنر دوره رایگان: همه محتوا باز است ⭐⭐ -->
+          <div class="free-curriculum-banner" *ngIf="isFreeCourse()" @slideIn>
+            <mat-icon>lock_open</mat-icon>
+            <div>
+              <strong>دوره رایگان — تمام دروس باز و در دسترس همه کاربران هستند</strong>
+              <span
+                >نیازی به تنظیم وضعیت قفل یا پیش‌نمایش برای هیچ درسی نیست؛ همه محتوا (ویدیو، متن و
+                فایل) برای همه فعال است.</span
+              >
+            </div>
+          </div>
+
+          <!-- Calculated Live Course Statistics -->
+          <div class="curriculum-stats">
+            <div class="stat-item">
+              <mat-icon>folder</mat-icon>
+              <span>{{ sections.length }} فصل کل</span>
+            </div>
+            <div class="stat-item">
+              <mat-icon>play_circle</mat-icon>
+              <span>{{ totalLectures() }} درس کل</span>
+            </div>
+            <div class="stat-item">
+              <mat-icon>schedule</mat-icon>
+              <span>مجموع زمان: {{ formatDuration(totalDuration()) }}</span>
+            </div>
+            <div class="stat-item free-stat" *ngIf="isFreeCourse()">
+              <mat-icon>lock_open</mat-icon>
+              <span>دسترسی: رایگان برای همه</span>
+            </div>
+          </div>
+
+          <!-- Interactive Drag & Drop / Collapsible Sections Container -->
+          <div
+            class="sections-container"
+            [@listAnimation]="sections.length"
+            cdkDropList
+            (cdkDropListDropped)="dropSection($event)"
+          >
+            <div
+              *ngFor="let section of sections.controls; let si = index"
+              class="section-card"
+              @slideIn
+              cdkDrag
+              [cdkDragDisabled]="isSaving()"
+            >
+              <div class="section-card-header">
+                <div class="drag-section-handle" cdkDragHandle>
+                  <mat-icon>drag_indicator</mat-icon>
+                </div>
+                <div class="section-title-wrapper">
+                  <button type="button" class="collapse-btn" (click)="toggleSection(si)">
+                    <mat-icon>{{
+                      isSectionCollapsed(si) ? 'chevron_left' : 'expand_more'
+                    }}</mat-icon>
+                  </button>
+                  <div class="section-badge">{{ si + 1 }}</div>
+                  <input
+                    [formControl]="getAsFormControl(section.get('title'))"
+                    [placeholder]="
+                      'عنوان فصل شماره ' + (si + 1) + ' (مثال: مفاهیم و تنظیمات اولیه)'
+                    "
+                    class="section-title-input"
+                  />
+                  <span class="section-meta">{{ getLectures(si).length }} درس</span>
+                </div>
+                <div class="section-actions">
+                  <button
+                    type="button"
+                    class="btn-icon"
+                    (click)="duplicateSection(si)"
+                    title="کپی کردن کامل فصل"
+                  >
+                    <mat-icon>content_copy</mat-icon>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn-icon btn-danger"
+                    (click)="removeSection(si)"
+                    title="حذف سرفصل"
+                  >
+                    <mat-icon>delete_outline</mat-icon>
+                  </button>
+                </div>
+              </div>
+
+              <!-- List of Lectures inside each section -->
+              <div
+                class="lectures-list"
+                *ngIf="!isSectionCollapsed(si)"
+                [@expandCollapse]="isSectionCollapsed(si) ? 'collapsed' : 'expanded'"
+                cdkDropList
+                (cdkDropListDropped)="dropLecture($event, si)"
+              >
+                <div
+                  *ngFor="let lecture of getLectures(si).controls; let li = index"
+                  class="lecture-item-wrapper"
+                  cdkDrag
+                  [cdkDragDisabled]="isSaving()"
+                >
+                  <!-- main lecture entry row -->
+                  <div class="lecture-item">
+                    <div class="lecture-drag-handle" cdkDragHandle>
+                      <mat-icon>drag_indicator</mat-icon>
+                    </div>
+                    <div
+                      class="lecture-type-icon"
+                      [attr.data-type]="getAsFormControl(lecture.get('type')).value"
+                    >
+                      <mat-icon>{{
+                        getLectureIcon(getAsFormControl(lecture.get('type')).value)
+                      }}</mat-icon>
+                    </div>
+                    <input
+                      [formControl]="getAsFormControl(lecture.get('title'))"
+                      [placeholder]="'عنوان درس شماره ' + (li + 1)"
+                      class="lecture-input"
+                    />
+                    <div class="duration-input">
+                      <input
+                        type="number"
+                        [formControl]="getAsFormControl(lecture.get('duration'))"
+                        placeholder="0"
+                        min="0"
+                      />
+                      <span>دقیقه</span>
+                    </div>
+
+                    <!-- ⭐⭐ در دوره پولی: سوییچ پیش‌نمایش رایگان ⭐⭐ -->
+                    <label
+                      class="preview-toggle"
+                      *ngIf="!isFreeCourse()"
+                      [title]="'امکان پیش‌نمایش رایگان برای دانشجویان مهمان'"
+                    >
+                      <input
+                        type="checkbox"
+                        [formControl]="getAsFormControl(lecture.get('isFreePreview'))"
+                      />
+                      <mat-icon>{{
+                        getAsFormControl(lecture.get('isFreePreview')).value
+                          ? 'visibility'
+                          : 'visibility_off'
+                      }}</mat-icon>
+                    </label>
+
+                    <!-- ⭐⭐ در دوره رایگان: نشان «باز برای همه» ⭐⭐ -->
+                    <span
+                      class="free-unlocked-badge"
+                      *ngIf="isFreeCourse()"
+                      title="دوره رایگان است؛ این درس برای همه کاربران باز است"
+                    >
+                      <mat-icon>lock_open</mat-icon>
+                      <span class="fub-text">رایگان</span>
+                    </span>
+
+                    <div class="lecture-actions">
+                      <button
+                        type="button"
+                        class="btn-icon btn-danger"
+                        (click)="removeLecture(si, li)"
+                      >
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+
+                  <!-- Legacy lecture-level media (read-only, only for courses created before content items) -->
+                  <div
+                    class="lecture-media-row legacy-media"
+                    *ngIf="lecture.get('videoUrl')?.value || lecture.get('fileUrl')?.value"
+                  >
+                    <div class="legacy-media-badge">
+                      <mat-icon>history</mat-icon>
+                      <span>محتوای قدیمی این درس</span>
+                    </div>
+
+                    <div class="lecture-media-uploaded" *ngIf="lecture.get('videoUrl')?.value">
+                      <mat-icon class="success-icon">check_circle</mat-icon>
+                      <div class="media-info">
+                        <span class="media-name">{{
+                          lecture.get('videoFileName')?.value || 'ویدیو آپلود شده'
+                        }}</span>
+                        <span class="media-size" *ngIf="lecture.get('videoFileSize')?.value">
+                          {{ formatFileSize(lecture.get('videoFileSize')?.value) }}
+                        </span>
+                      </div>
+                      <div class="media-actions-inline">
+                        <button
+                          type="button"
+                          class="btn-remove-media"
+                          (click)="removeLectureVideo(si, li)"
+                          title="حذف"
+                        >
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="lecture-media-uploaded" *ngIf="lecture.get('fileUrl')?.value">
+                      <mat-icon class="success-icon">check_circle</mat-icon>
+                      <div class="media-info">
+                        <span class="media-name">{{
+                          lecture.get('fileName')?.value || 'فایل آپلود شده'
+                        }}</span>
+                        <span class="media-size" *ngIf="lecture.get('fileSize')?.value">
+                          {{ formatFileSize(lecture.get('fileSize')?.value) }}
+                        </span>
+                      </div>
+                      <div class="media-actions-inline">
+                        <button
+                          type="button"
+                          class="btn-remove-media"
+                          (click)="removeLectureResource(si, li)"
+                          title="حذف"
+                        >
+                          <mat-icon>delete</mat-icon>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Content Items Management -->
+                  <div class="content-items-section">
+                    <div class="content-items-header">
+                      <h4><mat-icon>playlist_add</mat-icon> محتوای جلسه</h4>
+                      <div class="content-items-actions">
+                        <div class="content-type-selector">
+                          <button
+                            type="button"
+                            class="content-type-btn"
+                            *ngFor="let type of contentTypes"
+                            (click)="addContentItem(si, li, type)"
+                            [title]="'افزودن ' + getContentItemTypeLabel(type)"
+                          >
+                            <mat-icon>{{ getContentItemIcon(type) }}</mat-icon>
+                            <span>{{ getContentItemTypeLabel(type) }}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      class="content-items-list"
+                      cdkDropList
+                      (cdkDropListDropped)="dropContentItem($event, si, li)"
+                    >
+                      <div
+                        *ngFor="let contentItem of getContentItems(si, li).controls; let ci = index"
+                        class="content-item-card"
+                        cdkDrag
+                        [cdkDragDisabled]="isSaving()"
+                      >
+                        <div class="content-item-drag-handle" cdkDragHandle>
+                          <mat-icon>drag_indicator</mat-icon>
+                        </div>
+
+                        <div
+                          class="content-item-type-badge"
+                          [attr.data-type]="getAsFormControl(contentItem.get('type')).value"
+                        >
+                          <mat-icon>{{
+                            getContentItemIcon(getAsFormControl(contentItem.get('type')).value)
+                          }}</mat-icon>
+                        </div>
+
+                        <input
+                          [formControl]="getAsFormControl(contentItem.get('title'))"
+                          [placeholder]="'عنوان محتوا ' + (ci + 1)"
+                          class="content-item-title"
+                        />
+
+                        <span class="content-item-type-label">
+                          {{
+                            getContentItemTypeLabel(getAsFormControl(contentItem.get('type')).value)
+                          }}
+                        </span>
+
+                        <textarea
+                          [formControl]="getAsFormControl(contentItem.get('description'))"
+                          placeholder="توضیح کوتاه (اختیاری)"
+                          class="content-item-description"
+                          rows="2"
+                        ></textarea>
+
+                        <!-- Video Content Item -->
+                        <div
+                          class="content-item-media"
+                          *ngIf="getAsFormControl(contentItem.get('type')).value === 'video'"
+                        >
+                          <ng-container
+                            *ngIf="
+                              !getAsFormControl(contentItem.get('videoUrl'))?.value &&
+                              getContentItemUploadStatus(si, li, ci, 'video') !== 'uploading'
+                            "
+                          >
+                            <label class="upload-content-btn video-upload">
+                              <mat-icon>video_call</mat-icon>
+                              <span>آپلود ویدیو</span>
+                              <input
+                                type="file"
+                                accept="video/mp4,video/webm,video/quicktime"
+                                hidden
+                                (change)="onContentItemVideoSelected($event, si, li, ci)"
+                              />
+                            </label>
+                            <span class="upload-hint">MP4, WebM • حداکثر ۵ گیگابایت</span>
+                          </ng-container>
+
+                          <div
+                            class="content-upload-progress"
+                            *ngIf="getContentItemUploadStatus(si, li, ci, 'video') === 'uploading'"
+                          >
+                            <div class="progress-header">
+                              <mat-icon>cloud_upload</mat-icon>
+                              <span>در حال آپلود ویدیو...</span>
+                              <strong
+                                >{{ getContentItemUploadProgress(si, li, ci, 'video') }}٪</strong
+                              >
+                            </div>
+                            <div class="progress-track">
+                              <div
+                                class="progress-fill"
+                                [style.width.%]="getContentItemUploadProgress(si, li, ci, 'video')"
+                              ></div>
+                            </div>
+                          </div>
+
+                          <div
+                            class="content-media-uploaded"
+                            *ngIf="getAsFormControlValue(contentItem.get('videoUrl'))"
+                          >
+                            <mat-icon class="success-icon">check_circle</mat-icon>
+                            <div class="media-info">
+                              <span class="media-name">{{
+                                getAsFormControlValue(contentItem.get('videoFileName')) ||
+                                  'ویدیو آپلود شد'
+                              }}</span>
+                              <span
+                                class="media-size"
+                                *ngIf="getAsFormControlValue(contentItem.get('videoFileSize'))"
+                                >{{
+                                  formatFileSize(
+                                    getAsFormControlValue(contentItem.get('videoFileSize'))
+                                  )
+                                }}</span
+                              >
+                            </div>
+                            <div class="media-actions-inline">
+                              <label class="btn-replace" title="جایگزینی">
+                                <mat-icon>swap_horiz</mat-icon>
+                                <input
+                                  type="file"
+                                  accept="video/mp4,video/webm,video/quicktime"
+                                  hidden
+                                  (change)="onContentItemVideoSelected($event, si, li, ci)"
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                class="btn-remove-media"
+                                (click)="removeContentItemVideo(si, li, ci)"
+                                title="حذف"
+                              >
+                                <mat-icon>delete</mat-icon>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Rich Text Content Item -->
+                        <div
+                          class="content-item-media"
+                          *ngIf="getAsFormControl(contentItem.get('type')).value === 'rich-text'"
+                        >
+                          <ng-container *ngIf="isBrowser(); else contentRichTextPlaceholder">
+                            <app-rich-text-editor
+                              [formControl]="getAsFormControl(contentItem.get('richTextContent'))"
+                              placeholder="محتوای متنی را در اینجا بنویسید... (پشتیبانی از مارک‌داون)"
+                              minHeight="200px"
+                              [markdownMode]="true"
+                              [autoExpand]="true"
+                            ></app-rich-text-editor>
+                          </ng-container>
+                          <ng-template #contentRichTextPlaceholder>
+                            <div class="editor-placeholder"></div>
+                          </ng-template>
+                        </div>
+
+                        <!-- Attachment Content Item -->
+                        <div
+                          class="content-item-media"
+                          *ngIf="getAsFormControl(contentItem.get('type')).value === 'attachment'"
+                        >
+                          <ng-container
+                            *ngIf="
+                              !getAsFormControl(contentItem.get('fileUrl'))?.value &&
+                              getContentItemUploadStatus(si, li, ci, 'file') !== 'uploading'
+                            "
+                          >
+                            <label class="upload-content-btn file-upload">
+                              <mat-icon>attach_file</mat-icon>
+                              <span>آپلود فایل</span>
+                              <input
+                                type="file"
+                                hidden
+                                (change)="onContentItemFileSelected($event, si, li, ci)"
+                              />
+                            </label>
+                            <span class="upload-hint">PDF, ZIP, DOC • حداکثر ۱۰۰ مگابایت</span>
+                          </ng-container>
+
+                          <div
+                            class="content-upload-progress"
+                            *ngIf="getContentItemUploadStatus(si, li, ci, 'file') === 'uploading'"
+                          >
+                            <div class="progress-header">
+                              <mat-icon>cloud_upload</mat-icon>
+                              <span>در حال آپلود فایل...</span>
+                              <strong
+                                >{{ getContentItemUploadProgress(si, li, ci, 'file') }}٪</strong
+                              >
+                            </div>
+                            <div class="progress-track">
+                              <div
+                                class="progress-fill"
+                                [style.width.%]="getContentItemUploadProgress(si, li, ci, 'file')"
+                              ></div>
+                            </div>
+                          </div>
+
+                          <div
+                            class="content-media-uploaded"
+                            *ngIf="getAsFormControlValue(contentItem.get('fileUrl'))"
+                          >
+                            <mat-icon class="success-icon">check_circle</mat-icon>
+                            <div class="media-info">
+                              <span class="media-name">{{
+                                getAsFormControlValue(contentItem.get('fileName')) ||
+                                  'فایل آپلود شد'
+                              }}</span>
+                              <span
+                                class="media-size"
+                                *ngIf="getAsFormControlValue(contentItem.get('fileSize'))"
+                                >{{
+                                  formatFileSize(
+                                    getAsFormControlValue(contentItem.get('fileSize'))
+                                  )
+                                }}</span
+                              >
+                            </div>
+                            <div class="media-actions-inline">
+                              <label class="btn-replace" title="جایگزینی">
+                                <mat-icon>swap_horiz</mat-icon>
+                                <input
+                                  type="file"
+                                  hidden
+                                  (change)="onContentItemFileSelected($event, si, li, ci)"
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                class="btn-remove-media"
+                                (click)="removeContentItemFile(si, li, ci)"
+                                title="حذف"
+                              >
+                                <mat-icon>delete</mat-icon>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- External Link Content Item -->
+                        <div
+                          class="content-item-media"
+                          *ngIf="
+                            getAsFormControl(contentItem.get('type')).value === 'external-link'
+                          "
+                        >
+                          <div class="external-link-input">
+                            <input
+                              type="url"
+                              [formControl]="getAsFormControl(contentItem.get('externalUrl'))"
+                              placeholder="https://example.com"
+                              class="external-url-input"
+                            />
+                            <button
+                              type="button"
+                              class="btn-test-link"
+                              (click)="
+                                testExternalLink(
+                                  getAsFormControl(contentItem.get('externalUrl')).value
+                                )
+                              "
+                              title="تست لینک"
+                            >
+                              <mat-icon>open_in_new</mat-icon>
+                            </button>
+                          </div>
+                        </div>
+
+                        <!-- Image Content Item -->
+                        <div
+                          class="content-item-media"
+                          *ngIf="getAsFormControl(contentItem.get('type')).value === 'image'"
+                        >
+                          <ng-container
+                            *ngIf="
+                              !getAsFormControl(contentItem.get('imageUrl'))?.value &&
+                              getContentItemUploadStatus(si, li, ci, 'image') !== 'uploading'
+                            "
+                          >
+                            <label class="upload-content-btn image-upload">
+                              <mat-icon>image</mat-icon>
+                              <span>آپلود تصویر</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                hidden
+                                (change)="onContentItemImageSelected($event, si, li, ci)"
+                              />
+                            </label>
+                            <span class="upload-hint">JPG, PNG, WebP • حداکثر ۱۰ مگابایت</span>
+                          </ng-container>
+
+                          <div
+                            class="content-upload-progress"
+                            *ngIf="getContentItemUploadStatus(si, li, ci, 'image') === 'uploading'"
+                          >
+                            <div class="progress-header">
+                              <mat-icon>cloud_upload</mat-icon>
+                              <span>در حال آپلود تصویر...</span>
+                              <strong
+                                >{{ getContentItemUploadProgress(si, li, ci, 'image') }}٪</strong
+                              >
+                            </div>
+                            <div class="progress-track">
+                              <div
+                                class="progress-fill"
+                                [style.width.%]="getContentItemUploadProgress(si, li, ci, 'image')"
+                              ></div>
+                            </div>
+                          </div>
+
+                          <div
+                            class="content-media-uploaded"
+                            *ngIf="getAsFormControlValue(contentItem.get('imageUrl'))"
+                          >
+                            <mat-icon class="success-icon">check_circle</mat-icon>
+                            <div class="media-info">
+                              <img
+                                [src]="getAsFormControl(contentItem.get('imageUrl')).value"
+                                alt="Preview"
+                                class="image-preview"
+                              />
+                              <span class="media-name">{{
+                                getAsFormControlValue(contentItem.get('fileName')) ||
+                                  'تصویر آپلود شد'
+                              }}</span>
+                              <span
+                                class="media-size"
+                                *ngIf="getAsFormControlValue(contentItem.get('fileSize'))"
+                                >{{
+                                  formatFileSize(
+                                    getAsFormControlValue(contentItem.get('fileSize'))
+                                  )
+                                }}</span
+                              >
+                            </div>
+                            <div class="media-actions-inline">
+                              <label class="btn-replace" title="جایگزینی">
+                                <mat-icon>swap_horiz</mat-icon>
+                                <input
+                                  type="file"
+                                  accept="image/*"
+                                  hidden
+                                  (change)="onContentItemImageSelected($event, si, li, ci)"
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                class="btn-remove-media"
+                                (click)="removeContentItemImage(si, li, ci)"
+                                title="حذف"
+                              >
+                                <mat-icon>delete</mat-icon>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Audio Content Item -->
+                        <div
+                          class="content-item-media"
+                          *ngIf="getAsFormControl(contentItem.get('type')).value === 'audio'"
+                        >
+                          <ng-container
+                            *ngIf="
+                              !getAsFormControl(contentItem.get('audioUrl'))?.value &&
+                              getContentItemUploadStatus(si, li, ci, 'audio') !== 'uploading'
+                            "
+                          >
+                            <label class="upload-content-btn audio-upload">
+                              <mat-icon>audiotrack</mat-icon>
+                              <span>آپلود فایل صوتی</span>
+                              <input
+                                type="file"
+                                accept="audio/*"
+                                hidden
+                                (change)="onContentItemAudioSelected($event, si, li, ci)"
+                              />
+                            </label>
+                            <span class="upload-hint">MP3, WAV, OGG • حداکثر ۱۰۰ مگابایت</span>
+                          </ng-container>
+
+                          <div
+                            class="content-upload-progress"
+                            *ngIf="getContentItemUploadStatus(si, li, ci, 'audio') === 'uploading'"
+                          >
+                            <div class="progress-header">
+                              <mat-icon>cloud_upload</mat-icon>
+                              <span>در حال آپلود فایل صوتی...</span>
+                              <strong
+                                >{{ getContentItemUploadProgress(si, li, ci, 'audio') }}٪</strong
+                              >
+                            </div>
+                            <div class="progress-track">
+                              <div
+                                class="progress-fill"
+                                [style.width.%]="getContentItemUploadProgress(si, li, ci, 'audio')"
+                              ></div>
+                            </div>
+                          </div>
+
+                          <div
+                            class="content-media-uploaded"
+                            *ngIf="getAsFormControlValue(contentItem.get('audioUrl'))"
+                          >
+                            <mat-icon class="success-icon">check_circle</mat-icon>
+                            <div class="media-info">
+                              <mat-icon class="audio-icon">audiotrack</mat-icon>
+                              <span class="media-name">{{
+                                getAsFormControlValue(contentItem.get('audioFileName')) ||
+                                  'فایل صوتی آپلود شد'
+                              }}</span>
+                              <span
+                                class="media-size"
+                                *ngIf="getAsFormControlValue(contentItem.get('audioFileSize'))"
+                                >{{
+                                  formatFileSize(
+                                    getAsFormControlValue(contentItem.get('audioFileSize'))
+                                  )
+                                }}</span
+                              >
+                            </div>
+                            <div class="media-actions-inline">
+                              <label class="btn-replace" title="جایگزینی">
+                                <mat-icon>swap_horiz</mat-icon>
+                                <input
+                                  type="file"
+                                  accept="audio/*"
+                                  hidden
+                                  (change)="onContentItemAudioSelected($event, si, li, ci)"
+                                />
+                              </label>
+                              <button
+                                type="button"
+                                class="btn-remove-media"
+                                (click)="removeContentItemAudio(si, li, ci)"
+                                title="حذف"
+                              >
+                                <mat-icon>delete</mat-icon>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div class="content-item-actions">
+                          <button
+                            type="button"
+                            class="btn-icon btn-danger"
+                            (click)="removeContentItem(si, li, ci)"
+                            title="حذف محتوا"
+                          >
+                            <mat-icon>delete_outline</mat-icon>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div *ngIf="getContentItems(si, li).length === 0" class="empty-content-items">
+                        <mat-icon>playlist_add</mat-icon>
+                        <p>
+                          محتوایی برای این جلسه اضافه نشده است. از دکمه‌های بالا برای افزودن محتوا
+                          استفاده کنید.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div *ngIf="getLectures(si).length === 0" class="empty-lectures">
+                  <mat-icon>video_library</mat-icon>
+                  <p>درسی ثبت نشده است. ساختار یادگیری را با اولین جلسه آغاز کنید</p>
+                </div>
+
+                <button type="button" class="btn-add-lecture" (click)="addLecture(si)">
+                  <mat-icon>add_circle</mat-icon> <span>افزودن درس به این فصل</span>
+                </button>
+              </div>
+            </div>
+
+            <div *ngIf="sections.length === 0" class="empty-curriculum">
+              <mat-icon>library_books</mat-icon>
+              <h3>هیچ فصلی برای دوره ایجاد نشده است</h3>
+              <p>دروس دوره را به صورت فصول منظم تفکیک و دسته‌بندی کنید</p>
+            </div>
+          </div>
+
+          <button type="button" class="btn-add-section" (click)="addSection()">
+            <mat-icon>create_new_folder</mat-icon> <span>افزودن فصل جدید به دوره</span>
+          </button>
+        </form>
+      </div>
+
+      <!-- ==================== STEP 5: SEO & PUBLISH ==================== -->
+      <div class="step-panel" *ngIf="currentStep() === 5" @fadeSlide>
+        <form [formGroup]="seoForm" class="form-container">
+          <div class="section-header">
+            <mat-icon>rocket_launch</mat-icon>
+            <div>
+              <h2>تنظیمات سئو و ثبت نهایی</h2>
+              <p>ساختار نمایش در موتورهای جستجو و آدرس یکتای دوره را بهینه‌سازی کنید</p>
+            </div>
+          </div>
+
+          <!-- Master Summarized Overview Card -->
+          <div class="summary-card">
+            <h3><mat-icon>summarize</mat-icon> نگاه کلی به دوره آموزشی ساخته شده</h3>
+            <div class="summary-grid">
+              <div class="summary-item">
+                <span>عنوان اصلی:</span>
+                <strong>{{ basicForm.get('title')?.value || 'عنوان دوره هنوز وارد نشده' }}</strong>
+              </div>
+              <div class="summary-item">
+                <span>تعداد فصول ثبت شده:</span>
+                <strong>{{ sections.length }} فصل آموزشی</strong>
+              </div>
+              <div class="summary-item">
+                <span>تعداد کل فیلم‌ها و دروس:</span>
+                <strong>{{ totalLectures() }} درس جلسه‌ای</strong>
+              </div>
+              <div class="summary-item">
+                <span>مجموع طول آموزش:</span>
+                <strong>{{ formatDuration(totalDuration()) }}</strong>
+              </div>
+              <div class="summary-item">
+                <span>قیمت نهایی فروش:</span>
+                <strong>
+                  {{
+                    isFreeCourse()
+                      ? 'کاملاً رایگان'
+                      : (pricingForm.get('price')?.value | number) + ' تومان'
+                  }}
+                </strong>
+              </div>
+              <div class="summary-item">
+                <span>نوع دسترسی محتوا:</span>
+                <strong [class.free-access-text]="isFreeCourse()">
+                  {{ isFreeCourse() ? 'تمام دروس باز برای همه' : 'محدود به خریداران دوره' }}
+                </strong>
+              </div>
+              <div class="summary-item">
+                <span>درصد پیشرفت ساختار:</span>
+                <strong class="progress-text">{{ overallProgress() }}٪ تکمیل شده</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Customizable URL Slug Input -->
+          <div class="form-group">
+            <label><mat-icon>link</mat-icon> آدرس انگلیسی صفحه دوره (Slug) جهت بهبود سئو</label>
+            <div class="slug-input">
+              <span class="slug-prefix">yoursite.com/courses/</span>
+              <input type="text" formControlName="slug" placeholder="angular-expert-course" />
+            </div>
+            <div class="input-hint">
+              <span class="hint-text"
+                >توصیه می‌شود تنها از کلمات انگلیسی کوچک و خط تیره (-) استفاده کنید</span
+              >
+            </div>
+          </div>
+
+          <!-- SEO Title -->
+          <div class="form-group">
+            <label><mat-icon>title</mat-icon> عنوان اختصاصی متا (Meta Title)</label>
+            <input
+              type="text"
+              formControlName="metaTitle"
+              maxlength="60"
+              placeholder="عنوان صفحه دوره در تب مرورگر"
+            />
+            <div class="input-hint">
+              <span class="hint-text">حداکثر مجاز: ۶۰ کاراکتر</span>
+              <span class="char-count"
+                >{{ seoForm.get('metaTitle')?.value?.length || 0 }} / 60</span
+              >
+            </div>
+          </div>
+
+          <!-- SEO Description -->
+          <div class="form-group">
+            <label><mat-icon>description</mat-icon> توضیحات متا سئو (Meta Description)</label>
+            <textarea
+              formControlName="metaDescription"
+              maxlength="200"
+              rows="3"
+              placeholder="جمله‌ای خلاصه و جذاب که کاربر در نتایج جستجوی گوگل مشاهده خواهد کرد..."
+            ></textarea>
+            <div class="input-hint">
+              <span class="hint-text">حداکثر مجاز: ۲۰۰ کاراکتر</span>
+              <span class="char-count"
+                >{{ seoForm.get('metaDescription')?.value?.length || 0 }} / 200</span
+              >
+            </div>
+          </div>
+
+          <!-- Dynamic Keywords Area -->
+          <div class="dynamic-list-section">
+            <div class="list-header">
+              <div>
+                <label><mat-icon>vpn_key</mat-icon> کلمات کلیدی هدف سئو (Meta Keywords)</label>
+                <p class="list-desc">
+                  کلمات کلیدی که کاربران برای پیدا کردن این دوره جستجو می‌کنند
+                </p>
+              </div>
+              <button type="button" class="btn-add" (click)="addKeyword()">
+                <mat-icon>add</mat-icon> افزودن کلمه کلیدی
+              </button>
+            </div>
+            <div class="dynamic-items" [@listAnimation]="keywords.length">
+              <div *ngFor="let kw of keywords.controls; let i = index" class="dynamic-item">
+                <div class="item-number">{{ i + 1 }}</div>
+                <input
+                  [formControl]="getAsFormControl(kw)"
+                  [placeholder]="'مثال: فریمورک انگولار'"
+                />
+                <button type="button" class="btn-remove" (click)="removeKeyword(i)">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </div>
+              <div *ngIf="keywords.length === 0" class="empty-state">
+                <mat-icon>vpn_key</mat-icon>
+                <p>کلمه کلیدی اضافه نشده است</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Google Search Simulation Preview -->
+          <div class="seo-preview">
+            <h4><mat-icon>preview</mat-icon> پیش‌نمایش نحوه نمایش دوره در نتایج سرچ گوگل</h4>
+            <div class="google-preview">
+              <div class="preview-title">
+                {{
+                  seoForm.get('metaTitle')?.value ||
+                    basicForm.get('title')?.value ||
+                    'عنوان تستی متا سئو دوره'
+                }}
+              </div>
+              <div class="preview-url">
+                yoursite.com/courses/{{ seoForm.get('slug')?.value || 'angular-expert-course' }}
+              </div>
+              <div class="preview-description">
+                {{
+                  seoForm.get('metaDescription')?.value ||
+                    basicForm.get('shortDescription')?.value ||
+                    'جمله جذاب دیسکریپشن برای گوگل در این قسمت رندر خواهد شد...'
+                }}
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== STICKY BOTTOM ACTION BAR ==================== -->
+  <div class="bottom-bar">
+    <div class="bottom-bar-inner">
+      <div class="bb-side bb-left">
+        <button
+          type="button"
+          class="btn-prev"
+          (click)="prevStep()"
+          *ngIf="currentStep() > 1"
+          title="مرحله قبل"
+        >
+          <mat-icon>arrow_forward</mat-icon>
+          <span>مرحله قبل</span>
+        </button>
+      </div>
+
+      <div class="bb-center">
+        <span class="bb-text">مرحله {{ currentStep() }} از {{ steps.length }}</span>
+        <div class="bb-dots">
+          <button
+            type="button"
+            *ngFor="let step of steps; trackBy: trackByStepId"
+            class="bb-dot"
+            [class.active]="currentStep() === step.id"
+            [class.done]="currentStep() > step.id"
+            (click)="goToStep(step.id)"
+            [title]="step.title"
+          ></button>
+        </div>
+      </div>
+
+      <div class="bb-side bb-right">
+        <ng-container *ngIf="currentStep() < steps.length; else finalBtns">
+          <button type="button" class="btn-next" (click)="nextStep()" title="مرحله بعد">
+            <span>مرحله بعد</span>
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+        </ng-container>
+        <ng-template #finalBtns>
+          <div class="bottom-final-buttons">
+            <button
+              type="button"
+              class="btn-draft"
+              (click)="saveDraft()"
+              [disabled]="isSaving()"
+              title="حفظ پیش‌نویس"
+            >
+              <mat-icon *ngIf="!isSaving()">save</mat-icon>
+              <span class="spinner" *ngIf="isSaving()"></span>
+              <span>{{ isSaving() ? 'در حال ذخیره...' : 'ذخیره پیش‌نویس' }}</span>
+            </button>
+            <button
+              type="button"
+              class="btn-publish"
+              (click)="submitForReview()"
+              [disabled]="isSaving()"
+              title="ارسال برای بررسی"
+            >
+              <mat-icon>rocket_launch</mat-icon>
+              <span>ارسال برای بررسی</span>
+            </button>
+          </div>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== LIVE MODAL PREVIEW OVERLAY ==================== -->
+  <div class="preview-modal-overlay" *ngIf="showPreviewModal()" (click)="closePreview()" @fadeSlide>
+    <div class="preview-modal" (click)="$event.stopPropagation()" @slideIn>
+      <div class="modal-header">
+        <h2>
+          <mat-icon>visibility</mat-icon>
+          <span>پیش‌نمایش کارت دوره روی سایت</span>
+        </h2>
+        <button class="close-btn" (click)="closePreview()" aria-label="بستن">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="preview-hero">
+          <img
+            *ngIf="thumbnailPreview()"
+            [src]="getFullMediaUrl(thumbnailPreview())"
+            alt="Preview"
+          />
+          <div *ngIf="!thumbnailPreview()" class="no-image">
+            <mat-icon>image</mat-icon>
+          </div>
+        </div>
+
+        <h1 class="preview-title">
+          {{ basicForm.get('title')?.value || 'بدون عنوان' }}
+        </h1>
+
+        <p class="preview-subtitle" *ngIf="basicForm.get('subtitle')?.value">
+          {{ basicForm.get('subtitle')?.value }}
+        </p>
+
+        <div
+          class="preview-desc"
+          *ngIf="basicForm.get('shortDescription')?.value"
+          [innerHTML]="basicForm.get('shortDescription')?.value | markdown"
+        ></div>
+
+        <div class="preview-meta">
+          <span><mat-icon>folder</mat-icon> {{ sections.length }} فصل</span>
+          <span><mat-icon>play_circle</mat-icon> {{ totalLectures() }} جلسه</span>
+          <span><mat-icon>schedule</mat-icon> {{ formatDuration(totalDuration()) }}</span>
+          <span *ngIf="isFreeCourse()"><mat-icon>lock_open</mat-icon> بدون قفل</span>
+        </div>
+
+        <div class="preview-price">
+          <ng-container *ngIf="isFreeCourse()">
+            <span class="free-tag">رایگان عمومی — دسترسی کامل</span>
+          </ng-container>
+          <ng-container *ngIf="!isFreeCourse()">
+            <strong>{{ pricingForm.get('price')?.value | number }} تومان</strong>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

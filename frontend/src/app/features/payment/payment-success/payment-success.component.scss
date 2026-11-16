@@ -1,0 +1,502 @@
+// ──────────────────────────────────────────────
+//  Design Tokens (override via CSS custom props)
+// ──────────────────────────────────────────────
+:host {
+  --success: #10b981;
+  --success-light: #d1fae5;
+  --success-glow: rgba(16, 185, 129, 0.25);
+  --error: #ef4444;
+  --error-light: #fee2e2;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --card-bg: #ffffff;
+  --page-bg: #f8fafc;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --surface: #f1f5f9;
+  --radius: 20px;
+  --radius-sm: 12px;
+
+  display: block;
+  font-family: 'Vazirmatn', 'IRANSans', system-ui, sans-serif;
+}
+
+// ──────────────────────────────────────────────
+//  Page Wrapper
+// ──────────────────────────────────────────────
+.payment-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  padding: 2rem 1rem;
+  direction: rtl;
+  background: var(--page-bg);
+}
+
+// ──────────────────────────────────────────────
+//  Card Base
+// ──────────────────────────────────────────────
+.result-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3rem 2.5rem;
+  text-align: center;
+  max-width: 520px;
+  width: 100%;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 8px 32px rgba(0, 0, 0, 0.06);
+}
+
+// ──────────────────────────────────────────────
+//  Entrance Animation
+// ──────────────────────────────────────────────
+.animate-in {
+  animation: cardEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// ──────────────────────────────────────────────
+//  Animated Checkmark (SVG)
+// ──────────────────────────────────────────────
+.checkmark-wrapper {
+  margin-bottom: 1.5rem;
+}
+
+.checkmark-svg {
+  width: 80px;
+  height: 80px;
+}
+
+.checkmark-circle {
+  fill: none;
+  stroke: var(--success);
+  stroke-width: 3;
+  stroke-dasharray: 226;
+  stroke-dashoffset: 226;
+  animation: circleDraw 0.6s 0.2s ease-out forwards;
+}
+
+.checkmark-check {
+  fill: none;
+  stroke: var(--success);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: checkDraw 0.4s 0.7s ease-out forwards;
+}
+
+@keyframes circleDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes checkDraw {
+  to { stroke-dashoffset: 0; }
+}
+
+// ──────────────────────────────────────────────
+//  Typography
+// ──────────────────────────────────────────────
+.title {
+  color: var(--success);
+  font-size: 1.65rem;
+  font-weight: 800;
+  margin: 0 0 0.5rem;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.9;
+  margin: 0 0 2rem;
+}
+
+// ──────────────────────────────────────────────
+//  Details Panel
+// ──────────────────────────────────────────────
+.details-panel {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 0.25rem 1.25rem;
+  margin-bottom: 1.75rem;
+  text-align: right;
+}
+
+.detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.detail-label {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}
+
+.detail-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text);
+  font-size: 0.925rem;
+
+  strong {
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  &.amount {
+    font-weight: 700;
+    color: var(--success);
+    font-size: 1rem;
+
+    small {
+      font-weight: 400;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+  }
+}
+
+// ──────────────────────────────────────────────
+//  Status Badge
+// ──────────────────────────────────────────────
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: var(--success-light);
+  color: #065f46;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+// ──────────────────────────────────────────────
+//  Copy Button
+// ──────────────────────────────────────────────
+.copy-btn {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem;
+  border-radius: 6px;
+  color: var(--text-muted);
+  transition: color 0.2s, background 0.2s;
+
+  &:hover {
+    color: var(--accent);
+    background: rgba(99, 102, 241, 0.08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
+
+// ──────────────────────────────────────────────
+//  Courses Panel (optional)
+// ──────────────────────────────────────────────
+.courses-panel {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.75rem;
+  text-align: right;
+}
+
+.courses-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin: 0 0 0.5rem;
+}
+
+.courses-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.course-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+// ──────────────────────────────────────────────
+//  Icons
+// ──────────────────────────────────────────────
+.icon {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  flex-shrink: 0;
+
+  &.icon-copied {
+    fill: var(--success);
+  }
+
+  &.icon-course {
+    fill: var(--accent);
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// ──────────────────────────────────────────────
+//  Action Buttons
+// ──────────────────────────────────────────────
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.925rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+
+  &:hover {
+    background: var(--accent-hover);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+  }
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+
+  &:hover {
+    background: var(--border);
+  }
+}
+
+// ──────────────────────────────────────────────
+//  Error State
+// ──────────────────────────────────────────────
+.error-card {
+  .title {
+    color: var(--error);
+  }
+}
+
+.error-icon-wrapper {
+  margin-bottom: 1.5rem;
+}
+
+.error-svg {
+  width: 80px;
+  height: 80px;
+}
+
+.error-circle {
+  fill: none;
+  stroke: var(--error);
+  stroke-width: 3;
+  stroke-dasharray: 226;
+  stroke-dashoffset: 226;
+  animation: circleDraw 0.6s 0.2s ease-out forwards;
+}
+
+.error-x1,
+.error-x2 {
+  stroke: var(--error);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 34;
+  stroke-dashoffset: 34;
+  animation: checkDraw 0.3s 0.7s ease-out forwards;
+}
+
+.error-x2 {
+  animation-delay: 0.85s;
+}
+
+.error-title {
+  color: var(--error) !important;
+}
+
+// ──────────────────────────────────────────────
+//  Empty / No-Data State
+// ──────────────────────────────────────────────
+.empty-icon {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+}
+
+// ──────────────────────────────────────────────
+//  Skeleton Loading
+// ──────────────────────────────────────────────
+.skeleton-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.skeleton-circle {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--surface);
+  margin-bottom: 1.5rem;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-line {
+  height: 16px;
+  border-radius: 8px;
+  background: var(--surface);
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-title {
+  width: 45%;
+  height: 24px;
+  margin-bottom: 0.75rem;
+}
+
+.skeleton-text {
+  width: 75%;
+  margin-bottom: 2rem;
+}
+
+.skeleton-info {
+  width: 100%;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.skeleton-row {
+  width: 100%;
+  height: 14px;
+}
+
+.skeleton-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.skeleton-btn {
+  width: 140px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { opacity: 1; }
+  50% { opacity: 0.4; }
+  100% { opacity: 1; }
+}
+
+// ──────────────────────────────────────────────
+//  Accessibility
+// ──────────────────────────────────────────────
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+// ──────────────────────────────────────────────
+//  Responsive
+// ──────────────────────────────────────────────
+@media (max-width: 480px) {
+  .result-card {
+    padding: 2rem 1.25rem;
+  }
+
+  .title {
+    font-size: 1.35rem;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .btn {
+    justify-content: center;
+    width: 100%;
+  }
+}

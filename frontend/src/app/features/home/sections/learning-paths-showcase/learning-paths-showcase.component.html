@@ -1,0 +1,90 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     🛤️ Learning Paths Showcase — طراحی مدرن و اصلاح‌شده
+     تصویر بزرگ وسط‌چین + لایوت بدون تداخل متن و دکمه
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="lp-showcase block" dir="rtl">
+  <header class="block__head">
+    <div class="head__text">
+      <span class="eyebrow">
+        <mat-icon>route</mat-icon>
+        مسیر یادگیری
+      </span>
+      <h2 class="block__title">از صفر تا استخدام، قدم به قدم</h2>
+      <p class="block__sub">مسیرهای یادگیری ساختاریافته با نقاط عطف مشخص</p>
+    </div>
+    <a routerLink="/learning-paths" class="link-all">
+      <span>مشاهده‌ی همه</span>
+      <mat-icon>arrow_back</mat-icon>
+    </a>
+  </header>
+
+  @if (isLoading()) {
+    <!-- اسکلتون: ۴ کارت -->
+    <div class="lp-grid">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="lp-card lp-card--sk">
+          <div class="lp-card__cover sh"></div>
+          <div class="lp-card__body">
+            <div class="sh sh-title"></div>
+            <div class="sh sh-desc"></div>
+            <div class="sh sh-stat"></div>
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (featuredPaths().length > 0) {
+    <div class="lp-grid">
+      @for (path of featuredPaths(); track path._id; let i = $index) {
+        <a
+          class="lp-card"
+          [routerLink]="['/learning-paths', path.slug]"
+          tiltGlare
+          [intensity]="10"
+          [lift]="6"
+          [scale]="1.02">
+
+          <!-- تصویر/آیکن بزرگ وسط‌چین -->
+          <div class="lp-card__cover" [style.background]="getCardGradient(i)">
+            @if (path.coverImage) {
+              <img
+                [src]="path.coverImage"
+                [alt]="path.title"
+                loading="lazy"
+                class="lp-card__img" />
+            } @else {
+              <div class="lp-card__emoji-wrap">
+                <span class="lp-card__emoji">{{ path.icon || '🛤️' }}</span>
+              </div>
+            }
+            <!-- آمار دوره‌ها روی تصویر (Glassmorphism) -->
+            <div class="lp-card__glass">
+              <span class="lp-card__stat">
+                <mat-icon>menu_book</mat-icon>
+                {{ totalCoursesCount(path) | faNum }} دوره
+              </span>
+            </div>
+          </div>
+
+          <!-- متن کارت (با ساختار بدون تداخل) -->
+          <div class="lp-card__body">
+            <h3 class="lp-card__title">{{ path.title }}</h3>
+            <p class="lp-card__desc">{{ path.shortDescription }}</p>
+          </div>
+
+          <!-- دکمه شناور در هاور (با موقعیت ایمن در ستون چپ) -->
+          <div class="lp-card__arrow">
+            <mat-icon>arrow_back</mat-icon>
+          </div>
+        </a>
+      }
+    </div>
+  } @else {
+    <div class="empty">
+      <div class="empty__icon-wrap">
+        <mat-icon>route</mat-icon>
+      </div>
+      <h3>مسیر یادگیری‌ای یافت نشد</h3>
+      <p>به‌زودی مسیرهای یادگیری ساختاریافته در این بخش نمایش داده می‌شوند.</p>
+    </div>
+  }
+</section>

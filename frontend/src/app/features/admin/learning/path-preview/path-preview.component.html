@@ -1,0 +1,207 @@
+<div class="preview-dialog" dir="rtl">
+  <div class="scroll-container">
+    <!-- ══════ HERO SECTION ══════ -->
+    <div class="hero-section">
+      <!-- Background -->
+      @if (data.coverImage) {
+        <img [src]="data.coverImage" alt="کاور" class="hero-bg-img" />
+      } @else {
+        <div class="hero-bg-gradient"></div>
+      }
+      <div class="hero-overlay"></div>
+
+      <!-- Controls & Badges -->
+      <button class="close-btn" (click)="close()" aria-label="بستن">
+        <mat-icon>close</mat-icon>
+      </button>
+      <span class="preview-badge">
+        <mat-icon>visibility</mat-icon>
+        پیش‌نمایش دید دانشجو
+      </span>
+
+      <!-- Hero Content (Bottom aligned) -->
+      <div class="hero-content">
+        <div class="hero-icon-box">
+          {{ data.icon || '🛤️' }}
+        </div>
+        <div class="hero-text">
+          <h2 class="hero-title">{{ data.title || 'عنوان مسیر یادگیری' }}</h2>
+          @if (data.subtitle) {
+            <p class="hero-subtitle">{{ data.subtitle }}</p>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════ META STRIP ══════ -->
+    <div class="meta-strip">
+      <!-- Difficulty -->
+      <span
+        class="meta-chip diff-chip"
+        [style.background-color]="currentDifficulty.color"
+        style="color: white; border: none"
+      >
+        {{ currentDifficulty.label }}
+      </span>
+      <!-- Stages -->
+      <span class="meta-chip">
+        <mat-icon>layers</mat-icon>
+        {{ data.stages?.length || 0 | faNum }} مرحله
+      </span>
+      <!-- Courses -->
+      <span class="meta-chip">
+        <mat-icon>school</mat-icon>
+        {{ totalCourses() | faNum }} دوره
+      </span>
+      <!-- Duration -->
+      <span class="meta-chip">
+        <mat-icon>schedule</mat-icon>
+        {{ totalDuration() | duration }}
+      </span>
+      <!-- Certificate -->
+      @if (data.hasCertificate) {
+        <span class="meta-chip cert-chip">
+          <mat-icon>workspace_premium</mat-icon>
+          گواهینامه پایان مسیر
+        </span>
+      }
+    </div>
+
+    <!-- ══════ BODY ══════ -->
+    <div class="body-content">
+      <!-- Short Description -->
+      @if (data.shortDescription) {
+        <p class="short-desc">{{ data.shortDescription }}</p>
+      }
+
+      <!-- Grid: Outcomes & Audience -->
+      <div class="info-grid">
+        @if (data.learningOutcomes && data.learningOutcomes.length > 0) {
+          <div class="info-box border-violet">
+            <p class="info-title">
+              <mat-icon class="violet">flag</mat-icon> چه چیزهایی یاد می‌گیرید
+            </p>
+            <ul class="info-list">
+              @for (item of data.learningOutcomes.slice(0, 5); track item) {
+                <li><mat-icon class="violet">chevron_left</mat-icon> {{ item }}</li>
+              }
+            </ul>
+          </div>
+        }
+        @if (data.targetAudience && data.targetAudience.length > 0) {
+          <div class="info-box border-teal">
+            <p class="info-title"><mat-icon class="teal">group</mat-icon> مناسب برای</p>
+            <div class="chips-wrap">
+              @for (item of data.targetAudience; track item) {
+                <span class="info-tag">{{ item }}</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Roadmap Timeline -->
+      <div class="roadmap-section">
+        <p class="section-title">نقشه راه مسیر</p>
+
+        <div class="timeline-container">
+          @if (data.stages && data.stages.length > 1) {
+            <div class="timeline-line"></div>
+          }
+
+          @for (stage of data.stages || []; track stage._id || $index; let i = $index) {
+            <div class="timeline-item animate-fade-in" [style.animation-delay]="i * 0.06 + 's'">
+              <!-- Stage Icon Node -->
+              <span class="stage-node-icon" [style.background]="stage.color || '#a435f0'">
+                {{ stage.icon || '📚' }}
+              </span>
+
+              <!-- Stage Card -->
+              <div class="stage-card">
+                <div class="stage-card-header">
+                  <p class="stage-card-title">{{ i + 1 | faNum }}. {{ stage.title }}</p>
+                  @if (stage.milestone) {
+                    <span class="milestone-pill">
+                      <mat-icon>emoji_events</mat-icon>
+                      {{ stage.milestone.title }}
+                    </span>
+                  }
+                </div>
+
+                @if (stage.description) {
+                  <div class="stage-card-desc" [innerHTML]="stage.description | markdown"></div>
+                }
+
+                <!-- Courses inside stage -->
+                <div class="courses-list">
+                  @for (cn of stage.courses; track cn._id || $index; let j = $index) {
+                    <div class="course-row">
+                      <!-- Thumb -->
+                      <div
+                        class="course-thumb"
+                        [style.background]="
+                          'linear-gradient(135deg, hsl(' +
+                          getCourseHue(cn) +
+                          ' 68% 52%), hsl(' +
+                          (getCourseHue(cn) + 38) +
+                          ' 72% 38%))'
+                        "
+                      >
+                        <span class="course-thumb-icon">{{ getCourseIcon(cn) }}</span>
+                      </div>
+
+                      <!-- Details -->
+                      <div class="course-details">
+                        <p class="course-title">
+                          {{ getCourseTitle(cn) }}
+                          @if (!cn.isRequired) {
+                            <span class="optional-text">(اختیاری)</span>
+                          }
+                        </p>
+                        <p class="course-meta">
+                          <span
+                            ><mat-icon>schedule</mat-icon>
+                            {{ getCourseDuration(cn) | duration }}</span
+                          >
+                          <span
+                            ><mat-icon>play_circle</mat-icon>
+                            {{ getCourseLectures(cn) | faNum }} درس</span
+                          >
+                          <span class="amber"
+                            ><mat-icon>star</mat-icon> {{ getCourseRating(cn) | faNum }}</span
+                          >
+                        </p>
+                      </div>
+
+                      <!-- Number -->
+                      <span class="course-number">{{ j + 1 | faNum }}</span>
+                    </div>
+                  }
+                  @if (!stage.courses || stage.courses.length === 0) {
+                    <p class="empty-courses">دوره‌ای هنوز اضافه نشده است</p>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+
+          @if (!data.stages || data.stages.length === 0) {
+            <p class="empty-stages">ساختار مسیر هنوز تعریف نشده است</p>
+          }
+        </div>
+      </div>
+
+      <!-- Certificate Banner -->
+      @if (data.hasCertificate) {
+        <div class="cert-banner">
+          <div class="cert-glow"></div>
+          <mat-icon class="cert-icon">workspace_premium</mat-icon>
+          <div class="cert-text">
+            <p class="cert-title">{{ data.certificateTitle || 'گواهینامه تکمیل مسیر' }}</p>
+            <p class="cert-desc">پس از پایان همه دوره‌های اجباری به شما اعطا می‌شود</p>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

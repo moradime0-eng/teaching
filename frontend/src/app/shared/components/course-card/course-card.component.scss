@@ -1,0 +1,10 @@
+/* All course-card styles are in src/styles/_cards.scss (global) */
+:host {
+  display: block;
+  height: 100%;
+}
+.no-rating-text {
+  font-size: 0.75rem;
+  color: var(--muted, #999);
+  opacity: 0.7;
+}

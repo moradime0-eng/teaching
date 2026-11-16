@@ -1,0 +1,99 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     💬 Testimonials — نظرات دانشجویان
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="testi block">
+  <header class="block__head">
+    <div>
+      <span class="eyebrow eyebrow--amber">
+        <mat-icon>format_quote</mat-icon> نظرات دانشجویان
+      </span>
+      <h2 class="block__title">دانشجوهامون چی میگن؟</h2>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <div class="testi-scroll">
+      <div class="testi-scroll__track">
+        @for (i of skeletonItems; track $index) {
+          <div class="testi-card testi-card--sk">
+            <span class="sh" style="width:32px;height:32px;border-radius:50%"></span>
+            <span class="sh" style="width:90%;height:12px;border-radius:6px;margin-top:0.8rem"></span>
+            <span class="sh" style="width:70%;height:12px;border-radius:6px"></span>
+            <span class="sh" style="width:50%;height:10px;border-radius:6px;margin-top:0.5rem"></span>
+          </div>
+        }
+      </div>
+    </div>
+  } @else if (reviews().length > 0) {
+    <div class="testi-scroll">
+      <button type="button" class="testi-scroll__nav testi-scroll__nav--left" (click)="scrollLeft()" aria-label="بعدی">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+      <button type="button" class="testi-scroll__nav testi-scroll__nav--right" (click)="scrollRight()" aria-label="قبلی">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+
+      <div class="testi-scroll__track">
+        @for (review of reviews(); track review._id; let i = $index) {
+          <div class="testi-card" [class.testi-card--expanded]="isExpanded(review._id)" [style.animation-delay]="(i * 80) + 'ms'" tiltGlare [intensity]="10" [lift]="6" [scale]="1.025">
+            <!-- User (top) -->
+            <div class="testi-card__user">
+              <div class="testi-card__avatar">
+                @if (shouldShowImage('testi-' + review._id, userAvatar(review))) {
+                  <img
+                    [src]="resolveImageUrl(userAvatar(review))"
+                    [alt]="userName(review)"
+                    loading="lazy"
+                    (error)="onImageError('testi-' + review._id, $event)"
+                  />
+                } @else {
+                  <span class="testi-card__initials">{{ userName(review)[0] }}</span>
+                }
+              </div>
+              <div class="testi-card__meta">
+                <b>{{ userName(review) }}</b>
+                <small>دانشجوی دوره «{{ courseTitle(review) }}»</small>
+              </div>
+            </div>
+
+            <!-- ⭐ Stars — استفاده از کامپوننت RatingStars -->
+            <div class="testi-card__stars">
+              <app-rating-stars 
+                [rating]="reviewRating(review)" 
+                size="small"
+                [readonly]="true">
+              </app-rating-stars>
+            </div>
+
+            <!-- Comment -->
+            <div class="testi-card__comment-wrap">
+              <div
+                class="testi-card__comment"
+                [class.testi-card__comment--clamped]="!isExpanded(review._id)"
+                [innerHTML]="isExpanded(review._id) ? safeHtml(review.comment) : safeHtml(truncateHtml(review.comment, 3))"
+              ></div>
+              
+              @if (shouldShowExpand(review)) {
+                <button type="button" class="testi-card__expand" (click)="toggleExpand(review._id)">
+                  <mat-icon>{{ isExpanded(review._id) ? 'expand_less' : 'expand_more' }}</mat-icon>
+                  <span>{{ isExpanded(review._id) ? 'نمایش کمتر' : 'نمایش بیشتر' }}</span>
+                </button>
+              }
+            </div>
+
+            <!-- Quote Icon -->
+            <mat-icon class="testi-card__quote">format_quote</mat-icon>
+          </div>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="empty">
+      <div class="empty__icon-wrap">
+        <mat-icon>format_quote</mat-icon>
+      </div>
+      <h3>نظری ثبت نشده</h3>
+      <p>به‌زودی نظرات دانشجویان در این بخش نمایش داده می‌شوند.</p>
+    </div>
+  }
+</section>

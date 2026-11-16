@@ -1,0 +1,419 @@
+// ==========================================================================
+// 👨‍🏫 Top Instructors
+// ==========================================================================
+@use '../empty-state' as es;
+
+$ease: cubic-bezier(0.16, 1, 0.3, 1);
+$grad-brand: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+
+:host {
+  display: block;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.8rem;
+  border-radius: 99px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.28);
+  color: #7c3aed;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+  }
+}
+
+.link-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: 10px;
+  color: var(--primary-color, #4f46e5);
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: background 0.18s ease;
+  mat-icon {
+    font-size: 17px;
+    width: 17px;
+    height: 17px;
+    transition: transform 0.2s ease;
+  }
+  &:hover {
+    background: color-mix(in srgb, var(--primary-color, #4f46e5) 8%, transparent);
+    mat-icon {
+      transform: translateX(-3px);
+    }
+  }
+}
+
+.block {
+  padding: 3.25rem 0 0;
+  &__head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+  }
+  &__title {
+    margin: 0;
+    font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+    font-weight: 800;
+    line-height: 1.5;
+    color: var(--text-primary, #0f172a);
+  }
+}
+
+.sh {
+  display: block;
+  border-radius: 9px;
+  background: linear-gradient(
+    90deg,
+    var(--sk-a, rgba(100, 116, 139, 0.16)) 25%,
+    var(--sk-b, rgba(100, 116, 139, 0.28)) 50%,
+    var(--sk-a, rgba(100, 116, 139, 0.16)) 75%
+  );
+  background-size: 200% 100%;
+  animation: inst-shimmer 1.4s linear infinite;
+}
+@keyframes inst-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+// ─── Grid ───
+// کارت‌های بزرگ‌تر (۲۴۰ تا ۳۰۰ پیکسل)
+// ⚠️ auto-fill استفاده می‌شود (نه auto-fit): با auto-fit و تعداد کم مدرس،
+//    یک کارت کل عرض صفحه را می‌گیرد که ظاهر بدی دارد.
+//    در RTL چیدمان از راست شروع می‌شود (justify-content: flex-start).
+.inst-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 300px));
+  justify-content: flex-start;
+  gap: 1.5rem;
+}
+
+// ─── Card ───
+.inst-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem 1.5rem;
+  border-radius: 24px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-surface, #ffffff);
+  text-decoration: none;
+  animation: inst-rise 0.5s $ease both;
+  transition:
+    transform 0.25s $ease,
+    border-color 0.25s ease,
+    box-shadow 0.25s ease;
+
+  @for $i from 1 through 6 {
+    &:nth-child(#{$i}) {
+      animation-delay: #{$i * 60}ms;
+    }
+  }
+
+  &:hover {
+    transform: translateY(-5px);
+    border-color: rgba(139, 92, 246, 0.35);
+    box-shadow: 0 18px 36px -16px rgba(139, 92, 246, 0.2);
+  }
+
+  // ─── Avatar ───
+  // 🆕 Wrapper جدید: badge بیرون از قاب آواتار قرار می‌گیرد.
+  //    خود آواتار overflow:hidden دارد (برای گرد کردن تصویر)،
+  //    پس badge قبلی با bottom/right منفی بریده می‌شد.
+  &__avatar-wrap {
+    position: relative;
+    display: inline-flex;
+    margin-bottom: 1.15rem;
+    // فضای کافی برای badge که بیرون از آواتار بیرون می‌زند
+    padding: 0;
+  }
+
+  &__avatar {
+    position: relative;
+    width: 112px;
+    height: 112px;
+    border-radius: 28px; // گوشهٔ گرد نرم — ظاهر مدرن‌تر از دایره
+    overflow: hidden;
+    border: 1px solid var(--border-color, #e2e8f0);
+    background: var(--bg-secondary, #f8fafc);
+    box-shadow: 0 10px 26px -10px rgba(15, 23, 42, 0.22);
+    transition:
+      border-color 0.3s ease,
+      box-shadow 0.3s ease,
+      transform 0.3s $ease;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 20%; // 🎯 تمرکز روی بالای سر (چهره)
+      display: block;
+      opacity: 0;
+      transform: scale(1.04);
+      transition:
+        opacity 0.45s $ease,
+        transform 0.6s $ease;
+    }
+
+    // ✨ fade-in نرم بعد از لود تصویر (بدون پرش چیدمان)
+    &.is-loaded img {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    // 🆕 Shimmer روی تصویر در حال لود
+    &.is-loading .inst-card__avatar-shimmer {
+      opacity: 1;
+    }
+  }
+
+  &:hover &__avatar {
+    border-color: rgba(139, 92, 246, 0.5);
+    box-shadow: 0 16px 34px -12px rgba(139, 92, 246, 0.35);
+    transform: translateY(-2px);
+  }
+
+  // ─── Shimmer (تا لود شدن تصویر) ───
+  &__avatar-shimmer {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    pointer-events: none;
+    background: linear-gradient(
+      100deg,
+      transparent 20%,
+      rgba(255, 255, 255, 0.55) 45%,
+      transparent 70%
+    );
+    background-size: 220% 100%;
+    animation: inst-shimmer-sweep 1.3s linear infinite;
+    transition: opacity 0.3s ease;
+  }
+
+  &__initials {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    background: $grad-brand;
+    color: #fff;
+    font-size: 1.75rem;
+    font-weight: 900;
+  }
+
+  // ─── Rating badge (ستاره طلایی) ───
+  // ⚠️ نکته: mat-icon در Angular Material فونت ۲۴px دارد.
+  //    اگر line-height را کوچک‌تر از font-size بگذاریم، گلیف نصفه بریده می‌شود.
+  //    ⇒ line-height باید >= font-size باشد و overflow نباید hidden شود.
+  &__badge-star {
+    position: absolute;
+    bottom: -8px;
+    right: -8px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #fff;
+    border: 2.5px solid var(--bg-surface, #ffffff);
+    box-shadow: 0 4px 12px -2px rgba(251, 191, 36, 0.6);
+    pointer-events: none;
+
+    mat-icon {
+      display: block;
+      font-size: 17px;
+      width: 17px;
+      height: 17px;
+      line-height: 17px; // ✅ برابر با font-size → گلیف کامل دیده می‌شود
+      overflow: visible; // ✅ جلوگیری از برش گلیف
+    }
+  }
+
+  // ─── Info ───
+  &__name {
+    margin: 0 0 0.35rem;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--text-primary, #0f172a);
+  }
+
+  &__headline {
+    margin: 0 0 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary, #64748b);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  // ─── Stats ───
+  &__stats {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: auto;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--border-color, #e2e8f0);
+    width: 100%;
+  }
+
+  &__stat {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-muted, #94a3b8);
+    mat-icon {
+      font-size: 13px;
+      width: 13px;
+      height: 13px;
+    }
+    &--rating {
+      color: #f59e0b;
+    }
+  }
+
+  // ─── Skeleton ───
+  &--sk {
+    pointer-events: none;
+    gap: 0.6rem;
+  }
+  &__avatar-sk {
+    width: 112px;
+    height: 112px;
+    border-radius: 28px;
+  }
+  &__stats-sk {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@keyframes inst-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// 🆕 درخشش روی تصویر در حال لود
+@keyframes inst-shimmer-sweep {
+  0% {
+    background-position: 220% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+
+// ═══════════════ Empty State ═══════════════
+.empty {
+  @include es.empty-state;
+}
+
+// ═══════════════ Dark Theme ═══════════════
+:host-context(.dark-theme),
+:host-context(.dark-mode),
+:host-context(.dark),
+:host-context([data-theme='dark']) {
+  .inst-card {
+    box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.4);
+    &:hover {
+      box-shadow: 0 18px 36px -16px rgba(139, 92, 246, 0.25);
+    }
+  }
+
+  // 🆕 در حالت تیره، حاشیهٔ badge باید تیره باشد تا با پس‌زمینه هماهنگ شود
+  .inst-card__badge-star {
+    border-color: var(--bg-surface, #1e293b);
+    box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.55);
+  }
+}
+
+// ═══════════════ Responsive ═══════════════
+@media (max-width: 900px) {
+  .inst-grid {
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 1.15rem;
+  }
+  .inst-card {
+    padding: 1.6rem 1.1rem;
+    &__avatar {
+      width: 96px;
+      height: 96px;
+      border-radius: 24px;
+    }
+    &__avatar-wrap {
+      margin-bottom: 1rem;
+    }
+    &__avatar-sk {
+      width: 96px;
+      height: 96px;
+      border-radius: 24px;
+    }
+  }
+}
+@media (max-width: 760px) {
+  .inst-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+@media (max-width: 480px) {
+  .inst-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+  }
+  .inst-card {
+    padding: 1.25rem 0.8rem;
+    border-radius: 18px;
+    &__avatar {
+      width: 84px;
+      height: 84px;
+      border-radius: 20px;
+    }
+    &__avatar-wrap {
+      margin-bottom: 0.85rem;
+    }
+    &__avatar-sk {
+      width: 84px;
+      height: 84px;
+      border-radius: 20px;
+    }
+    &__name {
+      font-size: 0.92rem;
+    }
+  }
+}

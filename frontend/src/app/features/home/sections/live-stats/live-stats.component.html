@@ -1,0 +1,42 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     📊 Live Stats — آمار زنده پلتفرم
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="stats-section">
+  <div class="stats-section__inner">
+    @if (!isLoading()) {
+      <div class="stats-grid">
+        <div class="stats-item">
+          <div class="stats-item__icon stats-item__icon--students">
+            <mat-icon>groups</mat-icon>
+          </div>
+          <div class="stats-item__value">{{ faNum(animatedStudents()) }}</div>
+          <div class="stats-item__label">دانشجوی فعال</div>
+        </div>
+
+        <div class="stats-item">
+          <div class="stats-item__icon stats-item__icon--courses">
+            <mat-icon>school</mat-icon>
+          </div>
+          <div class="stats-item__value">{{ faNum(animatedCourses()) }}</div>
+          <div class="stats-item__label">دوره آموزشی</div>
+        </div>
+
+        <div class="stats-item">
+          <div class="stats-item__icon stats-item__icon--hours">
+            <mat-icon>schedule</mat-icon>
+          </div>
+          <div class="stats-item__value">{{ faNum(animatedHours()) }}</div>
+          <div class="stats-item__label">ساعت آموزش</div>
+        </div>
+
+        <div class="stats-item">
+          <div class="stats-item__icon stats-item__icon--certs">
+            <mat-icon>workspace_premium</mat-icon>
+          </div>
+          <div class="stats-item__value">{{ faNum(animatedCerts()) }}</div>
+          <div class="stats-item__label">گواهینامه صادرشده</div>
+        </div>
+      </div>
+    }
+  </div>
+</section>

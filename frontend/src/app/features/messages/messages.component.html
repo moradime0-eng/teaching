@@ -1,0 +1,727 @@
+<div class="messages-page" [class.mobile-chat-open]="isMobileChatOpen()" dir="rtl">
+  <!-- ================================================
+       SIDEBAR: Conversations List
+       ================================================ -->
+  <aside class="sidebar">
+    <!-- Sidebar Header -->
+    <div class="sidebar-header">
+      <div class="header-top">
+        <div class="header-title">
+          <div class="title-icon-wrap">
+            <mat-icon>forum</mat-icon>
+          </div>
+          <div class="title-text">
+            <h2>پیام‌ها</h2>
+            <span class="conv-count" *ngIf="conversations().length > 0">
+              {{ conversations().length }} گفتگو
+            </span>
+          </div>
+        </div>
+        <div class="header-actions">
+          <!-- Broadcast button (admin only) -->
+          <button
+            *ngIf="authService.isAdmin()"
+            class="btn-icon-circle broadcast-btn"
+            title="پیام مشترک به اساتید"
+            (click)="openBroadcastDialog()"
+          >
+            <mat-icon>campaign</mat-icon>
+          </button>
+          <!-- New conversation button -->
+          <button class="btn-icon-circle" title="گفتگوی جدید" (click)="openNewConversationDialog()">
+            <mat-icon>edit_square</mat-icon>
+          </button>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="sidebar-search">
+        <mat-icon class="search-prefix">search</mat-icon>
+        <input
+          type="text"
+          placeholder="جستجو در گفتگوها..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          name="conversationSearch"
+        />
+        <button class="btn-clear-search" *ngIf="searchQuery()" (click)="searchQuery.set('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <!-- Conversations Body -->
+    <div class="sidebar-body">
+      <!-- Skeleton Loading -->
+      <div class="skeleton-list" *ngIf="isLoadingConversations()">
+        <div class="skeleton-item" *ngFor="let s of skeletonArray">
+          <div class="skel-avatar shimmer"></div>
+          <div class="skel-content">
+            <div class="skel-line skel-name shimmer"></div>
+            <div class="skel-line skel-msg shimmer"></div>
+          </div>
+          <div class="skel-time shimmer"></div>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div class="empty-state" *ngIf="!isLoadingConversations() && conversations().length === 0">
+        <div class="empty-illustration">
+          <div class="empty-circle">
+            <mat-icon>chat</mat-icon>
+          </div>
+          <div class="empty-dots"><span></span><span></span><span></span></div>
+        </div>
+        <h4>هنوز گفتگویی ندارید</h4>
+        <p>روی دکمه ✏️ بالا کلیک کنید تا گفتگوی جدیدی شروع کنید</p>
+      </div>
+
+      <!-- No Search Results -->
+      <div
+        class="empty-state compact"
+        *ngIf="
+          !isLoadingConversations() &&
+          conversations().length > 0 &&
+          filteredConversations().length === 0
+        "
+      >
+        <mat-icon class="empty-search-icon">search_off</mat-icon>
+        <h4>نتیجه‌ای یافت نشد</h4>
+        <p>عبارت دیگری را جستجو کنید</p>
+      </div>
+
+      <!-- Conversation Items -->
+      <div
+        class="conversation-list"
+        *ngIf="!isLoadingConversations() && filteredConversations().length > 0"
+      >
+        <div
+          *ngFor="let conv of filteredConversations(); trackBy: trackByConvId"
+          class="conv-item"
+          [class.active]="activeConversation()?._id === conv._id"
+          [class.has-unread]="conv.unreadCount > 0"
+          (click)="openConversation(conv)"
+        >
+          <!-- Avatar -->
+          <div class="conv-avatar">
+            <img
+              *ngIf="getOtherParticipant(conv).avatar"
+              [src]="getOtherParticipant(conv).avatar"
+              [alt]="getOtherParticipant(conv).fullName"
+            />
+            <div class="avatar-placeholder" *ngIf="!getOtherParticipant(conv).avatar">
+              {{ getInitials(getOtherParticipant(conv).fullName) }}
+            </div>
+            <span class="status-dot online"></span>
+          </div>
+
+          <!-- Details -->
+          <div class="conv-info">
+            <div class="conv-info-top">
+              <span class="conv-name">{{ getOtherParticipant(conv).fullName }}</span>
+              <mat-icon *ngIf="conv.isMuted" class="mute-icon" title="بی‌صدا"
+                >notifications_off</mat-icon
+              >
+              <span class="conv-role-badge" [attr.data-role]="getOtherParticipant(conv).role">
+                {{ getRoleLabel(getOtherParticipant(conv).role) }}
+              </span>
+              <span class="conv-time" *ngIf="conv.lastMessage?.createdAt">
+                {{ conv.lastMessage.createdAt | jalaliDate: 'HH:mm' }}
+              </span>
+            </div>
+            <div class="conv-info-bottom">
+              <p class="conv-preview">
+                <span class="you-prefix" *ngIf="isMyMessage(conv.lastMessage)">شما: </span>
+                {{ getMessagePreview(conv.lastMessage?.content) }}
+              </p>
+              <span class="unread-badge" *ngIf="conv.unreadCount && conv.unreadCount > 0">
+                {{ conv.unreadCount }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ================================================
+       MAIN CHAT AREA
+       ================================================ -->
+  <main class="chat-main">
+    <!-- No Chat Selected -->
+    <div class="chat-placeholder" *ngIf="!activeConversation()">
+      <div class="placeholder-content">
+        <div class="placeholder-art">
+          <div class="art-bg-shape shape-1"></div>
+          <div class="art-bg-shape shape-2"></div>
+          <div class="art-bg-shape shape-3"></div>
+          <div class="art-icon-wrap">
+            <mat-icon>mark_chat_unread</mat-icon>
+          </div>
+        </div>
+        <h3>به بخش پیام‌ها خوش آمدید</h3>
+        <p>یک گفتگو از لیست کناری انتخاب کنید یا گفتگوی جدیدی شروع کنید</p>
+
+        <div class="placeholder-features">
+          <div class="feature-tag">
+            <mat-icon>lock</mat-icon>
+            <span>رمزگذاری شده</span>
+          </div>
+          <div class="feature-tag">
+            <mat-icon>bolt</mat-icon>
+            <span>ارسال آنی</span>
+          </div>
+          <button class="feature-tag clickable" (click)="openNewConversationDialog()">
+            <mat-icon>add_comment</mat-icon>
+            <span>گفتگوی جدید</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Active Chat -->
+    <div class="chat-active" *ngIf="activeConversation()">
+      <!-- Chat Header -->
+      <header class="chat-header">
+        <div class="chat-header-right">
+          <!-- Mobile Back -->
+          <button class="btn-back" (click)="closeMobileChat()" aria-label="بازگشت">
+            <mat-icon>arrow_forward</mat-icon>
+          </button>
+
+          <!-- Partner Info -->
+          <div class="header-partner">
+            <div class="header-avatar">
+              <img
+                *ngIf="getOtherParticipant(activeConversation()).avatar"
+                [src]="getOtherParticipant(activeConversation()).avatar"
+                [alt]="getOtherParticipant(activeConversation()).fullName"
+              />
+              <div
+                class="avatar-placeholder sm"
+                *ngIf="!getOtherParticipant(activeConversation()).avatar"
+              >
+                {{ getInitials(getOtherParticipant(activeConversation()).fullName) }}
+              </div>
+              <span class="status-dot online"></span>
+            </div>
+
+            <div class="header-details">
+              <div class="header-name-row">
+                <h4>
+                  {{ getOtherParticipant(activeConversation()).fullName }}
+                </h4>
+                <span
+                  class="instructor-badge"
+                  *ngIf="getOtherParticipant(activeConversation()).role === 'instructor'"
+                >
+                  <mat-icon>verified</mat-icon>
+                  <span class="badge-text">مدرس</span>
+                </span>
+                <span
+                  class="admin-badge-inline"
+                  *ngIf="getOtherParticipant(activeConversation()).role === 'admin'"
+                >
+                  <mat-icon>shield</mat-icon>
+                  <span class="badge-text">مدیر</span>
+                </span>
+              </div>
+              <span class="header-status" [class.typing]="isTyping()">
+                <ng-container *ngIf="isTyping(); else onlineStatus">
+                  <span class="typing-indicator">
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                    <span class="typing-dot"></span>
+                  </span>
+                  در حال نوشتن...
+                </ng-container>
+                <ng-template #onlineStatus>
+                  <span class="online-text">آنلاین</span>
+                </ng-template>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="chat-header-left">
+          <button class="btn-header-action hide-mobile" title="تماس صوتی">
+            <mat-icon>call</mat-icon>
+          </button>
+          <button class="btn-header-action hide-mobile" title="تماس تصویری">
+            <mat-icon>videocam</mat-icon>
+          </button>
+          <div class="header-divider hide-mobile"></div>
+          <button
+            class="btn-header-action"
+            title="اطلاعات"
+            [class.active]="isInfoPanelOpen()"
+            (click)="toggleInfoPanel()"
+          >
+            <mat-icon>info</mat-icon>
+          </button>
+        </div>
+      </header>
+
+      <!-- Messages Container -->
+      <div class="chat-body" #scrollContainer>
+        <!-- Loading Messages -->
+        <div class="loading-overlay" *ngIf="isLoadingMessages()">
+          <div class="loader-spinner">
+            <div class="spinner-ring"></div>
+          </div>
+          <span>در حال بارگذاری پیام‌ها...</span>
+        </div>
+
+        <!-- Empty Chat -->
+        <div class="chat-empty" *ngIf="!isLoadingMessages() && messages().length === 0">
+          <div class="chat-empty-content">
+            <div class="wave-emoji">👋</div>
+            <h5>
+              شروع گفتگو با
+              {{ getOtherParticipant(activeConversation()).fullName }}
+            </h5>
+            <p>اولین پیام خود را بنویسید و مکالمه را آغاز کنید</p>
+
+            <div class="quick-start-suggestions">
+              <button
+                class="suggestion-chip"
+                (click)="newMessage = 'سلام! چطور می‌تونم کمکت کنم؟'; sendMessage()"
+              >
+                سلام! 👋
+              </button>
+              <button
+                class="suggestion-chip"
+                (click)="newMessage = 'درباره دوره سوالی داشتم'; sendMessage()"
+              >
+                سوال درباره دوره 📚
+              </button>
+              <button
+                class="suggestion-chip"
+                (click)="newMessage = 'ممنون از آموزش‌هاتون'; sendMessage()"
+              >
+                تشکر از شما 🙏
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Messages Stream -->
+        <div class="messages-list" *ngIf="!isLoadingMessages() && messages().length > 0">
+          <ng-container *ngFor="let msg of messages(); let i = index; trackBy: trackByMsgId">
+            <!-- Date Separator -->
+            <div class="date-separator" *ngIf="shouldShowDateSeparator(i)">
+              <div class="separator-line"></div>
+              <span class="separator-label">{{ getDateLabel(msg.createdAt) }}</span>
+              <div class="separator-line"></div>
+            </div>
+
+            <!-- Message Bubble -->
+            <div
+              class="msg-row"
+              [class.sent]="isMyMessage(msg)"
+              [class.received]="!isMyMessage(msg)"
+              [class.show-avatar]="shouldShowAvatar(i) && !isMyMessage(msg)"
+              [class.hide-avatar]="!shouldShowAvatar(i) || isMyMessage(msg)"
+            >
+              <!-- Received: Avatar -->
+              <div class="msg-avatar" *ngIf="!isMyMessage(msg) && shouldShowAvatar(i)">
+                <img
+                  *ngIf="getOtherParticipant(activeConversation()).avatar"
+                  [src]="getOtherParticipant(activeConversation()).avatar"
+                />
+                <div
+                  class="avatar-placeholder xs"
+                  *ngIf="!getOtherParticipant(activeConversation()).avatar"
+                >
+                  {{ getInitials(getOtherParticipant(activeConversation()).fullName) }}
+                </div>
+              </div>
+
+              <div class="msg-bubble">
+                <div class="bubble-content">
+                  <div [innerHTML]="msg.content | sanitizeHtml"></div>
+                </div>
+                <div class="bubble-footer">
+                  <span class="bubble-time">{{ msg.createdAt | jalaliDate: 'HH:mm' }}</span>
+                  <div class="bubble-status" *ngIf="isMyMessage(msg)">
+                    <mat-icon>done_all</mat-icon>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+
+          <!-- Typing Indicator (in stream) -->
+          <div class="msg-row received show-avatar" *ngIf="isTyping()">
+            <div class="msg-avatar">
+              <div class="avatar-placeholder xs">
+                {{ getInitials(getOtherParticipant(activeConversation()).fullName) }}
+              </div>
+            </div>
+            <div class="msg-bubble typing-bubble">
+              <div class="typing-animation">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Emoji Picker -->
+      <div class="emoji-panel" *ngIf="showEmojiPicker()">
+        <div class="emoji-grid">
+          <button
+            *ngFor="let emoji of quickEmojis"
+            type="button"
+            class="emoji-btn"
+            (click)="insertEmoji(emoji)"
+          >
+            {{ emoji }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Chat Footer / Input -->
+      <footer class="chat-footer">
+        <form class="message-form" (ngSubmit)="sendMessage()" #chatForm="ngForm">
+          <div class="input-actions-right">
+            <button type="button" class="btn-tool" title="ضمیمه فایل">
+              <mat-icon>attach_file</mat-icon>
+            </button>
+          </div>
+
+          <div class="input-wrapper">
+            <app-rich-text-editor
+              #messageInput
+              [(ngModel)]="newMessage"
+              name="newMessage"
+              placeholder="پیام خود را بنویسید..."
+              minHeight="100px"
+              maxHeight="300px"
+              [compact]="false"
+              [showEmojiButton]="true"
+              [autoExpand]="true"
+              direction="rtl"
+              class="chat-rich-editor"
+              (ngModelChange)="onTyping()"
+            ></app-rich-text-editor>
+          </div>
+
+          <div class="input-actions-left">
+            <button
+              type="submit"
+              class="btn-send"
+              [disabled]="!newMessage.trim() || isSendingLock"
+              [class.ready]="newMessage.trim()"
+              aria-label="ارسال پیام"
+            >
+              <mat-icon>send</mat-icon>
+            </button>
+          </div>
+        </form>
+      </footer>
+    </div>
+
+    <!-- Info Side Panel -->
+    <aside class="info-panel" [class.info-panel-open]="isInfoPanelOpen()" *ngIf="activeConversation() && isInfoPanelOpen()">
+      <div class="info-panel-header">
+        <h4>اطلاعات مخاطب</h4>
+        <button class="btn-icon-sm" (click)="toggleInfoPanel()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="info-panel-body">
+        <!-- Profile Section -->
+        <div class="info-profile">
+          <div class="info-avatar-large">
+            <img
+              *ngIf="getOtherParticipant(activeConversation()).avatar"
+              [src]="getOtherParticipant(activeConversation()).avatar"
+            />
+            <div
+              class="avatar-placeholder lg"
+              *ngIf="!getOtherParticipant(activeConversation()).avatar"
+            >
+              {{ getInitials(getOtherParticipant(activeConversation()).fullName) }}
+            </div>
+          </div>
+          <h3>
+            {{ getOtherParticipant(activeConversation()).fullName }}
+          </h3>
+          <span
+            class="info-role"
+            *ngIf="getOtherParticipant(activeConversation()).role === 'instructor'"
+          >
+            <mat-icon>school</mat-icon>
+            مدرس دوره
+          </span>
+          <span
+            class="info-role"
+            *ngIf="getOtherParticipant(activeConversation()).role === 'admin'"
+          >
+            <mat-icon>shield</mat-icon>
+            مدیر سیستم
+          </span>
+          <span class="info-status">
+            <span class="status-dot online small"></span>
+            آنلاین
+          </span>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="info-actions">
+          <button class="info-action-btn" (click)="viewProfile()">
+            <mat-icon>person</mat-icon>
+            <span>مشاهده پروفایل</span>
+          </button>
+          <button class="info-action-btn" (click)="muteConversation()">
+            <mat-icon>notifications_off</mat-icon>
+            <span>بی‌صدا کردن</span>
+          </button>
+          <button class="info-action-btn danger" (click)="blockUser()">
+            <mat-icon>block</mat-icon>
+            <span>مسدود کردن</span>
+          </button>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ================================================
+       MOBILE INFO PANEL OVERLAY
+       ================================================ -->
+  <div class="mobile-info-overlay" *ngIf="activeConversation() && isInfoPanelOpen()" (click)="toggleInfoPanel()"></div>
+
+  <!-- ================================================
+       NEW CONVERSATION DIALOG
+       ================================================ -->
+  <div
+    class="modal-overlay"
+    *ngIf="showNewConversationDialog()"
+    (click)="closeNewConversationDialog()"
+  >
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>گفتگوی جدید</h3>
+        <button class="btn-icon-sm" (click)="closeNewConversationDialog()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Recipient Search -->
+        <div class="search-box">
+          <mat-icon>search</mat-icon>
+          <input
+            type="text"
+            placeholder="جستجوی نام یا ایمیل..."
+            [ngModel]="userSearchQuery()"
+            (ngModelChange)="userSearchQuery.set($event)"
+            name="userSearch"
+          />
+        </div>
+
+        <!-- Selected Recipient -->
+        <div class="selected-recipient" *ngIf="selectedRecipient()">
+          <div class="recipient-chip">
+            <div class="chip-avatar">
+              <img *ngIf="selectedRecipient().avatar" [src]="selectedRecipient().avatar" />
+              <div class="avatar-placeholder xs" *ngIf="!selectedRecipient().avatar">
+                {{ getInitials(selectedRecipient().fullName) }}
+              </div>
+            </div>
+            <span class="chip-name">{{ selectedRecipient().fullName }}</span>
+            <span class="chip-role">{{ getRoleLabel(selectedRecipient().role) }}</span>
+            <button class="chip-remove" (click)="selectedRecipient.set(null)">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Users List -->
+        <div class="users-list" *ngIf="!selectedRecipient()">
+          <div class="users-loading" *ngIf="availableUsers().length === 0">
+            <mat-icon>hourglass_empty</mat-icon>
+            <span>در حال بارگذاری...</span>
+          </div>
+          <div
+            class="user-item"
+            *ngFor="let user of filteredAvailableUsers()"
+            (click)="selectRecipient(user)"
+          >
+            <div class="user-avatar">
+              <img *ngIf="user.avatar" [src]="user.avatar" />
+              <div class="avatar-placeholder" *ngIf="!user.avatar">
+                {{ getInitials(user.fullName) }}
+              </div>
+            </div>
+            <div class="user-info">
+              <span class="user-name">{{ user.fullName }}</span>
+              <span class="user-email">{{ user.email }}</span>
+            </div>
+            <span class="user-role-tag" [attr.data-role]="user.role">
+              {{ getRoleLabel(user.role) }}
+            </span>
+          </div>
+          <div
+            class="no-users"
+            *ngIf="availableUsers().length > 0 && filteredAvailableUsers().length === 0"
+          >
+            <mat-icon>search_off</mat-icon>
+            <span>کاربری یافت نشد</span>
+          </div>
+        </div>
+
+        <!-- Message Input -->
+        <div class="new-conv-message" *ngIf="selectedRecipient()">
+          <textarea
+            placeholder="پیام اول خود را بنویسید..."
+            [ngModel]="newConversationMessage()"
+            (ngModelChange)="newConversationMessage.set($event)"
+            name="newConvMsg"
+            rows="3"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeNewConversationDialog()">انصراف</button>
+        <button
+          class="btn-primary"
+          [disabled]="
+            !selectedRecipient() || !newConversationMessage().trim() || isStartingConversation()
+          "
+          (click)="startNewConversation()"
+        >
+          <mat-icon *ngIf="!isStartingConversation()">send</mat-icon>
+          <span *ngIf="isStartingConversation()">در حال ارسال...</span>
+          <span *ngIf="!isStartingConversation()">ارسال پیام</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================
+       BROADCAST DIALOG (Admin only)
+       ================================================ -->
+  <div class="modal-overlay" *ngIf="showBroadcastDialog()" (click)="closeBroadcastDialog()">
+    <div class="modal-dialog broadcast-modal" (click)="$event.stopPropagation()">
+      <div class="modal-header broadcast-header">
+        <div class="modal-title-row">
+          <mat-icon class="broadcast-icon">campaign</mat-icon>
+          <h3>پیام مشترک به اساتید</h3>
+        </div>
+        <button class="btn-icon-sm" (click)="closeBroadcastDialog()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Broadcast Mode Toggle -->
+        <div class="broadcast-modes">
+          <button
+            class="mode-btn"
+            [class.active]="broadcastMode() === 'all'"
+            (click)="broadcastMode.set('all')"
+          >
+            <mat-icon>groups</mat-icon>
+            <span>همه اساتید</span>
+          </button>
+          <button
+            class="mode-btn"
+            [class.active]="broadcastMode() === 'specific'"
+            (click)="broadcastMode.set('specific')"
+          >
+            <mat-icon>person_search</mat-icon>
+            <span>انتخاب اساتید</span>
+          </button>
+        </div>
+
+        <!-- Instructor Selection (specific mode) -->
+        <div class="instructor-select" *ngIf="broadcastMode() === 'specific'">
+          <div class="search-box">
+            <mat-icon>search</mat-icon>
+            <input
+              type="text"
+              placeholder="جستجوی استاد..."
+              [ngModel]="instructorSearchQuery()"
+              (ngModelChange)="instructorSearchQuery.set($event)"
+              name="instructorSearch"
+            />
+          </div>
+
+          <!-- Selected instructors chips -->
+          <div class="selected-chips" *ngIf="selectedBroadcastInstructors().length > 0">
+            <div class="chip" *ngFor="let inst of selectedBroadcastInstructors()">
+              <span>{{ inst.fullName }}</span>
+              <button class="chip-remove" (click)="toggleBroadcastInstructor(inst)">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <!-- Instructors list -->
+          <div class="instructors-list">
+            <div
+              class="instructor-item"
+              *ngFor="let inst of filteredBroadcastInstructors()"
+              [class.selected]="isBroadcastInstructorSelected(inst)"
+              (click)="toggleBroadcastInstructor(inst)"
+            >
+              <div class="instructor-avatar">
+                <img *ngIf="inst.avatar" [src]="inst.avatar" />
+                <div class="avatar-placeholder" *ngIf="!inst.avatar">
+                  {{ getInitials(inst.fullName) }}
+                </div>
+              </div>
+              <div class="instructor-info">
+                <span class="instructor-name">{{ inst.fullName }}</span>
+                <span class="instructor-email">{{ inst.email }}</span>
+              </div>
+              <mat-icon class="check-icon" *ngIf="isBroadcastInstructorSelected(inst)">
+                check_circle
+              </mat-icon>
+            </div>
+          </div>
+        </div>
+
+        <!-- Message Input -->
+        <div class="broadcast-message">
+          <app-rich-text-editor
+            placeholder="متن پیام مشترک..."
+            [ngModel]="broadcastMessage()"
+            (ngModelChange)="broadcastMessage.set($event)"
+            minHeight="120px"
+            [autoExpand]="true"
+          ></app-rich-text-editor>
+          <div class="char-count" [class.warning]="broadcastMessage().length > 4500">
+            {{ broadcastMessage().length }} / 5000
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="closeBroadcastDialog()">انصراف</button>
+        <button
+          class="btn-primary broadcast-send"
+          [disabled]="!broadcastMessage().trim() || isSendingBroadcast()"
+          (click)="sendBroadcast()"
+        >
+          <mat-icon *ngIf="!isSendingBroadcast()">campaign</mat-icon>
+          <span *ngIf="isSendingBroadcast()">در حال ارسال...</span>
+          <span *ngIf="!isSendingBroadcast()">
+            ارسال به
+            {{
+              broadcastMode() === 'all'
+                ? 'همه اساتید'
+                : selectedBroadcastInstructors().length + ' استاد'
+            }}
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

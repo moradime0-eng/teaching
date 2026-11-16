@@ -1,0 +1,756 @@
+<header class="navbar-wrapper" [class.scrolled]="isScrolled()" dir="rtl">
+  <nav class="navbar-container">
+    <!-- ============================================
+         1. RIGHT: Logo & Main Navigation
+    ============================================ -->
+    <div class="nav-start">
+      <a routerLink="/" class="navbar-logo" aria-label="آموزشگاه همایون">
+        <div class="logo-icon-wrapper">
+          <mat-icon class="logo-icon">school</mat-icon>
+        </div>
+        <div class="logo-text-group">
+          <span class="logo-brand">همایون</span>
+          <span class="logo-tagline">مرکز تخصصی آموزش</span>
+        </div>
+      </a>
+
+      <!-- 🆕 مگا منوی دسته‌بندی دوره‌ها -->
+      <app-mega-menu class="desktop-only"></app-mega-menu>
+
+      <!-- Desktop Links -->
+      <div class="desktop-nav-links desktop-only">
+        <a routerLink="/learning-paths" routerLinkActive="active">مسیرهای یادگیری</a>
+
+        @if (authService.isInstructor()) {
+          <a routerLink="/instructor/dashboard" routerLinkActive="active" class="role-badge-link">
+            <span class="dot"></span>
+            پنل مدرس
+          </a>
+        }
+        @if (authService.isAdmin()) {
+          <a routerLink="/admin/dashboard" routerLinkActive="active" class="role-badge-link admin">
+            <span class="dot"></span>
+            پنل مدیریت
+          </a>
+        }
+      </div>
+    </div>
+
+    <!-- ============================================
+         2. MIDDLE: Desktop Interactive Search Bar
+    ============================================ -->
+    <div class="navbar-search desktop-only">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input
+        #desktopSearchInput
+        type="text"
+        placeholder="جستجوی دوره، مدرس یا مهارت..."
+        [(ngModel)]="searchQuery"
+        (keyup.enter)="onSearch()"
+      />
+      @if (searchQuery) {
+        <button type="button" class="btn-clear" (click)="clearSearch()" aria-label="پاک کردن">
+          <mat-icon>close</mat-icon>
+        </button>
+      } @else {
+        <kbd class="search-kbd">Ctrl K</kbd>
+      }
+    </div>
+
+    <!-- ============================================
+         3. LEFT: Actions & User Controls
+    ============================================ -->
+    <div class="navbar-actions">
+      <!-- Tenant Switcher -->
+      @if (authService.isAuthenticated()) {
+        <app-tenant-switcher class="desktop-only"></app-tenant-switcher>
+      }
+
+      <!-- Search Icon (Mobile) -->
+      <button class="icon-btn mobile-only" (click)="toggleSearch()" aria-label="جستجو">
+        <mat-icon>search</mat-icon>
+      </button>
+
+      <!-- Notifications & Cart -->
+      @if (authService.isAuthenticated()) {
+        <div class="notif-wrapper" appClickOutside (appClickOutside)="closeNotificationPanel()">
+          <button
+            class="icon-btn desktop-only"
+            [matBadge]="socketService.unreadCount()"
+            [matBadgeHidden]="socketService.unreadCount() === 0"
+            matBadgeColor="warn"
+            (click)="toggleNotificationPanel()"
+            [class.active]="isNotificationPanelOpen()"
+            aria-label="اعلان‌ها"
+          >
+            <mat-icon>{{
+              isNotificationPanelOpen() ? 'notifications' : 'notifications_none'
+            }}</mat-icon>
+          </button>
+
+          @if (isNotificationPanelOpen()) {
+            <app-notification-panel (close)="closeNotificationPanel()" />
+          }
+        </div>
+
+        <button class="icon-btn desktop-only" routerLink="/cart" aria-label="سبد خرید">
+          <mat-icon>shopping_bag</mat-icon>
+        </button>
+      }
+
+      <!-- ============================================
+           User Profile Dropdown (Modern Redesign)
+      ============================================ -->
+      @if (authService.isAuthenticated()) {
+        <div
+          class="profile-dropdown-wrapper"
+          appClickOutside
+          (appClickOutside)="closeProfileMenu()"
+        >
+          <!-- Profile Trigger Button -->
+          <button
+            class="profile-trigger"
+            (click)="toggleProfileMenu()"
+            [class.active]="isProfileMenuOpen()"
+            aria-label="منوی کاربری"
+          >
+            <div class="avatar-container">
+              @if (authService.userAvatar()) {
+                <img
+                  [src]="resolveAvatarUrl(authService.userAvatar())"
+                  alt="پروفایل کاربر"
+                  class="avatar-image"
+                  appImageFallback="avatar"
+                />
+              } @else {
+                <div class="avatar-initials">{{ getUserInitials() }}</div>
+              }
+              <span class="online-dot"></span>
+            </div>
+
+            <div class="trigger-info desktop-only">
+              <span class="trigger-name">{{ authService.userName() }}</span>
+              <span class="trigger-role">
+                <mat-icon>verified</mat-icon>
+                {{ getUserRoleLabel() }}
+              </span>
+            </div>
+
+            <mat-icon class="trigger-chevron desktop-only" [class.rotated]="isProfileMenuOpen()">
+              expand_more
+            </mat-icon>
+          </button>
+
+          <!-- Profile Dropdown Panel -->
+          @if (isProfileMenuOpen()) {
+            <div class="profile-panel">
+              <!-- Panel Header (Gradient) -->
+              <div class="panel-header">
+                <div class="header-bg-decoration">
+                  <div class="deco-circle circle-1"></div>
+                  <div class="deco-circle circle-2"></div>
+                </div>
+
+                <div class="header-content">
+                  <div class="header-avatar-wrap">
+                    @if (authService.userAvatar()) {
+                      <img
+                        [src]="resolveAvatarUrl(authService.userAvatar())"
+                        alt="avatar"
+                        appImageFallback="avatar"
+                      />
+                    } @else {
+                      <div class="avatar-initials-lg">{{ getUserInitials() }}</div>
+                    }
+                    <div class="verified-badge">
+                      <mat-icon>verified</mat-icon>
+                    </div>
+                  </div>
+
+                  <div class="header-text">
+                    <h4 class="header-name">{{ authService.userName() }}</h4>
+                    <p class="header-email">{{ authService.currentUser()?.email }}</p>
+                    <span class="header-role-badge">
+                      <span class="role-dot"></span>
+                      {{ getUserRoleLabel() }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Stats Row (hidden for admin) -->
+              @if (!authService.isAdmin()) {
+                <div class="panel-stats">
+                  <a
+                    [routerLink]="
+                      authService.isInstructor() ? '/instructor/dashboard' : '/dashboard/my-courses'
+                    "
+                    class="stat-item"
+                    (click)="closeProfileMenu()"
+                  >
+                    <div class="stat-icon icon-purple">
+                      <mat-icon>video_library</mat-icon>
+                    </div>
+                    <div class="stat-info">
+                      <span class="stat-value" [class.stat-value--loading]="statsLoading">{{ statNumber('activeCourses') | faNum }}</span>
+                      <span class="stat-label">دوره فعال</span>
+                    </div>
+                  </a>
+
+                  @if (!authService.isInstructor()) {
+                    <a
+                      routerLink="/dashboard/wishlist"
+                      class="stat-item"
+                      (click)="closeProfileMenu()"
+                    >
+                      <div class="stat-icon icon-rose">
+                        <mat-icon>favorite</mat-icon>
+                      </div>
+                      <div class="stat-info">
+                        <span class="stat-value" [class.stat-value--loading]="statsLoading">{{ statNumber('wishlist') | faNum }}</span>
+                        <span class="stat-label">علاقه‌مندی</span>
+                      </div>
+                    </a>
+
+                    <a routerLink="/dashboard/learning-paths" class="stat-item" (click)="closeProfileMenu()">
+                      <div class="stat-icon icon-purple">
+                        <mat-icon>route</mat-icon>
+                      </div>
+                      <div class="stat-info">
+                        <span class="stat-value" [class.stat-value--loading]="statsLoading">{{ statNumber('learningPaths') | faNum }}</span>
+                        <span class="stat-label">مسیر یادگیری</span>
+                      </div>
+                    </a>
+
+                    <a routerLink="/certificates" class="stat-item" (click)="closeProfileMenu()">
+                      <div class="stat-icon icon-amber">
+                        <mat-icon>workspace_premium</mat-icon>
+                      </div>
+                      <div class="stat-info">
+                        <span class="stat-value" [class.stat-value--loading]="statsLoading">{{ statNumber('certificates') | faNum }}</span>
+                        <span class="stat-label">گواهی‌نامه</span>
+                      </div>
+                    </a>
+                  }
+                </div>
+              }
+
+              <!-- Menu Items -->
+              <div class="panel-menu">
+                <!-- Admin Quick Links -->
+                @if (authService.isAdmin()) {
+                  <span class="menu-section-title">مدیریت</span>
+                  <a routerLink="/admin/dashboard" class="menu-item" (click)="closeProfileMenu()">
+                    <div class="menu-icon-wrap icon-purple">
+                      <mat-icon>dashboard</mat-icon>
+                    </div>
+                    <div class="menu-text">
+                      <span class="menu-label">داشبورد مدیریت</span>
+                      <span class="menu-desc">آمار و گزارش‌های کلی</span>
+                    </div>
+                    <mat-icon class="menu-arrow">chevron_left</mat-icon>
+                  </a>
+                  <a routerLink="/admin/tickets" class="menu-item" (click)="closeProfileMenu()">
+                    <div class="menu-icon-wrap icon-amber">
+                      <mat-icon>confirmation_number</mat-icon>
+                    </div>
+                    <div class="menu-text">
+                      <span class="menu-label">تیکت‌های پشتیبانی</span>
+                      <span class="menu-desc">مدیریت و پاسخ به تیکت‌ها</span>
+                    </div>
+                    <mat-icon class="menu-arrow">chevron_left</mat-icon>
+                  </a>
+                  <a routerLink="/admin/learning-paths" class="menu-item" (click)="closeProfileMenu()">
+                    <div class="menu-icon-wrap icon-purple">
+                      <mat-icon>route</mat-icon>
+                    </div>
+                    <div class="menu-text">
+                      <span class="menu-label">مسیرهای یادگیری</span>
+                      <span class="menu-desc">ساخت و مدیریت مسیرها</span>
+                    </div>
+                    <mat-icon class="menu-arrow">chevron_left</mat-icon>
+                  </a>
+                  <a routerLink="/messages" class="menu-item" (click)="closeProfileMenu()">
+                    <div class="menu-icon-wrap icon-blue">
+                      <mat-icon>chat_bubble_outline</mat-icon>
+                    </div>
+                    <div class="menu-text">
+                      <span class="menu-label">پیام‌ها و گفتگوها</span>
+                      <span class="menu-desc">مکالمات با مدرسان و دانشجویان</span>
+                    </div>
+                    @if (socketService.unreadCount() > 0) {
+                      <span class="menu-badge">{{ socketService.unreadCount() }}</span>
+                    }
+                    <mat-icon class="menu-arrow">chevron_left</mat-icon>
+                  </a>
+                  <a routerLink="/dashboard/orders" class="menu-item" (click)="closeProfileMenu()">
+                    <div class="menu-icon-wrap icon-green">
+                      <mat-icon>receipt_long</mat-icon>
+                    </div>
+                    <div class="menu-text">
+                      <span class="menu-label">سفارش‌ها و پرداخت‌ها</span>
+                      <span class="menu-desc">تاریخچه پرداخت‌های سیستم</span>
+                    </div>
+                    <mat-icon class="menu-arrow">chevron_left</mat-icon>
+                  </a>
+                  <div class="menu-divider"></div>
+                }
+
+                @if (!authService.isAdmin()) {
+                  <span class="menu-section-title">حساب کاربری</span>
+
+                  <a
+                    [routerLink]="
+                      authService.isInstructor() ? '/instructor/dashboard' : '/dashboard/my-courses'
+                    "
+                    class="menu-item"
+                    (click)="closeProfileMenu()"
+                  >
+                    <div class="menu-icon-wrap">
+                      <mat-icon>play_lesson</mat-icon>
+                    </div>
+                    <div class="menu-text">
+                      <span class="menu-label">دوره‌های من</span>
+                      <span class="menu-desc" *ngIf="!authService.isInstructor()"
+                        >مشاهده و ادامه یادگیری</span
+                      >
+                      <span class="menu-desc" *ngIf="authService.isInstructor()"
+                        >مدیریت دوره‌های آموزشی</span
+                      >
+                    </div>
+                    <mat-icon class="menu-arrow">chevron_left</mat-icon>
+                  </a>
+
+                  @if (!authService.isInstructor()) {
+                    <a
+                      routerLink="/dashboard/wishlist"
+                      class="menu-item"
+                      (click)="closeProfileMenu()"
+                    >
+                      <div class="menu-icon-wrap icon-rose">
+                        <mat-icon>favorite_border</mat-icon>
+                      </div>
+                      <div class="menu-text">
+                        <span class="menu-label">علاقه‌مندی‌ها</span>
+                        <span class="menu-desc">لیست دوره‌های نشان‌شده</span>
+                      </div>
+                      <mat-icon class="menu-arrow">chevron_left</mat-icon>
+                    </a>
+
+                    <a routerLink="/dashboard/learning-paths" class="menu-item" (click)="closeProfileMenu()">
+                      <div class="menu-icon-wrap icon-purple">
+                        <mat-icon>route</mat-icon>
+                      </div>
+                      <div class="menu-text">
+                        <span class="menu-label">مسیرهای یادگیری من</span>
+                        <span class="menu-desc">مسیرهای ثبت‌نام‌شده</span>
+                      </div>
+                      <mat-icon class="menu-arrow">chevron_left</mat-icon>
+                    </a>
+                  }
+
+                  <a routerLink="/messages" class="menu-item" (click)="closeProfileMenu()">
+                    <div class="menu-icon-wrap icon-blue">
+                      <mat-icon>chat_bubble_outline</mat-icon>
+                    </div>
+                    <div class="menu-text">
+                      <span class="menu-label">پیام‌ها و گفتگوها</span>
+                      <span class="menu-desc">مکالمات با مدرسان</span>
+                    </div>
+                    @if (socketService.unreadCount() > 0) {
+                      <span class="menu-badge">{{ socketService.unreadCount() }}</span>
+                    }
+                    <mat-icon class="menu-arrow">chevron_left</mat-icon>
+                  </a>
+
+                  <a routerLink="/dashboard/orders" class="menu-item" (click)="closeProfileMenu()">
+                    <div class="menu-icon-wrap icon-green">
+                      <mat-icon>receipt_long</mat-icon>
+                    </div>
+                    <div class="menu-text">
+                      <span class="menu-label">سفارش‌ها و پرداخت‌ها</span>
+                      <span class="menu-desc">تاریخچه خریدهای شما</span>
+                    </div>
+                    <mat-icon class="menu-arrow">chevron_left</mat-icon>
+                  </a>
+                }
+
+                <a routerLink="/wallet" class="menu-item" (click)="closeProfileMenu()">
+                  <div class="menu-icon-wrap icon-amber">
+                    <mat-icon>account_balance_wallet</mat-icon>
+                  </div>
+                  <div class="menu-text">
+                    <span class="menu-label">کیف پول</span>
+                    <span class="menu-desc">شارژ، برداشت و تاریخچه تراکنش‌ها</span>
+                  </div>
+                  <mat-icon class="menu-arrow">chevron_left</mat-icon>
+                </a>
+
+                <div class="menu-divider"></div>
+
+                <span class="menu-section-title">تنظیمات</span>
+
+                <a routerLink="/dashboard/profile" class="menu-item" (click)="closeProfileMenu()">
+                  <div class="menu-icon-wrap icon-slate">
+                    <mat-icon>manage_accounts</mat-icon>
+                  </div>
+                  <div class="menu-text">
+                    <span class="menu-label">پروفایل کاربری</span>
+                    <span class="menu-desc">اطلاعات شخصی و امنیت</span>
+                  </div>
+                  <mat-icon class="menu-arrow">chevron_left</mat-icon>
+                </a>
+
+                <button class="menu-item theme-toggle-item" (click)="themeService.toggleTheme()">
+                  <div class="menu-icon-wrap icon-amber">
+                    <mat-icon>{{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+                  </div>
+                  <div class="menu-text">
+                    <span class="menu-label">حالت نمایش</span>
+                    <span class="menu-desc"
+                      >{{ themeService.isDark() ? 'روشن کردن' : 'تیره کردن' }} صفحه</span
+                    >
+                  </div>
+                  <div class="toggle-switch" [class.on]="themeService.isDark()">
+                    <span class="toggle-dot"></span>
+                  </div>
+                </button>
+
+                @if (!authService.isAdmin()) {
+                  <a routerLink="/support" class="menu-item" (click)="closeProfileMenu()">
+                    <div class="menu-icon-wrap icon-teal">
+                      <mat-icon>support_agent</mat-icon>
+                    </div>
+                    <div class="menu-text">
+                      <span class="menu-label">پشتیبانی و راهنما</span>
+                      <span class="menu-desc">تماس با تیم پشتیبانی</span>
+                    </div>
+                    <mat-icon class="menu-arrow">chevron_left</mat-icon>
+                  </a>
+                }
+              </div>
+
+              <!-- Panel Footer (Logout) -->
+              <div class="panel-footer">
+                <button class="btn-logout" (click)="logout()">
+                  <mat-icon>logout</mat-icon>
+                  <span>خروج از حساب کاربری</span>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <!-- ============================================
+             Auth Buttons (Login / Register) - Modern
+        ============================================ -->
+        <div class="auth-buttons desktop-only">
+          <a routerLink="/auth/login" class="btn-auth btn-auth-ghost">
+            <mat-icon>login</mat-icon>
+            <span>ورود</span>
+          </a>
+          <a routerLink="/auth/register" class="btn-auth btn-auth-primary">
+            <span>ثبت‌نام رایگان</span>
+            <mat-icon>arrow_back</mat-icon>
+          </a>
+        </div>
+
+        <!-- Mobile Auth: Single Icon -->
+        <a routerLink="/auth/login" class="icon-btn mobile-only" aria-label="ورود به حساب">
+          <mat-icon>account_circle</mat-icon>
+        </a>
+      }
+
+      <!-- Theme Switcher (When Not Logged In - Desktop) -->
+      @if (!authService.isAuthenticated()) {
+        <button
+          class="icon-btn desktop-only"
+          (click)="themeService.toggleTheme()"
+          [title]="themeService.isDark() ? 'تغییر به حالت روشن' : 'تغییر به حالت تاریک'"
+        >
+          <mat-icon>{{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+        </button>
+      }
+
+      <!-- Mobile Hamburger Button -->
+      <button
+        class="icon-btn mobile-only hamburger"
+        (click)="toggleMobileMenu()"
+        aria-label="منوی اصلی"
+      >
+        <mat-icon>{{ isMobileMenuOpen() ? 'close' : 'menu' }}</mat-icon>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ============================================
+       Mobile Collapsible Search Dropdown
+  ============================================ -->
+  @if (isSearchOpen()) {
+    <div class="mobile-search-bar" appClickOutside (appClickOutside)="isSearchOpen.set(false)">
+      <div class="mobile-search-inner">
+        <mat-icon>search</mat-icon>
+        <input
+          #mobileSearchInput
+          type="text"
+          placeholder="جستجو در تمام دوره‌ها..."
+          [(ngModel)]="searchQuery"
+          (keyup.enter)="onSearch()"
+        />
+        @if (searchQuery) {
+          <button class="btn-clear" (click)="clearSearch()">
+            <mat-icon>close</mat-icon>
+          </button>
+        }
+      </div>
+    </div>
+  }
+</header>
+
+<!-- ============================================
+     Mobile Slide-Out Drawer & Backdrop
+============================================ -->
+@if (isMobileMenuOpen()) {
+  <div class="drawer-backdrop" (click)="toggleMobileMenu()"></div>
+  <aside class="mobile-drawer" dir="rtl">
+    <!-- Drawer Header -->
+    <div class="drawer-header">
+      <div class="drawer-brand">
+        <div class="drawer-logo-icon">
+          <mat-icon>school</mat-icon>
+        </div>
+        <div class="drawer-logo-text">
+          <span class="drawer-brand-name">همایون</span>
+          <span class="drawer-brand-tagline">مرکز آموزش</span>
+        </div>
+      </div>
+      <button class="icon-btn" (click)="toggleMobileMenu()">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <!-- Drawer Profile Summary -->
+    @if (authService.isAuthenticated()) {
+      <div class="drawer-user-card">
+        <div class="drawer-avatar-wrap">
+          @if (authService.userAvatar()) {
+            <img
+              [src]="resolveAvatarUrl(authService.userAvatar())"
+              alt="avatar"
+              appImageFallback="avatar"
+            />
+          } @else {
+            <div class="drawer-avatar-initials">{{ getUserInitials() }}</div>
+          }
+          <span class="drawer-online-dot"></span>
+        </div>
+        <div class="drawer-user-info">
+          <h4>{{ authService.userName() }}</h4>
+          <span class="drawer-user-role">
+            <mat-icon>verified</mat-icon>
+            {{ getUserRoleLabel() }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Drawer Quick Actions -->
+      <div class="drawer-quick-actions">
+        <a routerLink="/notifications" class="quick-action" (click)="toggleMobileMenu()">
+          <div class="quick-action-icon">
+            <mat-icon
+              [matBadge]="socketService.unreadCount()"
+              [matBadgeHidden]="socketService.unreadCount() === 0"
+              matBadgeColor="warn"
+              matBadgeSize="small"
+              >notifications_none</mat-icon
+            >
+          </div>
+          <span>اعلان‌ها</span>
+        </a>
+        <a routerLink="/cart" class="quick-action" (click)="toggleMobileMenu()">
+          <div class="quick-action-icon">
+            <mat-icon>shopping_bag</mat-icon>
+          </div>
+          <span>سبد خرید</span>
+        </a>
+        <button class="quick-action" (click)="themeService.toggleTheme()">
+          <div class="quick-action-icon">
+            <mat-icon>{{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+          </div>
+          <span>{{ themeService.isDark() ? 'روشن' : 'تیره' }}</span>
+        </button>
+      </div>
+    } @else {
+      <div class="drawer-auth-cta">
+        <div class="cta-illustration">
+          <mat-icon>waving_hand</mat-icon>
+        </div>
+        <h3>خوش آمدید!</h3>
+        <p>برای دسترسی به دوره‌ها وارد حساب خود شوید یا ثبت‌نام کنید.</p>
+        <div class="cta-buttons">
+          <a
+            routerLink="/auth/login"
+            class="btn-auth btn-auth-ghost w-100"
+            (click)="toggleMobileMenu()"
+          >
+            <mat-icon>login</mat-icon>
+            <span>ورود</span>
+          </a>
+          <a
+            routerLink="/auth/register"
+            class="btn-auth btn-auth-primary w-100"
+            (click)="toggleMobileMenu()"
+          >
+            <span>ثبت‌نام رایگان</span>
+            <mat-icon>arrow_back</mat-icon>
+          </a>
+        </div>
+
+        <button class="theme-toggle-standalone" (click)="themeService.toggleTheme()">
+          <mat-icon>{{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+          <span>{{ themeService.isDark() ? 'حالت روشن' : 'حالت تاریک' }}</span>
+        </button>
+      </div>
+    }
+
+    <!-- Drawer Navigation Links -->
+    <nav class="drawer-nav">
+      <span class="drawer-section-title">منوی اصلی</span>
+
+      <!-- 🆕 مگا منوی دسته‌بندی (موبایل) -->
+      <app-mega-menu (navigated)="isMobileMenuOpen.set(false)"></app-mega-menu>
+
+      <a routerLink="/learning-paths" routerLinkActive="active" (click)="toggleMobileMenu()">
+        <div class="drawer-nav-icon icon-purple">
+          <mat-icon>route</mat-icon>
+        </div>
+        <span>مسیرهای یادگیری</span>
+        <mat-icon class="drawer-arrow">chevron_left</mat-icon>
+      </a>
+
+      @if (authService.isAuthenticated()) {
+        <div class="drawer-divider"></div>
+        <span class="drawer-section-title">حساب کاربری</span>
+
+        @if (!authService.isAdmin()) {
+          <a
+            [routerLink]="
+              authService.isInstructor() ? '/instructor/dashboard' : '/dashboard/my-courses'
+            "
+            (click)="toggleMobileMenu()"
+          >
+            <div class="drawer-nav-icon icon-purple">
+              <mat-icon>play_lesson</mat-icon>
+            </div>
+            <span>دوره‌های من</span>
+            <mat-icon class="drawer-arrow">chevron_left</mat-icon>
+          </a>
+
+          @if (!authService.isInstructor()) {
+            <a routerLink="/dashboard/wishlist" (click)="toggleMobileMenu()">
+              <div class="drawer-nav-icon icon-rose">
+                <mat-icon>favorite_border</mat-icon>
+              </div>
+              <span>علاقه‌مندی‌ها</span>
+              <mat-icon class="drawer-arrow">chevron_left</mat-icon>
+            </a>
+
+            <a routerLink="/dashboard/learning-paths" (click)="toggleMobileMenu()">
+              <div class="drawer-nav-icon icon-purple">
+                <mat-icon>route</mat-icon>
+              </div>
+              <span>مسیرهای یادگیری من</span>
+              <mat-icon class="drawer-arrow">chevron_left</mat-icon>
+            </a>
+          }
+        }
+
+        <a routerLink="/messages" (click)="toggleMobileMenu()">
+          <div class="drawer-nav-icon icon-blue">
+            <mat-icon>chat_bubble_outline</mat-icon>
+          </div>
+          <span>پیام‌ها</span>
+          @if (socketService.unreadCount() > 0) {
+            <span class="drawer-badge">{{ socketService.unreadCount() }}</span>
+          }
+          <mat-icon class="drawer-arrow">chevron_left</mat-icon>
+        </a>
+
+        <a routerLink="/dashboard/orders" (click)="toggleMobileMenu()">
+          <div class="drawer-nav-icon icon-green">
+            <mat-icon>receipt_long</mat-icon>
+          </div>
+          <span>سفارش‌ها</span>
+          <mat-icon class="drawer-arrow">chevron_left</mat-icon>
+        </a>
+
+        <a routerLink="/wallet" (click)="toggleMobileMenu()">
+          <div class="drawer-nav-icon icon-amber">
+            <mat-icon>account_balance_wallet</mat-icon>
+          </div>
+          <span>کیف پول</span>
+          <mat-icon class="drawer-arrow">chevron_left</mat-icon>
+        </a>
+
+        <a routerLink="/dashboard/profile" (click)="toggleMobileMenu()">
+          <div class="drawer-nav-icon icon-slate">
+            <mat-icon>manage_accounts</mat-icon>
+          </div>
+          <span>تنظیمات پروفایل</span>
+          <mat-icon class="drawer-arrow">chevron_left</mat-icon>
+        </a>
+
+        @if (authService.isInstructor() || authService.isAdmin()) {
+          <div class="drawer-divider"></div>
+          <span class="drawer-section-title">مدیریت</span>
+
+          @if (authService.isInstructor()) {
+            <a
+              routerLink="/instructor/dashboard"
+              class="instructor-link"
+              (click)="toggleMobileMenu()"
+            >
+              <div class="drawer-nav-icon icon-amber">
+                <mat-icon>co_present</mat-icon>
+              </div>
+              <span>پنل مدرس</span>
+              <mat-icon class="drawer-arrow">chevron_left</mat-icon>
+            </a>
+          }
+
+          @if (authService.isAdmin()) {
+            <a routerLink="/admin/dashboard" class="admin-link" (click)="toggleMobileMenu()">
+              <div class="drawer-nav-icon icon-red">
+                <mat-icon>admin_panel_settings</mat-icon>
+              </div>
+              <span>پنل مدیریت</span>
+              <mat-icon class="drawer-arrow">chevron_left</mat-icon>
+            </a>
+          }
+        }
+
+        <div class="drawer-divider"></div>
+
+        @if (!authService.isAdmin()) {
+          <a routerLink="/support" (click)="toggleMobileMenu()">
+            <div class="drawer-nav-icon icon-teal">
+              <mat-icon>support_agent</mat-icon>
+            </div>
+            <span>پشتیبانی</span>
+            <mat-icon class="drawer-arrow">chevron_left</mat-icon>
+          </a>
+        }
+      }
+    </nav>
+
+    <!-- Drawer Footer -->
+    @if (authService.isAuthenticated()) {
+      <div class="drawer-footer">
+        <button class="btn-drawer-logout" (click)="logout(); toggleMobileMenu()">
+          <mat-icon>logout</mat-icon>
+          <span>خروج از حساب کاربری</span>
+        </button>
+      </div>
+    }
+  </aside>
+}

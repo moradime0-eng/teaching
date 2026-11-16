@@ -1,0 +1,225 @@
+// ==========================================================================
+// Variables & Tokens
+// ==========================================================================
+$brand-primary: var(--primary-color, #4f46e5);
+$bg-surface: var(--bg-surface, #ffffff);
+$bg-subtle: var(--bg-secondary, #f8fafc);
+$border-color: var(--border-color, #e2e8f0);
+$border-focus: var(--primary-color, #4f46e5);
+$text-main: var(--text-primary, #0f172a);
+$text-muted: var(--text-secondary, #94a3b8);
+
+// ==========================================================================
+// Base Container
+// ==========================================================================
+.search-bar-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  background: $bg-subtle;
+  border: 1.5px solid $border-color;
+  border-radius: 12px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-sizing: border-box;
+
+  &:hover:not(.focused) {
+    border-color: #cbd5e1;
+    background: $bg-surface;
+  }
+
+  // Active / Focused Glow State
+  &.focused {
+    background: $bg-surface;
+    border-color: $border-focus;
+    box-shadow:
+      0 0 0 4px rgba(79, 70, 229, 0.12),
+      0 2px 8px rgba(0, 0, 0, 0.04);
+
+    .search-lead-icon .icon {
+      color: $brand-primary;
+      transform: scale(1.08);
+    }
+  }
+}
+
+// ==========================================================================
+// Lead Icon & Mini Spinner
+// ==========================================================================
+.search-lead-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline-start: 1rem;
+  margin-inline-end: 0.5rem;
+  color: $text-muted;
+  pointer-events: none;
+
+  .icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    transition:
+      color 0.2s ease,
+      transform 0.2s ease;
+  }
+
+  .search-spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid rgba(79, 70, 229, 0.2);
+    border-top-color: $brand-primary;
+    border-radius: 50%;
+    animation: spin 0.65s linear infinite;
+  }
+}
+
+// ==========================================================================
+// Input Field
+// ==========================================================================
+input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: $text-main;
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 500;
+  outline: none;
+  padding: 0;
+
+  &::placeholder {
+    color: $text-muted;
+    font-weight: 400;
+    transition: opacity 0.15s;
+  }
+
+  &:focus::placeholder {
+    opacity: 0.6;
+  }
+}
+
+// ==========================================================================
+// Action / Clear Button
+// ==========================================================================
+.clear-btn {
+  background: rgba(148, 163, 184, 0.15);
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  margin-inline-start: 0.5rem;
+  margin-inline-end: 0.75rem;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $text-muted;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: popIn 0.2s ease-out;
+
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+  }
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+    transform: scale(1.1);
+  }
+
+  &:active {
+    transform: scale(0.92);
+  }
+}
+
+// ==========================================================================
+// Sizes
+// ==========================================================================
+.search-bar-container {
+  &.small {
+    height: 38px;
+    border-radius: 8px;
+    input {
+      font-size: 0.85rem;
+    }
+    .search-lead-icon {
+      margin-inline-start: 0.65rem;
+      .icon {
+        font-size: 17px;
+        width: 17px;
+        height: 17px;
+      }
+    }
+  }
+
+  &.medium {
+    height: 46px;
+    border-radius: 12px;
+    input {
+      font-size: 0.92rem;
+    }
+  }
+
+  &.large {
+    height: 54px;
+    border-radius: 14px;
+    input {
+      font-size: 1rem;
+    }
+    .search-lead-icon {
+      margin-inline-start: 1.25rem;
+      .icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+      }
+    }
+  }
+}
+
+// ==========================================================================
+// Dark Mode Overrides
+// ==========================================================================
+:host-context(.dark-theme),
+[data-theme='dark'] {
+  .search-bar-container {
+    background: rgba(30, 41, 59, 0.6);
+    border-color: rgba(255, 255, 255, 0.08);
+
+    &:hover:not(.focused) {
+      background: rgba(30, 41, 59, 0.9);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    &.focused {
+      background: rgba(15, 23, 42, 0.95);
+      border-color: $brand-primary;
+    }
+  }
+}
+
+// ==========================================================================
+// Animations
+// ==========================================================================
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

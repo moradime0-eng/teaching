@@ -1,0 +1,1521 @@
+// ==========================================================================
+// Design Tokens
+// ==========================================================================
+$brand-primary: var(--primary-color, #4f46e5);
+$brand-primary-hover: #4338ca;
+$brand-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+
+$text-main: var(--text-primary, #0f172a);
+$text-sub: var(--text-secondary, #64748b);
+$text-muted: var(--text-muted, #94a3b8);
+
+$bg-surface: var(--bg-surface, #ffffff);
+$bg-subtle: var(--bg-secondary, #f8fafc);
+$border-color: var(--border-color, #e2e8f0);
+
+// ==========================================================================
+// Global Smooth Theme Transition
+// ==========================================================================
+:host {
+  display: block;
+
+  * {
+    transition:
+      background-color 0.3s ease,
+      border-color 0.3s ease,
+      color 0.25s ease,
+      box-shadow 0.3s ease !important;
+  }
+}
+
+// ==========================================================================
+// Loading Skeletons
+// ==========================================================================
+.page-loading {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+
+.skel-header {
+  height: 80px;
+  border-radius: 16px;
+  margin-bottom: 2rem;
+}
+
+.skel-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.skel-card {
+  height: 160px;
+  border-radius: 16px;
+}
+
+.skel-charts {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 1.5rem;
+}
+
+.skel-chart {
+  height: 360px;
+  border-radius: 16px;
+}
+
+.shimmer {
+  background: var(--skeleton-bg, #e2e8f0);
+  background-image: linear-gradient(
+    90deg,
+    var(--skeleton-bg, #e2e8f0) 25%,
+    var(--skeleton-shine, #f1f5f9) 50%,
+    var(--skeleton-bg, #e2e8f0) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+// ==========================================================================
+// Analytics Page Base
+// ==========================================================================
+.analytics-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  overflow-x: hidden;
+  position: relative;
+}
+
+// ==========================================================================
+// Page Header
+// ==========================================================================
+.page-header {
+  position: relative;
+  background: $bg-surface;
+  border-bottom: 1px solid $border-color;
+  padding: 1.5rem 0 1.75rem;
+  margin-bottom: 2rem;
+}
+
+.header-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.82rem;
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    color: $text-muted;
+    text-decoration: none;
+    font-weight: 500;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+
+    &:hover {
+      color: $brand-primary;
+    }
+  }
+
+  .breadcrumb-sep {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: $text-muted;
+  }
+
+  span {
+    color: $text-main;
+    font-weight: 700;
+  }
+}
+
+.header-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.header-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  .header-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: $brand-gradient;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    box-shadow: 0 8px 20px rgba(99, 102, 241, 0.3);
+
+    mat-icon {
+      font-size: 26px;
+      width: 26px;
+      height: 26px;
+    }
+  }
+
+  h1 {
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: $text-main;
+    margin: 0 0 0.2rem;
+    letter-spacing: -0.3px;
+  }
+
+  p {
+    font-size: 0.88rem;
+    color: $text-sub;
+    margin: 0;
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.period-tabs {
+  display: flex;
+  align-items: center;
+  background: $bg-subtle;
+  border: 1px solid $border-color;
+  border-radius: 12px;
+  padding: 4px;
+  gap: 2px;
+}
+
+.period-tab {
+  background: transparent;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 9px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: $text-sub;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+
+  &:hover {
+    color: $text-main;
+    background: rgba(0, 0, 0, 0.04);
+  }
+
+  &.active {
+    background: $bg-surface;
+    color: $brand-primary;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    font-weight: 700;
+  }
+}
+
+.btn-refresh {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid $border-color;
+  background: $bg-surface;
+  color: $text-sub;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover {
+    color: $brand-primary;
+    border-color: $brand-primary;
+    background: rgba(79, 70, 229, 0.06);
+
+    mat-icon {
+      animation: spin 0.6s ease;
+    }
+  }
+}
+
+// ==========================================================================
+// Page Container
+// ==========================================================================
+.page-container {
+  padding: 0 1.5rem 4rem;
+}
+
+// ==========================================================================
+// KPI Stat Cards
+// ==========================================================================
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.kpi-card {
+  background: $bg-surface;
+  border: 1px solid $border-color;
+  border-radius: 18px;
+  padding: 1.5rem;
+  position: relative;
+  overflow: hidden;
+  animation: fadeSlideUp 0.5s ease both;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100%;
+    height: 3px;
+    border-radius: 18px 18px 0 0;
+  }
+
+  &[data-color='green']::before {
+    background: linear-gradient(90deg, #10b981, #34d399);
+  }
+  &[data-color='blue']::before {
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+  }
+  &[data-color='purple']::before {
+    background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+  }
+  &[data-color='amber']::before {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.12);
+  }
+}
+
+.kpi-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.kpi-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  mat-icon {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+
+  [data-color='green'] & {
+    background: rgba(16, 185, 129, 0.12);
+    color: #10b981;
+  }
+  [data-color='blue'] & {
+    background: rgba(59, 130, 246, 0.12);
+    color: #3b82f6;
+  }
+  [data-color='purple'] & {
+    background: rgba(139, 92, 246, 0.12);
+    color: #8b5cf6;
+  }
+  [data-color='amber'] & {
+    background: rgba(245, 158, 11, 0.12);
+    color: #f59e0b;
+  }
+}
+
+.kpi-trend {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 8px;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &.up {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+  }
+
+  &.down {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+  }
+}
+
+.kpi-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-bottom: 0.75rem;
+}
+
+.kpi-value {
+  font-size: 1.85rem;
+  font-weight: 800;
+  color: $text-main;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
+
+  small {
+    font-size: 0.85rem;
+    color: $text-muted;
+    font-weight: 500;
+  }
+
+  &.revenue {
+    font-size: 1.5rem;
+  }
+}
+
+.kpi-label {
+  font-size: 0.82rem;
+  color: $text-sub;
+  font-weight: 500;
+}
+
+.kpi-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid $border-color;
+  font-size: 0.75rem;
+  color: $text-muted;
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+
+    &.green {
+      background: #10b981;
+    }
+  }
+}
+
+.star-row {
+  display: flex;
+  gap: 1px;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    color: #e2e8f0;
+
+    &.filled {
+      color: #f59e0b;
+    }
+  }
+}
+
+// ==========================================================================
+// Charts Grid
+// ==========================================================================
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+// ==========================================================================
+// Panel Component
+// ==========================================================================
+.panel {
+  background: $bg-surface;
+  border: 1px solid $border-color;
+  border-radius: 18px;
+  overflow: hidden;
+  animation: fadeSlideUp 0.5s ease both;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid $border-color;
+}
+
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: #818cf8;
+  }
+
+  h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: $text-main;
+    margin: 0;
+  }
+}
+
+.panel-body {
+  padding: 1.5rem;
+
+  &.center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}
+
+// ==========================================================================
+// Chart Panel – Revenue Bar Chart
+// ==========================================================================
+.chart-total {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+
+  .ct-label {
+    font-size: 0.72rem;
+    color: $text-muted;
+    font-weight: 500;
+  }
+
+  .ct-value {
+    font-size: 1rem;
+    font-weight: 800;
+    color: $text-main;
+  }
+}
+
+// Bar Chart
+.bar-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  animation: fadeSlideRight 0.4s ease both;
+}
+
+.bar-label {
+  width: 60px;
+  min-width: 60px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: $text-sub;
+  text-align: left;
+}
+
+.bar-track {
+  flex: 1;
+  height: 32px;
+  background: $bg-subtle;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.bar-fill {
+  height: 100%;
+  background: $brand-gradient;
+  border-radius: 8px;
+  min-width: 4px;
+  position: relative;
+  animation: barGrow 0.8s ease both;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-left: 8px;
+
+  .bar-tooltip {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #ffffff;
+    padding: 0 6px;
+    white-space: nowrap;
+  }
+}
+
+.bar-value {
+  width: 90px;
+  min-width: 90px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: $text-main;
+  text-align: right;
+}
+
+// Chart Empty State
+.chart-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 1.5rem;
+
+  &.compact {
+    padding: 2rem 1.5rem;
+  }
+
+  .empty-icon-wrap {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    background: $bg-subtle;
+    border: 1px dashed $border-color;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+
+    mat-icon {
+      font-size: 32px;
+      width: 32px;
+      height: 32px;
+      color: $text-muted;
+    }
+
+    &.sm {
+      width: 56px;
+      height: 56px;
+
+      mat-icon {
+        font-size: 26px;
+        width: 26px;
+        height: 26px;
+      }
+    }
+  }
+
+  h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: $text-main;
+    margin: 0 0 0.4rem;
+  }
+
+  p {
+    font-size: 0.82rem;
+    color: $text-sub;
+    margin: 0;
+    max-width: 300px;
+    line-height: 1.6;
+  }
+}
+
+// ==========================================================================
+// Enrollment List
+// ==========================================================================
+.btn-view-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: #818cf8;
+  font-weight: 700;
+  font-size: 0.82rem;
+  text-decoration: none;
+  white-space: nowrap;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &:hover {
+    transform: translateX(-4px);
+  }
+}
+
+.enrollment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.enrollment-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 0.5rem;
+  border-radius: 12px;
+  animation: fadeSlideUp 0.4s ease both;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid $border-color;
+  }
+
+  &:hover {
+    background: $bg-subtle;
+  }
+}
+
+.en-avatar {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  border-radius: 50%;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .avatar-fallback {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #818cf8 0%, #6366f1 100%);
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+  }
+}
+
+.en-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+
+  .en-name {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: $text-main;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .en-course {
+    font-size: 0.75rem;
+    color: $text-muted;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    mat-icon {
+      font-size: 13px;
+      width: 13px;
+      height: 13px;
+    }
+  }
+}
+
+.en-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  white-space: nowrap;
+
+  .en-time {
+    font-size: 0.72rem;
+    color: $text-muted;
+  }
+
+  .en-badge {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.08);
+    padding: 2px 8px;
+    border-radius: 6px;
+  }
+}
+
+// ==========================================================================
+// Bottom Grid
+// ==========================================================================
+.bottom-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 0.6fr;
+  gap: 1.5rem;
+}
+
+// ==========================================================================
+// Top Courses Performance
+// ==========================================================================
+.course-perf-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.course-perf-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 0.5rem;
+  border-radius: 12px;
+  animation: fadeSlideUp 0.4s ease both;
+
+  &:not(:last-child) {
+    border-bottom: 1px solid $border-color;
+  }
+
+  &:hover {
+    background: $bg-subtle;
+  }
+}
+
+.cp-rank {
+  width: 38px;
+  height: 38px;
+  min-width: 38px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: $text-sub;
+  background: $bg-subtle;
+  border: 1px solid $border-color;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &[data-rank='1'] {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    border-color: #fcd34d;
+    color: #b45309;
+  }
+
+  &[data-rank='2'] {
+    background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+    border-color: #cbd5e1;
+    color: #475569;
+  }
+
+  &[data-rank='3'] {
+    background: linear-gradient(135deg, #fef2e8, #fed7aa);
+    border-color: #fdba74;
+    color: #c2410c;
+  }
+}
+
+.cp-info {
+  flex: 1;
+  min-width: 0;
+
+  h4 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: $text-main;
+    margin: 0 0 0.3rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cp-metrics {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.2rem;
+      font-size: 0.75rem;
+      color: $text-muted;
+      font-weight: 500;
+
+      mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+      }
+    }
+  }
+}
+
+.cp-revenue {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+
+  .cp-amount {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #10b981;
+  }
+
+  .cp-label {
+    font-size: 0.7rem;
+    color: $text-muted;
+    font-weight: 500;
+  }
+}
+
+.btn-empty-cta {
+  margin-top: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  background: $brand-gradient;
+  color: #ffffff;
+  text-decoration: none;
+  padding: 0.6rem 1.25rem;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    opacity: 0.92;
+    transform: translateY(-2px);
+  }
+}
+
+// ==========================================================================
+// Insights Sidebar
+// ==========================================================================
+.insights-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+// Ring / Donut Chart
+.ring-chart {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  margin-bottom: 1rem;
+}
+
+.ring-svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ring-bg {
+  fill: none;
+  stroke: $border-color;
+  stroke-width: 3;
+}
+
+.ring-fill {
+  fill: none;
+  stroke: url(#ringGradient);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke: #6366f1;
+  animation: ringDraw 1.2s ease both;
+}
+
+.ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  .ring-value {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: $text-main;
+    line-height: 1.2;
+  }
+
+  .ring-label {
+    font-size: 0.75rem;
+    color: $text-muted;
+    font-weight: 500;
+  }
+}
+
+.insight-desc {
+  font-size: 0.8rem;
+  color: $text-sub;
+  line-height: 1.6;
+  max-width: 240px;
+  margin: 0;
+}
+
+// Tip Card
+.tip-card {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1px solid #fde68a;
+  border-radius: 18px;
+  padding: 1.5rem;
+  text-align: center;
+
+  .tip-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(245, 158, 11, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 0.85rem;
+
+    mat-icon {
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+      color: #f59e0b;
+    }
+  }
+
+  h4 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #92400e;
+    margin: 0 0 0.5rem;
+  }
+
+  p {
+    font-size: 0.8rem;
+    color: #a16207;
+    line-height: 1.65;
+    margin: 0 0 1rem;
+  }
+
+  .tip-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #b45309;
+    text-decoration: none;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+
+    &:hover {
+      color: #92400e;
+      transform: translateX(-3px);
+    }
+  }
+}
+
+// ==========================================================================
+// Dark Mode
+// ==========================================================================
+:host-context(.dark-theme),
+:host-context(.dark-mode),
+:host-context(.dark),
+[data-theme='dark'],
+.dark {
+  --skeleton-bg: #1e293b;
+  --skeleton-shine: #334155;
+
+  .page-header {
+    background: var(--bg-surface, #0f172a);
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .period-tabs {
+    background: #1e293b;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  .period-tab {
+    color: #94a3b8;
+
+    &:hover {
+      color: #f8fafc;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    &.active {
+      background: #334155;
+      color: #a5b4fc;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  .btn-refresh {
+    background: #1e293b;
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+
+    &:hover {
+      background: rgba(99, 102, 241, 0.1);
+      border-color: #6366f1;
+      color: #818cf8;
+    }
+  }
+
+  .kpi-card {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+
+    &:hover {
+      box-shadow: 0 16px 32px -8px rgba(0, 0, 0, 0.4) !important;
+    }
+  }
+
+  .kpi-value {
+    color: #f8fafc !important;
+  }
+
+  .kpi-footer {
+    border-top-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .panel {
+    background: #1e293b !important;
+    border-color: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .panel-header {
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .panel-title h3 {
+    color: #f8fafc !important;
+  }
+
+  .ct-value {
+    color: #f8fafc !important;
+  }
+
+  .bar-track {
+    background: #0f172a;
+  }
+
+  .bar-value {
+    color: #f8fafc !important;
+  }
+
+  .chart-empty {
+    h4 {
+      color: #f8fafc !important;
+    }
+
+    .empty-icon-wrap {
+      background: #0f172a;
+      border-color: rgba(255, 255, 255, 0.12);
+    }
+  }
+
+  .enrollment-item {
+    &:not(:last-child) {
+      border-bottom-color: rgba(255, 255, 255, 0.06);
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+  }
+
+  .en-name {
+    color: #f8fafc !important;
+  }
+
+  .course-perf-item {
+    &:not(:last-child) {
+      border-bottom-color: rgba(255, 255, 255, 0.06);
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+  }
+
+  .cp-info h4 {
+    color: #f8fafc !important;
+  }
+
+  .cp-rank {
+    background: #0f172a;
+    border-color: rgba(255, 255, 255, 0.1);
+
+    &[data-rank='1'] {
+      background: rgba(251, 191, 36, 0.12);
+      border-color: rgba(251, 191, 36, 0.3);
+    }
+
+    &[data-rank='2'] {
+      background: rgba(148, 163, 184, 0.12);
+      border-color: rgba(148, 163, 184, 0.3);
+    }
+
+    &[data-rank='3'] {
+      background: rgba(251, 146, 60, 0.12);
+      border-color: rgba(251, 146, 60, 0.3);
+    }
+  }
+
+  .ring-bg {
+    stroke: rgba(255, 255, 255, 0.08);
+  }
+
+  .ring-value {
+    color: #f8fafc !important;
+  }
+
+  .tip-card {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.04));
+    border-color: rgba(245, 158, 11, 0.2);
+
+    h4 {
+      color: #fbbf24;
+    }
+
+    p {
+      color: #fcd34d;
+    }
+
+    .tip-link {
+      color: #fbbf24;
+
+      &:hover {
+        color: #fde68a;
+      }
+    }
+
+    .tip-icon {
+      background: rgba(245, 158, 11, 0.12);
+    }
+  }
+
+  .star-row mat-icon {
+    color: #334155;
+
+    &.filled {
+      color: #f59e0b;
+    }
+  }
+
+  .skel-header,
+  .skel-card,
+  .skel-chart {
+    background: #1e293b;
+    background-image: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 200% 100%;
+  }
+}
+
+// ==========================================================================
+// Animations
+// ==========================================================================
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeSlideRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes barGrow {
+  from {
+    width: 0;
+  }
+}
+
+@keyframes ringDraw {
+  from {
+    stroke-dasharray: 0, 100;
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ==========================================================================
+// Responsive Design
+// ==========================================================================
+@media (max-width: 1200px) {
+  .kpi-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bottom-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 0 1rem 3rem;
+  }
+
+  .header-content {
+    padding: 0 1rem;
+  }
+
+  .header-main {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  .header-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .period-tabs {
+    flex-wrap: wrap;
+    width: 100%;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .skel-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .skel-charts {
+    grid-template-columns: 1fr;
+  }
+
+  .header-title-wrap {
+    h1 {
+      font-size: 1.35rem;
+    }
+
+    .header-icon {
+      width: 44px;
+      height: 44px;
+
+      mat-icon {
+        font-size: 22px;
+        width: 22px;
+        height: 22px;
+      }
+    }
+  }
+
+  .bar-label {
+    width: 45px;
+    min-width: 45px;
+    font-size: 0.72rem;
+  }
+
+  .bar-value {
+    width: 70px;
+    min-width: 70px;
+    font-size: 0.72rem;
+  }
+
+  .bar-track {
+    height: 26px;
+  }
+
+  .kpi-value {
+    font-size: 1.5rem;
+
+    &.revenue {
+      font-size: 1.25rem;
+    }
+  }
+
+  .insights-sidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
+
+    .panel,
+    .tip-card {
+      flex: 1;
+      min-width: 260px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .page-header {
+    padding: 1rem 0 1.25rem;
+  }
+
+  .breadcrumb {
+    font-size: 0.75rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .header-title-wrap {
+    gap: 0.75rem;
+
+    h1 {
+      font-size: 1.2rem;
+    }
+
+    p {
+      font-size: 0.8rem;
+    }
+  }
+
+  .period-tab {
+    font-size: 0.75rem;
+    padding: 0.4rem 0.75rem;
+  }
+
+  .kpi-card {
+    padding: 1.15rem;
+  }
+
+  .panel-body {
+    padding: 1.15rem;
+  }
+
+  .panel-header {
+    padding: 1rem 1.15rem;
+  }
+
+  .enrollment-item {
+    gap: 0.65rem;
+    padding: 0.7rem 0.25rem;
+  }
+
+  .en-avatar {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+  }
+
+  .en-name {
+    font-size: 0.82rem;
+  }
+
+  .course-perf-item {
+    gap: 0.75rem;
+    padding: 0.85rem 0.25rem;
+  }
+
+  .cp-rank {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 8px;
+    font-size: 0.78rem;
+
+    mat-icon {
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+    }
+  }
+
+  .ring-chart {
+    width: 120px;
+    height: 120px;
+  }
+
+  .ring-center .ring-value {
+    font-size: 1.3rem;
+  }
+
+  .tip-card {
+    padding: 1.15rem;
+  }
+
+  .insights-sidebar {
+    flex-direction: column;
+
+    .panel,
+    .tip-card {
+      min-width: unset;
+    }
+  }
+}

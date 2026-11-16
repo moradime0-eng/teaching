@@ -1,0 +1,171 @@
+// ==========================================================================
+// Variables & Design Tokens
+// ==========================================================================
+$star-gold: #f59e0b;
+$star-gold-hover: #d97706;
+$star-empty: #cbd5e1;
+$star-empty-dark: #475569;
+
+// ==========================================================================
+// Container & Layout
+// ==========================================================================
+.rating-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  user-select: none;
+  vertical-align: middle;
+
+  .stars-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+  }
+}
+
+// ==========================================================================
+// Star Icons & States
+// ==========================================================================
+.star-icon {
+  color: $star-empty;
+  transition:
+    color 0.15s ease,
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &.full {
+    color: $star-gold;
+  }
+
+  &.half {
+    color: $star-gold;
+    // Fix for RTL: Flips the half-star icon so it fills from right-to-left
+    transform: scaleX(-1);
+  }
+}
+
+// ==========================================================================
+// Interactive Button Styling
+// ==========================================================================
+.star-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  outline: none;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &:hover {
+    transform: scale(1.22);
+
+    .star-icon {
+      color: $star-gold-hover;
+    }
+  }
+
+  &:active {
+    transform: scale(0.9);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.4);
+  }
+}
+
+// ==========================================================================
+// Descriptive Tag / Tooltip Label
+// ==========================================================================
+.rating-label-tag {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: $star-gold-hover;
+  background: #fef3c7;
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  animation: fadeIn 0.15s ease-out;
+
+  &.highlight {
+    background: #fde68a;
+    transform: translateY(-1px);
+  }
+}
+
+// ==========================================================================
+// Sizes
+// ==========================================================================
+.rating-container {
+  &.small {
+    .star-icon {
+      font-size: 15px;
+      width: 15px;
+      height: 15px;
+    }
+    .rating-label-tag {
+      font-size: 0.72rem;
+      padding: 1px 6px;
+    }
+  }
+
+  &.medium {
+    .star-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  &.large {
+    .star-icon {
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+    }
+    .rating-label-tag {
+      font-size: 0.9rem;
+      padding: 3px 10px;
+    }
+  }
+
+  &.xlarge {
+    .star-icon {
+      font-size: 36px;
+      width: 36px;
+      height: 36px;
+    }
+    .rating-label-tag {
+      font-size: 1rem;
+      padding: 4px 12px;
+    }
+  }
+}
+
+// ==========================================================================
+// Dark Mode Overrides
+// ==========================================================================
+:host-context(.dark-theme),
+[data-theme='dark'] {
+  .star-icon:not(.full):not(.half) {
+    color: $star-empty-dark;
+  }
+
+  .rating-label-tag {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

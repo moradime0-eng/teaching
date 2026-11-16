@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450">
+  <defs>
+    <linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f6d365"/>
+      <stop offset="100%" stop-color="#fda085"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#g1)"/>
+  <ellipse cx="400" cy="380" rx="500" ry="120" fill="#f093fb" opacity="0.3"/>
+  <ellipse cx="300" cy="400" rx="400" ry="100" fill="#f5576c" opacity="0.25"/>
+  <ellipse cx="550" cy="360" rx="350" ry="90" fill="#fda085" opacity="0.4"/>
+  <text x="400" y="225" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" fill="#fff" font-weight="bold">Dunes</text>
+</svg>

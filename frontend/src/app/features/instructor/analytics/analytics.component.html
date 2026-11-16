@@ -1,0 +1,366 @@
+<div class="analytics-page" dir="rtl">
+  <!-- LOADING -->
+  <div class="page-loading" *ngIf="isLoading()">
+    <div class="skel-header shimmer"></div>
+    <div class="skel-stats">
+      <div class="skel-card shimmer" *ngFor="let s of skeletonArray"></div>
+    </div>
+    <div class="skel-charts">
+      <div class="skel-chart shimmer"></div>
+      <div class="skel-chart shimmer"></div>
+    </div>
+  </div>
+
+  <ng-container *ngIf="!isLoading()">
+    <!-- ==========================================
+         PAGE HEADER
+         ========================================== -->
+    <header class="page-header">
+      <div class="header-content">
+        <div class="breadcrumb">
+          <a routerLink="/instructor/dashboard">
+            <mat-icon>dashboard</mat-icon>
+            پنل مدرس
+          </a>
+          <mat-icon class="breadcrumb-sep">chevron_left</mat-icon>
+          <span>تحلیل و آمار</span>
+        </div>
+
+        <div class="header-main">
+          <div class="header-title-wrap">
+            <div class="header-icon">
+              <mat-icon>insights</mat-icon>
+            </div>
+            <div>
+              <h1>تحلیل و آمار</h1>
+              <p>نمای کلی از عملکرد دوره‌ها، درآمد و دانشجویان شما</p>
+            </div>
+          </div>
+
+          <div class="header-actions">
+            <div class="period-tabs">
+              <button
+                *ngFor="let p of periods"
+                class="period-tab"
+                [class.active]="selectedPeriod() === p.value"
+                (click)="setPeriod(p.value)"
+              >
+                {{ p.label }}
+              </button>
+            </div>
+
+            <button class="btn-refresh" (click)="loadAnalytics()" title="بروزرسانی">
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-container">
+      <!-- ==========================================
+           KPI STAT CARDS
+           ========================================== -->
+      <section class="kpi-grid">
+        <div class="kpi-card" data-color="green">
+          <div class="kpi-top">
+            <div class="kpi-icon"><mat-icon>payments</mat-icon></div>
+            <div
+              class="kpi-trend"
+              [class.up]="revenueGrowth() >= 0"
+              [class.down]="revenueGrowth() < 0"
+            >
+              <mat-icon>{{ revenueGrowth() >= 0 ? 'trending_up' : 'trending_down' }}</mat-icon>
+              <span>{{ revenueGrowth() >= 0 ? '+' : '' }}{{ revenueGrowth() }}٪</span>
+            </div>
+          </div>
+          <div class="kpi-body">
+            <span class="kpi-value revenue">{{ display().totalRevenue | toman }}</span>
+            <span class="kpi-label">کل درآمد</span>
+          </div>
+          <div class="kpi-footer">
+            <span>نسبت به دوره قبل</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" data-color="blue">
+          <div class="kpi-top">
+            <div class="kpi-icon"><mat-icon>groups</mat-icon></div>
+          </div>
+          <div class="kpi-body">
+            <span class="kpi-value">{{ display().totalStudents | number }}</span>
+            <span class="kpi-label">کل دانشجویان</span>
+          </div>
+          <div class="kpi-footer">
+            <span>{{ display().recentEnrollments.length }} ثبت‌نام اخیر</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" data-color="purple">
+          <div class="kpi-top">
+            <div class="kpi-icon"><mat-icon>school</mat-icon></div>
+          </div>
+          <div class="kpi-body">
+            <span class="kpi-value">{{ display().totalCourses }}</span>
+            <span class="kpi-label">کل دوره‌ها</span>
+          </div>
+          <div class="kpi-footer">
+            <span class="dot green"></span>
+            <span>{{ display().publishedCourses }} منتشر شده</span>
+          </div>
+        </div>
+
+        <div class="kpi-card" data-color="amber">
+          <div class="kpi-top">
+            <div class="kpi-icon"><mat-icon>star</mat-icon></div>
+          </div>
+          <div class="kpi-body">
+            <span class="kpi-value">
+              {{ display().averageRating | number: '1.1-1' }}
+              <small>/ ۵</small>
+            </span>
+            <span class="kpi-label">میانگین امتیاز</span>
+          </div>
+          <div class="kpi-footer">
+            <div class="star-row">
+              <mat-icon
+                *ngFor="let s of [1, 2, 3, 4, 5]"
+                [class.filled]="s <= display().averageRating"
+                >{{ s <= display().averageRating ? 'star' : 'star_border' }}</mat-icon
+              >
+            </div>
+            <span>{{ display().totalReviews }} نظر</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ==========================================
+           CHARTS ROW
+           ========================================== -->
+      <div class="charts-grid">
+        <!-- Revenue Chart -->
+        <section class="panel chart-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <mat-icon>bar_chart</mat-icon>
+              <h3>درآمد ماهانه</h3>
+            </div>
+            <div class="chart-total" *ngIf="chartMonths().length > 0">
+              <span class="ct-label">جمع نمودار</span>
+              <span class="ct-value">{{ chartTotal() | toman }}</span>
+            </div>
+          </div>
+
+          <div class="panel-body">
+            <!-- Empty chart -->
+            <div class="chart-empty" *ngIf="chartMonths().length === 0">
+              <div class="empty-icon-wrap">
+                <mat-icon>show_chart</mat-icon>
+              </div>
+              <h4>هنوز داده‌ای برای نمایش نیست</h4>
+              <p>پس از ثبت فروش، نمودار درآمد ماهانه اینجا نمایش داده می‌شود</p>
+            </div>
+
+            <!-- Bars -->
+            <div class="bar-chart" *ngIf="chartMonths().length > 0">
+              <div
+                class="bar-row"
+                *ngFor="let month of chartMonths(); trackBy: trackByMonth; let i = index"
+              >
+                <span class="bar-label">{{ month.label }}</span>
+
+                <div class="bar-track">
+                  <div
+                    class="bar-fill"
+                    [style.width.%]="month.percent"
+                    [style.animation-delay.ms]="i * 80"
+                  >
+                    <span class="bar-tooltip" *ngIf="month.percent > 15">
+                      {{ month.percent }}٪
+                    </span>
+                  </div>
+                </div>
+
+                <span class="bar-value">{{ month.total | toman }}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Recent Enrollments -->
+        <section class="panel enrollments-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <mat-icon>person_add</mat-icon>
+              <h3>آخرین ثبت‌نام‌ها</h3>
+            </div>
+          </div>
+
+          <div class="panel-body">
+            <!-- Empty -->
+            <div class="chart-empty compact" *ngIf="display().recentEnrollments.length === 0">
+              <div class="empty-icon-wrap sm">
+                <mat-icon>person_off</mat-icon>
+              </div>
+              <h4>ثبت‌نام جدیدی نیست</h4>
+              <p>وقتی دانشجویی در دوره شما ثبت‌نام کند، اینجا نمایش داده می‌شود</p>
+            </div>
+
+            <!-- List -->
+            <div class="enrollment-list" *ngIf="display().recentEnrollments.length > 0">
+              <div
+                class="enrollment-item"
+                *ngFor="
+                  let en of display().recentEnrollments;
+                  trackBy: trackByEnrollment;
+                  let i = index
+                "
+                [style.animation-delay.ms]="i * 60"
+              >
+                <div class="en-avatar">
+                  <img
+                    *ngIf="en.student?.avatar"
+                    [src]="en.student.avatar"
+                    [alt]="en.student?.fullName"
+                    appImageFallback
+                  />
+                  <div class="avatar-fallback" *ngIf="!en.student?.avatar">
+                    {{ getInitials(en.student?.fullName) }}
+                  </div>
+                </div>
+
+                <div class="en-info">
+                  <span class="en-name">{{ en.student?.fullName || 'دانشجو' }}</span>
+                  <span class="en-course">
+                    <mat-icon>play_circle</mat-icon>
+                    {{ en.course?.title || 'دوره' }}
+                  </span>
+                </div>
+
+                <div class="en-meta">
+                  <span class="en-time" *ngIf="en.createdAt">
+                    {{ en.createdAt | jalaliDate }}
+                  </span>
+                  <span class="en-badge" *ngIf="en.amount || en.price">
+                    {{ en.amount || en.price | toman }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- ==========================================
+           BOTTOM ROW: Top Courses + Completion
+           ========================================== -->
+      <div class="bottom-grid">
+        <!-- Top Courses -->
+        <section class="panel top-courses-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <mat-icon>emoji_events</mat-icon>
+              <h3>عملکرد دوره‌ها</h3>
+            </div>
+          </div>
+
+          <div class="panel-body">
+            <div class="chart-empty compact" *ngIf="display().topCourses.length === 0">
+              <div class="empty-icon-wrap sm">
+                <mat-icon>school</mat-icon>
+              </div>
+              <h4>دوره‌ای برای نمایش نیست</h4>
+              <p>پس از انتشار دوره، آمار عملکرد اینجا دیده می‌شود</p>
+              <a routerLink="/instructor/course-builder" class="btn-empty-cta">
+                <mat-icon>add</mat-icon>
+                ایجاد دوره
+              </a>
+            </div>
+
+            <div class="course-perf-list" *ngIf="display().topCourses.length > 0">
+              <div
+                class="course-perf-item"
+                *ngFor="let course of display().topCourses; trackBy: trackByCourse; let i = index"
+              >
+                <div class="cp-rank" [attr.data-rank]="i + 1">
+                  <span *ngIf="i > 2">{{ i + 1 }}</span>
+                  <mat-icon *ngIf="i === 0">workspace_premium</mat-icon>
+                  <mat-icon *ngIf="i === 1">military_tech</mat-icon>
+                  <mat-icon *ngIf="i === 2">star</mat-icon>
+                </div>
+
+                <div class="cp-info">
+                  <h4>{{ course.title }}</h4>
+                  <div class="cp-metrics">
+                    <span>
+                      <mat-icon>people</mat-icon>
+                      {{ course.students || 0 | number }}
+                    </span>
+                    <span>
+                      <mat-icon>star</mat-icon>
+                      {{ course.rating || 0 | number: '1.1-1' }}
+                    </span>
+                  </div>
+                </div>
+
+                <div class="cp-revenue">
+                  <span class="cp-amount">{{ course.revenue || 0 | toman }}</span>
+                  <span class="cp-label">درآمد</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Side insights -->
+        <aside class="insights-sidebar">
+          <!-- Completion Rate -->
+          <div class="panel insight-card">
+            <div class="panel-header">
+              <div class="panel-title">
+                <mat-icon>donut_large</mat-icon>
+                <h3>نرخ تکمیل دوره</h3>
+              </div>
+            </div>
+            <div class="panel-body center">
+              <div class="ring-chart">
+                <svg viewBox="0 0 36 36" class="ring-svg">
+                  <path
+                    class="ring-bg"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    class="ring-fill"
+                    [attr.stroke-dasharray]="(display().completionRate || 0) + ', 100'"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+                <div class="ring-center">
+                  <span class="ring-value">{{ display().completionRate || 0 }}٪</span>
+                  <span class="ring-label">تکمیل</span>
+                </div>
+              </div>
+              <p class="insight-desc">درصد دانشجویانی که دوره را تا انتها گذرانده‌اند</p>
+            </div>
+          </div>
+
+          <!-- Quick tip -->
+          <div class="tip-card">
+            <div class="tip-icon">
+              <mat-icon>lightbulb</mat-icon>
+            </div>
+            <h4>نکته رشد</h4>
+            <p>
+              دوره‌هایی با پیش‌نمایش رایگان معمولاً تا ۳۵٪ ثبت‌نام بیشتری دارند. یک جلسه رایگان
+              اضافه کنید.
+            </p>
+            <a routerLink="/instructor/course-builder" class="tip-link">
+              مدیریت دوره‌ها
+              <mat-icon>arrow_back</mat-icon>
+            </a>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </ng-container>
+</div>

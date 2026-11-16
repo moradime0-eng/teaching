@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450">
+  <defs>
+    <linearGradient id="g5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffecd2"/>
+      <stop offset="100%" stop-color="#fcb69f"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#g5)"/>
+  <polygon points="0,450 200,300 400,450" fill="#fff" opacity="0.3"/>
+  <polygon points="200,450 500,250 800,450" fill="#fff" opacity="0.2"/>
+  <polygon points="400,450 600,320 800,450" fill="#fff" opacity="0.25"/>
+  <text x="400" y="225" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" fill="#8b5e3c" font-weight="bold">Papercut</text>
+</svg>

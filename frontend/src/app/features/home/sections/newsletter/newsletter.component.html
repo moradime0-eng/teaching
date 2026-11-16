@@ -1,0 +1,52 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     📧 Newsletter — خبرنامه
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="newsletter">
+  <div class="newsletter__inner">
+    <div class="newsletter__content">
+      <mat-icon class="newsletter__icon">mail</mat-icon>
+      <h3 class="newsletter__title">هفته‌ای یک دوز مهارت 💊</h3>
+      <p class="newsletter__desc">بهترین دوره‌های هفته + تخفیف‌های ویژه را در ایمیلت دریافت کن</p>
+
+      <form class="newsletter__form" (submit)="$event.preventDefault(); subscribe()">
+        <div class="newsletter__input-wrap">
+          <mat-icon class="newsletter__input-icon">email</mat-icon>
+          <input
+            type="email"
+            [(ngModel)]="email"
+            name="newsletter-email"
+            placeholder="ایمیل خود را وارد کنید"
+            required
+            autocomplete="email"
+            [disabled]="isLoading()"
+            aria-label="ایمیل برای عضویت در خبرنامه"
+          />
+        </div>
+        <button
+          type="submit"
+          class="newsletter__btn"
+          [disabled]="isLoading() || !email"
+        >
+          @if (isLoading()) {
+            <span class="newsletter__spinner"></span>
+          } @else {
+            <mat-icon>send</mat-icon>
+            <span>عضویت</span>
+          }
+        </button>
+      </form>
+
+      @if (status() === 'success') {
+        <p class="newsletter__msg newsletter__msg--success">
+          <mat-icon>check_circle</mat-icon>
+          {{ message() }}
+        </p>
+      } @else if (status() === 'error') {
+        <p class="newsletter__msg newsletter__msg--error">
+          <mat-icon>error</mat-icon>
+          {{ message() }}
+        </p>
+      }
+    </div>
+  </div>
+</section>

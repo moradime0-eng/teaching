@@ -1,0 +1,559 @@
+<div class="ipp-wrapper" dir="rtl">
+  <div class="ipp-container">
+    <!-- ===== LOADING ===== -->
+    <div class="ipp-skeleton" *ngIf="isLoading()">
+      <div class="sk-hero">
+        <div class="sk-cover"></div>
+        <div class="sk-body">
+          <div class="sk-avatar"></div>
+          <div class="sk-lines">
+            <div class="sk-line w-40"></div>
+            <div class="sk-line w-60"></div>
+            <div class="sk-line w-30"></div>
+          </div>
+        </div>
+      </div>
+      <div class="sk-tabs"></div>
+      <div class="sk-grid">
+        <div class="sk-card" *ngFor="let i of [1, 2, 3]"></div>
+      </div>
+    </div>
+
+    <!-- ===== ERROR ===== -->
+    <div class="ipp-error" *ngIf="!isLoading() && hasError()">
+      <div class="err-icon"><mat-icon>cloud_off</mat-icon></div>
+      <h2>{{ errorMessage() }}</h2>
+      <p>ممکن است لینک اشتباه باشد یا مدرس حساب خود را غیرفعال کرده باشد.</p>
+      <div class="err-actions">
+        <a routerLink="/courses" class="ipp-btn ipp-btn-primary">
+          <mat-icon>explore</mat-icon>
+          مشاهده دوره‌ها
+        </a>
+        <button class="ipp-btn ipp-btn-ghost" (click)="retryLoad()">
+          <mat-icon>refresh</mat-icon>
+          تلاش مجدد
+        </button>
+      </div>
+    </div>
+
+    <!-- ===== MAIN ===== -->
+    <ng-container *ngIf="!isLoading() && !hasError() && instructor() as data">
+      <!-- =============== HERO CARD =============== -->
+      <section class="ipp-hero">
+        <!-- Cover -->
+        <div class="hero-cover">
+          <div class="cover-mesh"></div>
+          <div class="cover-pattern"></div>
+        </div>
+
+        <!-- Row: avatar + info + stats -->
+        <div class="hero-content">
+          <!-- Avatar -->
+          <div class="hero-avatar-wrap">
+            <div class="hero-avatar">
+              <img [src]="getAvatar()" [alt]="data.fullName" (error)="handleAvatarError($event)" />
+            </div>
+            <span class="verify-mark" *ngIf="data.stats.averageRating >= 4" title="مدرس تایید شده">
+              <mat-icon>verified</mat-icon>
+            </span>
+          </div>
+
+          <!-- Info -->
+          <div class="hero-info">
+            <div class="info-name-row">
+              <h1 class="info-name">{{ data.fullName }}</h1>
+              <span class="info-badge" *ngIf="data.stats.totalCourses >= 3">
+                <mat-icon>workspace_premium</mat-icon>
+                مدرس برتر
+              </span>
+            </div>
+
+            <p class="info-headline" *ngIf="data.instructorProfile.headline">
+              {{ data.instructorProfile.headline }}
+            </p>
+
+            <!-- ⭐ رندر HTML بیو کوتاه ⭐ -->
+            <div
+              class="info-bio prose"
+              *ngIf="data.bio"
+              [innerHTML]="data.bio | sanitizeHtml"
+            ></div>
+
+            <div class="info-social" *ngIf="hasSocialLinks()">
+              <ng-container *ngIf="getSocialLinks() as social">
+                <a
+                  *ngIf="social.linkedin"
+                  [href]="social.linkedin"
+                  target="_blank"
+                  rel="noopener"
+                  class="soc soc-linkedin"
+                  title="LinkedIn"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.063 2.063 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452z"
+                    />
+                  </svg>
+                </a>
+                <a
+                  *ngIf="social.twitter"
+                  [href]="social.twitter"
+                  target="_blank"
+                  rel="noopener"
+                  class="soc soc-twitter"
+                  title="X"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231z"
+                    />
+                  </svg>
+                </a>
+                <a
+                  *ngIf="social.youtube"
+                  [href]="social.youtube"
+                  target="_blank"
+                  rel="noopener"
+                  class="soc soc-youtube"
+                  title="YouTube"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"
+                    />
+                  </svg>
+                </a>
+                <a
+                  *ngIf="social.instagram"
+                  [href]="social.instagram"
+                  target="_blank"
+                  rel="noopener"
+                  class="soc soc-instagram"
+                  title="Instagram"
+                >
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path
+                      d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204 0-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12s.014 3.668.072 4.948c.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24s3.668-.014 4.948-.072c4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948s-.014-3.667-.072-4.947c-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8z"
+                    />
+                  </svg>
+                </a>
+              </ng-container>
+              <a
+                *ngIf="data.instructorProfile.website"
+                [href]="data.instructorProfile.website"
+                target="_blank"
+                rel="noopener"
+                class="soc soc-web"
+                title="Website"
+              >
+                <mat-icon>language</mat-icon>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stats strip -->
+        <div class="hero-stats">
+          <div class="hs-item">
+            <div class="hs-icon hs-p"><mat-icon>play_circle</mat-icon></div>
+            <div class="hs-txt">
+              <span class="hs-num">{{ data.stats.totalCourses | faNum }}</span>
+              <span class="hs-lbl">دوره</span>
+            </div>
+          </div>
+          <div class="hs-divider"></div>
+          <div class="hs-item">
+            <div class="hs-icon hs-t"><mat-icon>groups</mat-icon></div>
+            <div class="hs-txt">
+              <span class="hs-num">{{ data.stats.totalStudents | faNum }}</span>
+              <span class="hs-lbl">دانشجو</span>
+            </div>
+          </div>
+          <div class="hs-divider"></div>
+          <div class="hs-item">
+            <div class="hs-icon hs-w"><mat-icon>star</mat-icon></div>
+            <div class="hs-txt">
+              <span class="hs-num">{{ data.stats.averageRating | number: '1.1-1' | faNum }}</span>
+              <span class="hs-lbl">امتیاز</span>
+            </div>
+          </div>
+          <div class="hs-divider"></div>
+          <div class="hs-item">
+            <div class="hs-icon hs-b"><mat-icon>chat_bubble</mat-icon></div>
+            <div class="hs-txt">
+              <span class="hs-num">{{ data.stats.totalReviews | faNum }}</span>
+              <span class="hs-lbl">نظر</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- =============== TABS =============== -->
+      <nav class="ipp-tabs" role="tablist">
+        <button
+          role="tab"
+          class="tab"
+          [class.active]="activeSection() === 'about'"
+          (click)="setActiveSection('about')"
+        >
+          <mat-icon>person</mat-icon>
+          <span>درباره مدرس</span>
+        </button>
+        <button
+          role="tab"
+          class="tab"
+          [class.active]="activeSection() === 'courses'"
+          (click)="setActiveSection('courses')"
+        >
+          <mat-icon>school</mat-icon>
+          <span>دوره‌ها</span>
+          <span class="tab-cnt" *ngIf="data.courses.length">{{
+            data.courses.length | faNum
+          }}</span>
+        </button>
+        <button
+          role="tab"
+          class="tab"
+          [class.active]="activeSection() === 'reviews'"
+          (click)="setActiveSection('reviews')"
+        >
+          <mat-icon>rate_review</mat-icon>
+          <span>نظرات</span>
+          <span class="tab-cnt" *ngIf="data.stats.totalReviews">{{
+            data.stats.totalReviews | faNum
+          }}</span>
+        </button>
+      </nav>
+
+      <!-- =============== CONTENT =============== -->
+      <main class="ipp-main">
+        <!-- ===== ABOUT ===== -->
+   <section class="panel" *ngIf="activeSection() === 'about'">
+  <div class="ipp-empty panel-empty" *ngIf="!hasAboutContent()">
+    <mat-icon>edit_note</mat-icon>
+    <h3>اطلاعاتی درج نشده</h3>
+    <p>مدرس هنوز اطلاعات تکمیلی پروفایل خود را وارد نکرده است.</p>
+  </div>
+
+          <div class="about-layout" *ngIf="hasAboutContent()">
+            <div class="about-main">
+              <!-- ⭐⭐⭐ Biography - رندر HTML ⭐⭐⭐ -->
+              <article class="ipp-card" *ngIf="data.instructorProfile.biography as bio">
+                <div class="ipp-card-head">
+                  <div class="ch-ic ch-p"><mat-icon>menu_book</mat-icon></div>
+                  <h3>بیوگرافی</h3>
+                </div>
+                <div class="ipp-card-body">
+                  <div
+                    class="ipp-rich prose"
+                    [class.clamped]="!showFullBio() && getBioTextLength(bio) > 300"
+                    [innerHTML]="bio | sanitizeHtml"
+                  ></div>
+                  <button
+                    class="ipp-link"
+                    *ngIf="getBioTextLength(bio) > 300"
+                    (click)="toggleBio()"
+                  >
+                    {{ showFullBio() ? 'نمایش کمتر' : 'ادامه مطلب' }}
+                    <mat-icon>{{ showFullBio() ? 'expand_less' : 'expand_more' }}</mat-icon>
+                  </button>
+                </div>
+              </article>
+
+              <!-- Expertise -->
+              <article class="ipp-card" *ngIf="getExpertise().length">
+                <div class="ipp-card-head">
+                  <div class="ch-ic ch-t"><mat-icon>psychology</mat-icon></div>
+                  <h3>حوزه‌های تخصصی</h3>
+                </div>
+                <div class="ipp-card-body">
+                  <div class="ipp-chips">
+                    <span class="ipp-chip chip-teal" *ngFor="let skill of getExpertise()">
+                      <mat-icon>check</mat-icon>
+                      {{ skill }}
+                    </span>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Languages -->
+              <article class="ipp-card" *ngIf="data.instructorProfile.languages?.length">
+                <div class="ipp-card-head">
+                  <div class="ch-ic ch-b"><mat-icon>translate</mat-icon></div>
+                  <h3>زبان‌ها</h3>
+                </div>
+                <div class="ipp-card-body">
+                  <div class="ipp-chips">
+                    <span
+                      class="ipp-chip chip-outline"
+                      *ngFor="let lang of data.instructorProfile.languages"
+                    >
+                      {{ lang }}
+                    </span>
+                  </div>
+                </div>
+              </article>
+            </div>
+
+            <aside class="about-side">
+              <!-- Education -->
+              <article class="ipp-card" *ngIf="data.instructorProfile.education?.length">
+                <div class="ipp-card-head">
+                  <div class="ch-ic ch-w"><mat-icon>school</mat-icon></div>
+                  <h3>تحصیلات</h3>
+                </div>
+                <div class="ipp-card-body">
+                  <div class="ipp-tl">
+                    <div
+                      class="tl-item"
+                      *ngFor="let edu of data.instructorProfile.education; let last = last"
+                    >
+                      <div class="tl-line-wrap">
+                        <span class="tl-dot dot-w"></span>
+                        <span class="tl-vert" *ngIf="!last"></span>
+                      </div>
+                      <div class="tl-body">
+                        <h4>{{ edu.degree }}</h4>
+                        <p><mat-icon>apartment</mat-icon>{{ edu.university }}</p>
+                        <span class="tl-tag">{{ edu.year | faNum }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+
+              <!-- Experience -->
+              <article class="ipp-card" *ngIf="data.instructorProfile.experience?.length">
+                <div class="ipp-card-head">
+                  <div class="ch-ic ch-b"><mat-icon>work</mat-icon></div>
+                  <h3>سوابق شغلی</h3>
+                </div>
+                <div class="ipp-card-body">
+                  <div class="ipp-tl">
+                    <div
+                      class="tl-item"
+                      *ngFor="let exp of data.instructorProfile.experience; let last = last"
+                    >
+                      <div class="tl-line-wrap">
+                        <span class="tl-dot dot-b"></span>
+                        <span class="tl-vert" *ngIf="!last"></span>
+                      </div>
+                      <div class="tl-body">
+                        <h4>{{ exp.title }}</h4>
+                        <p><mat-icon>business</mat-icon>{{ exp.company }}</p>
+                        <span class="tl-tag">{{ exp.years | faNum }} سال</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </article>
+            </aside>
+          </div>
+        </section>
+
+        <!-- ===== COURSES ===== -->
+        <section class="panel" *ngIf="activeSection() === 'courses'">
+          <div class="ipp-toolbar" *ngIf="data.courses.length">
+            <div class="tb-filters">
+              <button
+                class="tb-chip"
+                [class.active]="courseFilter() === 'all'"
+                (click)="setCourseFilter('all')"
+              >
+                <mat-icon>apps</mat-icon> همه
+              </button>
+              <button
+                class="tb-chip"
+                [class.active]="courseFilter() === 'popular'"
+                (click)="setCourseFilter('popular')"
+              >
+                <mat-icon>trending_up</mat-icon> محبوب
+              </button>
+              <button
+                class="tb-chip"
+                [class.active]="courseFilter() === 'newest'"
+                (click)="setCourseFilter('newest')"
+              >
+                <mat-icon>schedule</mat-icon> جدیدترین
+              </button>
+              <button
+                class="tb-chip"
+                [class.active]="courseFilter() === 'free'"
+                (click)="setCourseFilter('free')"
+              >
+                <mat-icon>card_giftcard</mat-icon> رایگان
+              </button>
+            </div>
+            <span class="tb-count">{{ filteredCourses().length | faNum }} دوره</span>
+          </div>
+
+          <div class="ipp-courses" *ngIf="filteredCourses().length; else emptyCourses">
+            <a
+              *ngFor="let course of filteredCourses(); trackBy: trackByCourseId"
+              [routerLink]="['/course', course.slug]"
+              class="ipp-course"
+            >
+              <div class="ic-thumb">
+                <img
+                  [src]="resolveMediaUrl(course.thumbnail)"
+                  [alt]="course.title"
+                  appImageFallback="course"
+                  loading="lazy"
+                />
+                <div class="ic-overlay">
+                  <span class="play-btn"><mat-icon>play_arrow</mat-icon></span>
+                </div>
+                <!-- ✅ حذف بج «رایگان» روی تصویر — فقط یک‌بار در بخش قیمت -->
+                <span class="ic-tag tag-sale" *ngIf="!course.isFree && course.discountPrice">
+                  {{ getDiscountPercent(course) | faNum }}٪
+                </span>
+              </div>
+              <div class="ic-body">
+                <h3 class="ic-title">{{ course.title }}</h3>
+                <div class="ic-meta">
+                  <span class="mt-i">
+                    <app-rating-stars
+                      [rating]="course.averageRating"
+                      size="small"
+                    ></app-rating-stars>
+                    <b>{{ course.averageRating | number: '1.1-1' | faNum }}</b>
+                  </span>
+                  <span class="mt-i">
+                    <mat-icon>people</mat-icon>
+                    {{ course.totalStudents | faNum }}
+                  </span>
+                  <span class="mt-i">
+                    <mat-icon>videocam</mat-icon>
+                    {{ course.totalLectures | faNum }}
+                  </span>
+                </div>
+                <div class="ic-foot">
+                  <div class="ic-price" *ngIf="!course.isFree">
+                    <span class="p-old" *ngIf="course.discountPrice">{{
+                      course.price | toman
+                    }}</span>
+                    <span class="p-new">{{ course.discountPrice || course.price | toman }}</span>
+                  </div>
+                  <span class="ic-price p-free" *ngIf="course.isFree">رایگان</span>
+                  <span class="ic-cta">
+                    مشاهده
+                    <mat-icon>arrow_back</mat-icon>
+                  </span>
+                </div>
+              </div>
+            </a>
+          </div>
+
+          <ng-template #emptyCourses>
+            <div class="ipp-empty">
+              <mat-icon>video_library</mat-icon>
+              <h3>دوره‌ای یافت نشد</h3>
+              <p *ngIf="courseFilter() !== 'all'">فیلتر دیگری را امتحان کنید.</p>
+              <p *ngIf="courseFilter() === 'all'">هنوز دوره‌ای توسط این مدرس منتشر نشده است.</p>
+              <button
+                class="ipp-btn ipp-btn-primary"
+                *ngIf="courseFilter() !== 'all'"
+                (click)="setCourseFilter('all')"
+              >
+                نمایش همه دوره‌ها
+              </button>
+            </div>
+          </ng-template>
+        </section>
+
+        <!-- ===== REVIEWS ===== -->
+        <section class="panel" *ngIf="activeSection() === 'reviews'">
+          <!-- خلاصه امتیازات -->
+          <div class="ipp-review-sum" *ngIf="data.stats.totalReviews > 0">
+            <div class="rs-block">
+              <span class="rs-big">{{ data.stats.averageRating | number: '1.1-1' | faNum }}</span>
+              <app-rating-stars
+                [rating]="data.stats.averageRating"
+                size="medium"
+              ></app-rating-stars>
+              <span class="rs-cnt">از {{ data.stats.totalReviews | faNum }} نظر</span>
+            </div>
+            <div class="rs-bars">
+              <div class="bar-row" *ngFor="let s of [5, 4, 3, 2, 1]">
+                <span class="bar-lbl">{{ s | faNum }} <mat-icon>star</mat-icon></span>
+                <div class="bar-track">
+                  <div
+                    class="bar-fill"
+                    [style.width.%]="ratingPercentages()[s]"
+                  ></div>
+                </div>
+                <span class="bar-cnt">{{ ratingDistribution()[s] | faNum }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- لیست نظرات -->
+          <div class="ipp-reviews-list" *ngIf="!isLoadingReviews() && reviews().length > 0">
+            <div class="review-card" *ngFor="let r of reviews()">
+              <div class="rc-header">
+                <div class="rc-user">
+                  <div class="rc-avatar" *ngIf="getReviewUserAvatar(r) as av">
+                    <img [src]="av" [alt]="getReviewUserName(r)" (error)="handleAvatarError($event)" />
+                  </div>
+                  <div class="rc-avatar rc-initial" *ngIf="!getReviewUserAvatar(r)" [style.background]="getReviewAvatarGradient(r)">
+                    {{ getReviewUserInitial(r) }}
+                  </div>
+                  <div class="rc-user-info">
+                    <span class="rc-name">{{ getReviewUserName(r) }}</span>
+                    <span class="rc-course" *ngIf="getReviewCourseName(r)">
+                      {{ getReviewCourseName(r) }}
+                    </span>
+                  </div>
+                </div>
+                <div class="rc-meta">
+                  <app-rating-stars [rating]="r.rating" size="small"></app-rating-stars>
+                  <span class="rc-date">{{ formatDate(r.createdAt) | faNum }}</span>
+                </div>
+              </div>
+              <h4 class="rc-title" *ngIf="r.title">{{ r.title }}</h4>
+              <!-- ⭐ رندر HTML نظر ⭐ -->
+              <div class="rc-comment prose" [innerHTML]="r.comment | sanitizeHtml"></div>
+
+              <!-- پاسخ استاد -->
+              <div class="rc-reply" *ngIf="r.instructorReply?.content">
+                <div class="rc-reply-header">
+                  <mat-icon>reply</mat-icon>
+                  <span>پاسخ مدرس</span>
+                </div>
+                <!-- ⭐ رندر HTML پاسخ استاد ⭐ -->
+                <div
+                  class="rc-reply-content prose"
+                  [innerHTML]="r.instructorReply.content | sanitizeHtml"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- بارگذاری -->
+          <div class="ipp-loading-reviews" *ngIf="isLoadingReviews()">
+            <div class="review-skeleton" *ngFor="let i of [1, 2, 3]">
+              <div class="sk-header">
+                <div class="sk-avatar shimmer"></div>
+                <div class="sk-lines">
+                  <div class="sk-line shimmer"></div>
+                  <div class="sk-line shimmer short"></div>
+                </div>
+              </div>
+              <div class="sk-body">
+                <div class="sk-line shimmer w80"></div>
+                <div class="sk-line shimmer w60"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- خالی -->
+          <div class="ipp-empty" *ngIf="!isLoadingReviews() && reviews().length === 0">
+            <mat-icon>chat_bubble_outline</mat-icon>
+            <h3>هنوز نظری ثبت نشده</h3>
+            <p>نظرات دانشجویان اینجا نمایش داده خواهد شد.</p>
+          </div>
+        </section>
+      </main>
+    </ng-container>
+  </div>
+</div>

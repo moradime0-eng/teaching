@@ -1,0 +1,219 @@
+<div class="color-picker">
+  <!-- ══════ Mode tabs ══════ -->
+  <div class="mode-tabs" role="tablist">
+    <button
+      type="button"
+      role="tab"
+      class="mode-tab"
+      [class.active]="mode() === 'theme'"
+      (click)="setMode('theme')"
+    >
+      <mat-icon>palette</mat-icon>
+      <span>تم آماده</span>
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="mode-tab"
+      [class.active]="mode() === 'solid'"
+      (click)="setMode('solid')"
+    >
+      <mat-icon>format_color_fill</mat-icon>
+      <span>رنگ دلخواه</span>
+    </button>
+    <button
+      type="button"
+      role="tab"
+      class="mode-tab"
+      [class.active]="mode() === 'gradient'"
+      (click)="setMode('gradient')"
+    >
+      <mat-icon>gradient</mat-icon>
+      <span>گرادیان</span>
+    </button>
+  </div>
+
+  <!-- ══════ Theme mode ══════ -->
+  @if (mode() === 'theme') {
+    <div class="theme-grid">
+      @for (theme of themeOptions; track theme.value) {
+        <button
+          type="button"
+          class="theme-card"
+          [attr.data-theme]="theme.value"
+          [class.selected]="selectedTheme() === theme.value"
+          (click)="pickTheme(theme.value)"
+        >
+          <div class="theme-bg-layer"></div>
+          <div class="theme-content">
+            <div class="theme-icon-circle">
+              <mat-icon>{{ theme.icon }}</mat-icon>
+            </div>
+            <span class="theme-label">{{ theme.label }}</span>
+          </div>
+          <div class="theme-check"><mat-icon>check</mat-icon></div>
+        </button>
+      }
+    </div>
+    <p class="hint">
+      <mat-icon>info</mat-icon>
+      تم‌های آماده از پیش طراحی شده‌اند. برای رنگ دلخواه یا گرادیان، تب‌های بالا را انتخاب کنید.
+    </p>
+  }
+
+  <!-- ══════ Solid color mode ══════ -->
+  @if (mode() === 'solid') {
+    <div class="solid-body">
+      <div class="solid-picker-row">
+        <label class="color-input-wrap" [style.background]="solidColor()">
+          <input
+            type="color"
+            [value]="solidColor()"
+            (input)="onSolidInput($event)"
+            aria-label="انتخاب رنگ"
+          />
+          <span class="color-input-hex">{{ solidColor() }}</span>
+        </label>
+        <div class="solid-actions">
+          <input
+            type="text"
+            class="hex-text"
+            [value]="solidColor()"
+            (input)="onHexInput($event, 'solid')"
+            placeholder="#b93818"
+            dir="ltr"
+            aria-label="کد رنگ هگز"
+          />
+          <button type="button" class="clear-btn" (click)="clearCustom()">
+            <mat-icon>restart_alt</mat-icon>
+            بازگشت به تم آماده
+          </button>
+        </div>
+      </div>
+
+      <div class="palette-block">
+        <span class="palette-label">پالت رنگ</span>
+        <div class="palette-grid">
+          @for (color of palette; track color) {
+            <button
+              type="button"
+              class="swatch"
+              [style.background]="color"
+              [class.selected]="solidColor() === color"
+              [attr.title]="color"
+              (click)="pickSolid(color)"
+            >
+              @if (solidColor() === color) {
+                <mat-icon>check</mat-icon>
+              }
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ══════ Gradient mode ══════ -->
+  @if (mode() === 'gradient') {
+    <div class="gradient-body">
+      <!-- Gradient stops -->
+      <div class="stops-header">
+        <span class="palette-label">رنگ‌های گرادیان (۲ تا ۴ رنگ)</span>
+        <div class="stops-count">{{ gradientStops().length }}/4</div>
+      </div>
+
+      <div class="stops-list">
+        @for (stop of gradientStops(); track $index; let i = $index) {
+          <div class="stop-row">
+            <label class="stop-swatch" [style.background]="stop">
+              <input
+                type="color"
+                [value]="stop"
+                (input)="updateStop(i, $event)"
+                [attr.aria-label]="'رنگ ' + (i + 1)"
+              />
+            </label>
+            <input
+              type="text"
+              class="hex-text"
+              [value]="stop"
+              (input)="updateStopHex(i, $event)"
+              dir="ltr"
+              [attr.aria-label]="'کد هگز رنگ ' + (i + 1)"
+            />
+            @if (gradientStops().length > 2) {
+              <button
+                type="button"
+                class="remove-stop"
+                (click)="removeStop(i)"
+                [attr.aria-label]="'حذف رنگ ' + (i + 1)"
+              >
+                <mat-icon>close</mat-icon>
+              </button>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="add-stop-row">
+        <button
+          type="button"
+          class="add-stop-btn"
+          [disabled]="gradientStops().length >= 4"
+          (click)="addStop()"
+        >
+          <mat-icon>add</mat-icon>
+          افزودن رنگ
+        </button>
+      </div>
+
+      <!-- Angle -->
+      <div class="angle-block">
+        <div class="angle-header">
+          <span class="palette-label">زاویه گرادیان</span>
+          <span class="angle-value">{{ gradientAngle() }}°</span>
+        </div>
+        <input
+          type="range"
+          class="angle-slider"
+          min="0"
+          max="360"
+          step="5"
+          [value]="gradientAngle()"
+          (input)="onAngleInput($event)"
+          aria-label="زاویه گرادیان"
+        />
+        <div class="angle-presets">
+          @for (preset of anglePresets; track preset) {
+            <button
+              type="button"
+              class="angle-chip"
+              [class.selected]="gradientAngle() === preset"
+              (click)="setAngle(preset)"
+            >
+              {{ preset }}°
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Presets -->
+      <div class="palette-block">
+        <span class="palette-label">گرادیان‌های آماده</span>
+        <div class="gradient-presets">
+          @for (preset of gradientPresets; track preset.label) {
+            <button
+              type="button"
+              class="gradient-preset"
+              [style.background]="'linear-gradient(120deg, ' + preset.from + ', ' + preset.to + ')'"
+              [title]="preset.label"
+              (click)="applyGradientPreset(preset)"
+            >
+              <span class="preset-label">{{ preset.label }}</span>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

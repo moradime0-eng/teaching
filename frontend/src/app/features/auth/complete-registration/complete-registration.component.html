@@ -1,0 +1,170 @@
+<div class="auth-page" dir="rtl">
+  <div class="bg-decoration">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="grid-pattern"></div>
+  </div>
+
+  <button class="theme-toggle-floating" (click)="toggleTheme()"
+    [attr.aria-label]="themeService.isDark() ? 'حالت روشن' : 'حالت تیره'">
+    <mat-icon>{{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+  </button>
+
+  <div class="auth-container">
+    <!-- Left Side - Branding -->
+    <aside class="auth-branding">
+      <div class="branding-content">
+        <a routerLink="/" class="logo-wrapper">
+          <div class="logo-icon"><mat-icon>school</mat-icon></div>
+          <div class="logo-text">
+            <h1>همایون</h1>
+            <span>مرکز تخصصی آموزش</span>
+          </div>
+        </a>
+        <div class="branding-body">
+          <div class="welcome-badge">
+            <span class="pulse-dot"></span>
+            <span>تکمیل ثبت‌نام</span>
+          </div>
+          <h2 class="branding-title">
+            فقط <span class="gradient-text">چند قدم</span> تا شروع یادگیری
+          </h2>
+          <p class="branding-desc">
+            نقش خود را انتخاب کنید و رمز عبور بگذارید تا وارد پلتفرم شوید.
+          </p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right Side -->
+    <main class="auth-card">
+      <!-- Loading -->
+      <div class="state-content" *ngIf="status() === 'loading'">
+        <div class="spinner-wrapper"><div class="spinner"></div></div>
+        <h2>در حال بارگذاری...</h2>
+      </div>
+
+      <!-- Error Alert -->
+      <div class="alert alert-error" *ngIf="errorMessage()" @fadeSlide>
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ errorMessage() }}</span>
+      </div>
+
+      <!-- ===== STEP 1: ROLE SELECTION ===== -->
+      <div *ngIf="status() === 'form' && currentStep() === 'role'" class="auth-form" @fadeSlide>
+        <div class="card-header">
+          <div class="header-icon"><mat-icon>person_add</mat-icon></div>
+          <h2>تکمیل ثبت‌نام</h2>
+          <p>نقش خود را در پلتفرم انتخاب کنید</p>
+        </div>
+
+        <!-- User Info -->
+        <div class="user-info" *ngIf="userInfo()">
+          <div class="user-avatar" *ngIf="userInfo()?.avatar">
+            <img [src]="userInfo()!.avatar" [alt]="userInfo()!.fullName" />
+          </div>
+          <div class="user-avatar placeholder" *ngIf="!userInfo()?.avatar">
+            <mat-icon>account_circle</mat-icon>
+          </div>
+          <div class="user-details">
+            <span class="user-name">{{ userInfo()!.fullName }}</span>
+            <span class="user-email">{{ userInfo()!.email }}</span>
+          </div>
+        </div>
+
+        <div class="role-selector">
+          <label class="role-label">می‌خواهید چه کاری کنید؟</label>
+          <div class="role-cards">
+            <button type="button" class="role-card" [class.selected]="selectedRole() === 'student'" (click)="selectRole('student')">
+              <div class="role-icon student"><mat-icon>menu_book</mat-icon></div>
+              <div class="role-info">
+                <h4>دانشجو</h4>
+                <p>می‌خواهم یاد بگیرم</p>
+              </div>
+              <mat-icon class="role-check">check_circle</mat-icon>
+            </button>
+            <button type="button" class="role-card" [class.selected]="selectedRole() === 'instructor'" (click)="selectRole('instructor')">
+              <div class="role-icon instructor"><mat-icon>co_present</mat-icon></div>
+              <div class="role-info">
+                <h4>مدرس</h4>
+                <p>می‌خواهم تدریس کنم</p>
+              </div>
+              <mat-icon class="role-check">check_circle</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <button class="btn-submit" (click)="onRoleSubmit()">
+          <span class="btn-content">
+            <span>مرحله بعد</span>
+            <mat-icon>arrow_back</mat-icon>
+          </span>
+        </button>
+      </div>
+
+      <!-- ===== STEP 2: PASSWORD ===== -->
+      <div *ngIf="status() === 'form' && currentStep() === 'password'" class="auth-form" @fadeSlide>
+        <button type="button" class="btn-back" (click)="goBackToRole()">
+          <mat-icon>arrow_forward</mat-icon>
+          <span>بازگشت</span>
+        </button>
+
+        <div class="card-header">
+          <div class="header-icon"><mat-icon>lock</mat-icon></div>
+          <h2>تنظیم رمز عبور</h2>
+          <p>یک رمز عبور قوی برای حساب خود انتخاب کنید</p>
+        </div>
+
+        <div class="form-group">
+          <label for="oauth-password"><mat-icon>lock</mat-icon> رمز عبور</label>
+          <div class="input-wrapper password-input">
+            <input id="oauth-password" [type]="showPassword() ? 'text' : 'password'"
+              [value]="password()" (input)="password.set($any($event.target).value)"
+              placeholder="حداقل ۸ کاراکتر با حروف بزرگ و کوچک" autocomplete="new-password" />
+            <button type="button" class="eye-btn" (click)="toggleShowPassword()" tabindex="-1">
+              <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="oauth-confirmPassword"><mat-icon>lock_reset</mat-icon> تکرار رمز عبور</label>
+          <div class="input-wrapper password-input">
+            <input id="oauth-confirmPassword" [type]="showConfirmPassword() ? 'text' : 'password'"
+              [value]="confirmPassword()" (input)="confirmPassword.set($any($event.target).value)"
+              placeholder="رمز عبور را دوباره وارد کنید" autocomplete="new-password" />
+            <button type="button" class="eye-btn" (click)="toggleShowConfirmPassword()" tabindex="-1">
+              <mat-icon>{{ showConfirmPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <div class="alert alert-error" *ngIf="passwordError()" @fadeSlide>
+          <mat-icon>error_outline</mat-icon>
+          <span>{{ passwordError() }}</span>
+        </div>
+
+        <button class="btn-submit" (click)="onPasswordSubmit()" [disabled]="status() === 'submitting'">
+          <span class="btn-content" *ngIf="status() !== 'submitting'">
+            <span>تکمیل ثبت‌نام</span>
+            <mat-icon>check</mat-icon>
+          </span>
+          <span class="btn-loading" *ngIf="status() === 'submitting'">
+            <span class="spinner"></span>
+            <span>در حال ثبت...</span>
+          </span>
+        </button>
+      </div>
+
+      <!-- Success -->
+      <div *ngIf="status() === 'success'" class="auth-form" @fadeSlide>
+        <div class="card-header">
+          <div class="header-icon success"><mat-icon>check_circle</mat-icon></div>
+          <h2>ثبت‌نام تکمیل شد! 🎉</h2>
+          <p>در حال انتقال به صفحه اصلی...</p>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>

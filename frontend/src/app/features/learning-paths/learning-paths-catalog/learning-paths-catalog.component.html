@@ -1,0 +1,463 @@
+<div class="catalog-page" dir="rtl">
+
+  <!-- ═══════════════════════════════════════════
+       HERO
+  ═══════════════════════════════════════════ -->
+  <header class="hero">
+    <div class="hero__decor" aria-hidden="true">
+      <span class="hero__orb hero__orb--1"></span>
+      <span class="hero__orb hero__orb--2"></span>
+      <span class="hero__orb hero__orb--3"></span>
+      <span class="hero__grid"></span>
+    </div>
+
+    <div class="hero__inner">
+      <!-- Badge -->
+      <span class="hero__badge">
+        <span class="hero__badge-pulse"></span>
+        <mat-icon>auto_awesome</mat-icon>
+        نقشه راه‌های اختصاصی همایون
+      </span>
+
+      <!-- Title -->
+      <h1 class="hero__title">
+        یاد بگیر، بساز،
+        <span class="hero__title-accent">
+          متخصص شو
+          <svg class="hero__title-underline" viewBox="0 0 300 12" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M3,9 Q150,0 297,9" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+          </svg>
+        </span>
+      </h1>
+
+      <p class="hero__subtitle">
+        مسیرهای یادگیری ساختاریافته برای تبدیل شدن به بهترین نسخهٔ خودت.
+        <br />
+        دوره‌ها، پروژه‌ها و گواهینامه در یک برنامهٔ منسجم.
+      </p>
+
+      <!-- Search -->
+      <div class="hero__search-wrap">
+        <div class="hero__search">
+          <mat-icon class="hero__search-icon">search</mat-icon>
+          <input
+            #searchInput
+            type="search"
+            class="hero__search-input"
+            placeholder="چه مهارتی می‌خوای یاد بگیری؟"
+            [ngModel]="searchQuery()"
+            (ngModelChange)="onSearchInput($event)"
+            aria-label="جستجوی مسیر یادگیری"
+          />
+          @if (searchQuery()) {
+            <button
+              type="button"
+              class="hero__search-clear"
+              (click)="onSearchInput(''); focusSearch()"
+              aria-label="پاک کردن جستجو">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+          <button
+            type="button"
+            class="hero__search-btn"
+            (click)="focusSearch()"
+            aria-label="جستجو">
+            جستجو
+          </button>
+        </div>
+
+        <!-- Quick search tags -->
+        <div class="hero__quick-tags">
+          <span class="hero__quick-label">پیشنهادها:</span>
+          <button type="button" (click)="onSearchInput('فرانت‌اند')">فرانت‌اند</button>
+          <button type="button" (click)="onSearchInput('پایتون')">پایتون</button>
+          <button type="button" (click)="onSearchInput('هوش مصنوعی')">هوش مصنوعی</button>
+          <button type="button" (click)="onSearchInput('UX')">UX</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="hero__stats">
+        <div class="hstat">
+          <div class="hstat__icon-wrap hstat__icon-wrap--rose">
+            <mat-icon>route</mat-icon>
+          </div>
+          <div class="hstat__content">
+            <strong>{{ heroStats().totalPaths | faNum }}</strong>
+            <span>مسیر یادگیری</span>
+          </div>
+        </div>
+
+        <div class="hstat">
+          <div class="hstat__icon-wrap hstat__icon-wrap--teal">
+            <mat-icon>school</mat-icon>
+          </div>
+          <div class="hstat__content">
+            <strong>{{ heroStats().totalCourses | faNum }}</strong>
+            <span>دوره تخصصی</span>
+          </div>
+        </div>
+
+        <div class="hstat">
+          <div class="hstat__icon-wrap hstat__icon-wrap--blue">
+            <mat-icon>schedule</mat-icon>
+          </div>
+          <div class="hstat__content">
+            <strong>{{ heroStats().totalDuration | duration }}</strong>
+            <span>محتوای آموزشی</span>
+          </div>
+        </div>
+
+        <div class="hstat">
+          <div class="hstat__icon-wrap hstat__icon-wrap--amber">
+            <mat-icon>workspace_premium</mat-icon>
+          </div>
+          <div class="hstat__content">
+            <strong>{{ heroStats().certifiedPaths | faNum }}</strong>
+            <span>گواهینامه معتبر</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════════
+       TOOLBAR
+  ═══════════════════════════════════════════ -->
+  <div class="toolbar-wrap">
+    <div class="toolbar">
+      <!-- Difficulty filters -->
+      <div class="seg-wrap">
+        <div class="seg" role="group" aria-label="فیلتر سطح دشواری">
+          @for (d of difficulties; track trackByKey($index, d)) {
+            <button
+              type="button"
+              class="seg__btn"
+              [class.is-active]="selectedDifficulty() === d.key"
+              [style.--seg-color]="d.color"
+              (click)="setDifficulty(d.key)"
+              [attr.aria-pressed]="selectedDifficulty() === d.key">
+              @if (d.icon) {
+                <mat-icon>{{ d.icon }}</mat-icon>
+              }
+              <span>{{ d.label }}</span>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Secondary controls -->
+      <div class="toolbar__controls">
+        <button
+          type="button"
+          class="chip"
+          [class.is-active]="requireCertificate()"
+          (click)="toggleCertificate()"
+          [attr.aria-pressed]="requireCertificate()">
+          <mat-icon>workspace_premium</mat-icon>
+          <span>گواهی‌دار</span>
+        </button>
+
+        <div class="sort">
+          <mat-icon class="sort__icon">sort</mat-icon>
+          <select
+            class="sort__select"
+            [ngModel]="sortBy()"
+            (ngModelChange)="setSort($event)"
+            aria-label="ترتیب نمایش">
+            @for (s of sortOptions; track s.value) {
+              <option [value]="s.value">{{ s.label }}</option>
+            }
+          </select>
+          <mat-icon class="sort__chevron">expand_more</mat-icon>
+        </div>
+
+        @if (hasActiveFilters()) {
+          <button
+            type="button"
+            class="toolbar__reset"
+            (click)="clearFilters()"
+            aria-label="حذف همه فیلترها">
+            <mat-icon>filter_alt_off</mat-icon>
+            <span>حذف فیلترها</span>
+            <span class="toolbar__reset-count">{{ activeFiltersCount() | faNum }}</span>
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       RESULT BAR
+  ═══════════════════════════════════════════ -->
+  <div class="result-bar">
+    @if (loading() && paths().length === 0) {
+      <div class="result-bar__loading">
+        <div class="result-bar__spinner"></div>
+        <span>در حال جستجو…</span>
+      </div>
+    } @else if (totalCount() > 0) {
+      <div class="result-bar__info">
+        <mat-icon class="result-bar__check">check_circle</mat-icon>
+        <span>
+          <b>{{ totalCount() | faNum }}</b>
+          مسیر یافت شد
+          @if (totalPages() > 1) {
+            <span class="result-bar__range">
+              — نمایش
+              <b>{{ rangeStart() | faNum }}</b>
+              تا
+              <b>{{ rangeEnd() | faNum }}</b>
+            </span>
+          }
+        </span>
+      </div>
+    }
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       CONTENT
+  ═══════════════════════════════════════════ -->
+  <main class="content">
+    <!-- Loading skeletons -->
+    @if (loading() && paths().length === 0) {
+      <div class="grid">
+        @for (i of [0, 1, 2, 3, 4, 5]; track i) {
+          <div class="sk-card">
+            <div class="sk sk--cover"></div>
+            <div class="sk-body">
+              <div class="sk-row">
+                <div class="sk sk--avatar"></div>
+                <div class="sk-row-text">
+                  <div class="sk sk--title"></div>
+                  <div class="sk sk--sub"></div>
+                </div>
+              </div>
+              <div class="sk sk--line"></div>
+              <div class="sk sk--line sk--short"></div>
+              <div class="sk-chips">
+                <div class="sk sk--chip"></div>
+                <div class="sk sk--chip"></div>
+              </div>
+              <div class="sk sk--meta"></div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Error -->
+    @else if (error()) {
+      <div class="state state--error">
+        <div class="state__icon-wrap state__icon-wrap--error">
+          <mat-icon>cloud_off</mat-icon>
+        </div>
+        <h3>مشکلی در دریافت اطلاعات پیش آمد</h3>
+        <p>اتصال به سرور برقرار نشد. لطفاً اتصال اینترنت را بررسی و دوباره تلاش کنید.</p>
+        <button type="button" class="btn btn--primary" (click)="clearFilters()">
+          <mat-icon>refresh</mat-icon>
+          تلاش دوباره
+        </button>
+      </div>
+    }
+
+    <!-- Empty -->
+    @else if (paths().length === 0) {
+      <div class="state">
+        <div class="state__icon-wrap">
+          <mat-icon>search_off</mat-icon>
+        </div>
+        <h3>نتیجه‌ای برای این جستجو یافت نشد</h3>
+        <p>
+          شاید عبارت جستجو را تغییر دهید یا فیلترها را کم کنید.
+          همچنین می‌توانید در بین <b>دوره‌های تکی</b> ما جستجو کنید.
+        </p>
+        <div class="state__actions">
+          @if (hasActiveFilters()) {
+            <button type="button" class="btn btn--primary" (click)="clearFilters()">
+              <mat-icon>filter_alt_off</mat-icon>
+              نمایش همه مسیرها
+            </button>
+          }
+          <a routerLink="/courses" class="btn btn--ghost">
+            <mat-icon>school</mat-icon>
+            مشاهده دوره‌ها
+          </a>
+        </div>
+      </div>
+    }
+
+    <!-- Grid -->
+    @else {
+      <div class="grid" [class.grid--loading]="loading()">
+        @for (path of paths(); track trackByPath($index, path); let i = $index) {
+          <a
+            [routerLink]="['/learning-paths', path.slug]"
+            class="pcard"
+            [style.--pc-diff]="diffMeta(path.difficulty).color"
+            [style.--pc-diff-soft]="diffMeta(path.difficulty).bg"
+            [style.animation-delay]="(i * 50) + 'ms'"
+            [attr.aria-label]="path.title">
+
+            <!-- Cover -->
+            <div class="pcard__cover">
+              @if (path.coverImage) {
+                <img
+                  class="pcard__img"
+                  [src]="path.coverImage"
+                  [alt]="path.title"
+                  loading="lazy"
+                />
+              } @else {
+                <div class="pcard__fallback" [style.background]="fallbackGradient(path)">
+                  <span class="pcard__fallback-icon">{{ path.icon || '🛤️' }}</span>
+                </div>
+              }
+
+              <div class="pcard__cover-grad"></div>
+
+              <!-- Top-right badges -->
+              <div class="pcard__badges">
+                @if (path.isFeatured) {
+                  <span class="badge badge--featured">
+                    <mat-icon>star</mat-icon>
+                    ویژه
+                  </span>
+                }
+                @if (path.hasCertificate) {
+                  <span class="badge badge--cert">
+                    <mat-icon>workspace_premium</mat-icon>
+                  </span>
+                }
+              </div>
+
+              <!-- Bottom-left: difficulty + students -->
+              <div class="pcard__cover-footer">
+                <span class="pcard__diff-pill" [style.background]="diffMeta(path.difficulty).color">
+                  <mat-icon>{{ diffMeta(path.difficulty).icon }}</mat-icon>
+                  {{ diffMeta(path.difficulty).label }}
+                </span>
+                @if (path.enrolledStudents > 0) {
+                  <span class="pcard__students">
+                    <mat-icon>group</mat-icon>
+                    {{ path.enrolledStudents | faNum }}
+                  </span>
+                }
+              </div>
+            </div>
+
+            <!-- Timeline rail -->
+            <div class="pcard__rail" aria-hidden="true">
+              <div class="pcard__rail-track"></div>
+              @for (color of getStagePreviewColors(path, 5); track $index) {
+                <span class="pcard__rail-node" [style.background]="color"></span>
+              }
+              @if (stageCount(path) > 5) {
+                <span class="pcard__rail-more">+{{ (stageCount(path) - 5) | faNum }}</span>
+              }
+            </div>
+
+            <!-- Body -->
+            <div class="pcard__body">
+              <div class="pcard__head">
+                <span class="pcard__icon">{{ path.icon || '🛤️' }}</span>
+                <h3 class="pcard__title">{{ path.title }}</h3>
+              </div>
+
+              @if (path.subtitle) {
+                <p class="pcard__subtitle">{{ path.subtitle }}</p>
+              }
+
+              <p class="pcard__desc">{{ path.shortDescription }}</p>
+
+              <!-- Stages preview chips -->
+              @if (path.stages.length) {
+                <div class="stages">
+                  @for (s of path.stages.slice(0, 3); track $index) {
+                    <span class="stage-chip" [style.--chip-color]="s.color || '#6b59e7'">
+                      <span class="stage-chip__emoji">{{ s.icon || '📚' }}</span>
+                      <span class="stage-chip__text">{{ s.title }}</span>
+                    </span>
+                  }
+                  @if (stageCount(path) > 3) {
+                    <span class="stage-chip stage-chip--more">
+                      +{{ (stageCount(path) - 3) | faNum }}
+                    </span>
+                  }
+                </div>
+              }
+
+              <!-- Meta -->
+              <div class="pcard__meta">
+                <div class="meta-item">
+                  <mat-icon>layers</mat-icon>
+                  <span>{{ stageCount(path) | faNum }} مرحله</span>
+                </div>
+                <div class="meta-item">
+                  <mat-icon>school</mat-icon>
+                  <span>{{ courseCount(path) | faNum }} دوره</span>
+                </div>
+                <div class="meta-item">
+                  <mat-icon>schedule</mat-icon>
+                  <span>{{ path.estimatedTotalDuration | duration }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- CTA -->
+            <div class="pcard__cta">
+              <span class="pcard__cta-text">شروع مسیر</span>
+              <span class="pcard__cta-arrow">
+                <mat-icon>arrow_back</mat-icon>
+              </span>
+            </div>
+          </a>
+        }
+      </div>
+
+      <!-- Pagination -->
+      @if (totalPages() > 1) {
+        <nav class="pager" aria-label="صفحه‌بندی">
+          <button
+            type="button"
+            class="pager__btn pager__btn--nav"
+            [disabled]="page() === 1"
+            (click)="prevPage()"
+            aria-label="صفحه قبل">
+            <mat-icon>chevron_right</mat-icon>
+            <span class="pager__btn-text">قبلی</span>
+          </button>
+
+          <div class="pager__nums">
+            @for (p of pageNumbers(); track $index) {
+              @if (p === 'gap') {
+                <span class="pager__gap">…</span>
+              } @else {
+                <button
+                  type="button"
+                  class="pager__num"
+                  [class.is-active]="p === page()"
+                  (click)="goToPage(p)"
+                  [attr.aria-current]="p === page() ? 'page' : null"
+                  [attr.aria-label]="'صفحه ' + p">
+                  {{ p | faNum }}
+                </button>
+              }
+            }
+          </div>
+
+          <button
+            type="button"
+            class="pager__btn pager__btn--nav"
+            [disabled]="page() === totalPages()"
+            (click)="nextPage()"
+            aria-label="صفحه بعد">
+            <span class="pager__btn-text">بعدی</span>
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+        </nav>
+      }
+    }
+  </main>
+</div>

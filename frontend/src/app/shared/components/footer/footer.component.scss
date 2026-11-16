@@ -1,0 +1,915 @@
+// ==========================================================================
+// Variables & Design Tokens
+// ==========================================================================
+$bg-main: #090d16;
+$bg-card: #111827;
+$bg-card-hover: #1f2937;
+$border-color: rgba(255, 255, 255, 0.08);
+
+$text-primary: #f8fafc;
+$text-secondary: #94a3b8;
+$text-muted: #64748b;
+
+$brand-primary: #4f46e5;
+$brand-gradient: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+$accent-color: #06b6d4;
+
+// Breakpoints
+$bp-xl: 1280px;
+$bp-lg: 1024px;
+$bp-md: 768px;
+$bp-sm: 640px;
+$bp-xs: 480px;
+
+// ==========================================================================
+// Structure
+// ==========================================================================
+.site-footer {
+  background-color: $bg-main;
+  color: $text-secondary;
+  margin-top: 5rem;
+  position: relative;
+  font-family: inherit;
+  overflow: hidden;
+  border-top: 1px solid $border-color;
+}
+
+.footer-container {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+// ==========================================================================
+// Newsletter Strip
+// ==========================================================================
+.newsletter-wrapper {
+  padding: 2.5rem 0 1.5rem;
+}
+
+.newsletter-card {
+  background:
+    radial-gradient(circle at top right, rgba(79, 70, 229, 0.2), transparent 70%),
+    $bg-card;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 2rem 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+
+  .newsletter-text {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    min-width: 0;
+    flex: 1;
+
+    .newsletter-icon {
+      width: 52px;
+      height: 52px;
+      min-width: 52px;
+      border-radius: 14px;
+      background: rgba(79, 70, 229, 0.15);
+      border: 1px solid rgba(79, 70, 229, 0.3);
+      color: #818cf8;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      mat-icon {
+        font-size: 26px;
+        width: 26px;
+        height: 26px;
+      }
+    }
+
+    .newsletter-content {
+      min-width: 0;
+      flex: 1;
+
+      h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: $text-primary;
+        margin: 0 0 0.35rem;
+        line-height: 1.3;
+      }
+
+      p {
+        font-size: 0.88rem;
+        color: $text-secondary;
+        margin: 0;
+        line-height: 1.6;
+      }
+    }
+  }
+
+  .newsletter-form {
+    flex: 1;
+    max-width: 440px;
+    min-width: 0;
+
+    .input-group {
+      display: flex;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      padding: 0.35rem;
+      transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+      width: 100%;
+
+      &:focus-within {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+      }
+
+      input {
+        flex: 1;
+        min-width: 0;
+        background: transparent;
+        border: none;
+        outline: none;
+        color: $text-primary;
+        padding: 0.65rem 1rem;
+        font-size: 0.9rem;
+        font-family: inherit;
+
+        &::placeholder {
+          color: $text-muted;
+        }
+      }
+
+      button {
+        background: $brand-gradient;
+        color: #ffffff;
+        border: none;
+        border-radius: 9px;
+        padding: 0.65rem 1.25rem;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        transition:
+          opacity 0.2s,
+          transform 0.15s;
+        white-space: nowrap;
+        flex-shrink: 0;
+
+        .btn-arrow {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+          transition: transform 0.2s ease;
+        }
+
+        &:hover:not(:disabled) {
+          opacity: 0.92;
+          .btn-arrow {
+            transform: translateX(-3px);
+          }
+        }
+
+        &:disabled {
+          background: #10b981;
+          cursor: default;
+        }
+      }
+    }
+  }
+}
+
+// ==========================================================================
+// Main Footer Grid
+// ==========================================================================
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.5fr 0.9fr 1fr 1.6fr;
+  gap: 2.5rem;
+  padding: 3rem 0 2.5rem;
+}
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  .col-heading {
+    position: relative;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: $text-primary;
+    margin: 0 0 1.4rem;
+    padding-bottom: 0.65rem;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      inset-inline-start: 0;
+      width: 28px;
+      height: 2.5px;
+      background: $brand-primary;
+      border-radius: 2px;
+    }
+  }
+}
+
+// Brand Column
+.brand-col {
+  .brand-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+
+    .brand-logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: $brand-gradient;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      mat-icon {
+        font-size: 22px;
+        width: 22px;
+        height: 22px;
+      }
+    }
+
+    .brand-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: $text-primary;
+      letter-spacing: -0.5px;
+    }
+  }
+
+  .brand-desc {
+    font-size: 0.88rem;
+    line-height: 1.85;
+    color: $text-secondary;
+    margin: 0 0 1.5rem;
+  }
+}
+
+// Social Links
+.social-links {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+
+  a {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: $bg-card;
+    border: 1px solid $border-color;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $text-secondary;
+    transition: all 0.25s ease;
+    flex-shrink: 0;
+
+    &:hover {
+      background: $brand-primary;
+      color: #ffffff;
+      border-color: $brand-primary;
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35);
+    }
+  }
+}
+
+// Footer Links
+.footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  a {
+    color: $text-secondary;
+    text-decoration: none;
+    font-size: 0.9rem;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    max-width: 100%;
+
+    &:hover {
+      color: #ffffff;
+      transform: translateX(-4px);
+    }
+  }
+
+  .disabled-link {
+    color: $text-secondary;
+    font-size: 0.9rem;
+    opacity: 0.5;
+    cursor: default;
+  }
+}
+
+// Contact Info
+.contact-col {
+  .contact-info {
+    font-style: normal;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+
+    .contact-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      color: $text-secondary;
+      text-decoration: none;
+      font-size: 0.88rem;
+      line-height: 1.6;
+      transition: color 0.2s ease;
+      word-break: break-word;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #818cf8;
+        margin-top: 2px;
+        flex-shrink: 0;
+      }
+
+      span {
+        min-width: 0;
+        word-break: break-word;
+      }
+
+      &:hover:is(a) {
+        color: #ffffff;
+      }
+    }
+  }
+}
+
+// ==========================================================================
+// Map Styles
+// ==========================================================================
+.map-wrapper {
+  width: 100%;
+  height: 140px;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  margin-bottom: 1.25rem;
+  position: relative;
+  background: #10172a;
+
+  .footer-map-canvas {
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    filter: brightness(0.85) contrast(1.1) invert(100%) hue-rotate(200deg) saturate(0.3);
+  }
+}
+
+// Trust Badges
+.trust-badges {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+
+  .badge-placeholder {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.85rem;
+    background: $bg-card;
+    border: 1px dashed $border-color;
+    border-radius: 8px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: $text-secondary;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: $accent-color;
+    }
+
+    &:hover {
+      border-color: $brand-primary;
+      color: #ffffff;
+      background: $bg-card-hover;
+    }
+  }
+}
+
+// ==========================================================================
+// Bottom Bar
+// ==========================================================================
+.footer-bottom {
+  border-top: 1px solid $border-color;
+  padding: 1.75rem 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  .bottom-legal {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+
+    p {
+      margin: 0;
+      font-size: 0.85rem;
+      color: $text-muted;
+    }
+
+    .legal-links {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.82rem;
+      flex-wrap: wrap;
+
+      span {
+        color: $border-color;
+      }
+
+      .disabled-link {
+        color: $text-muted;
+        opacity: 0.5;
+        cursor: default;
+      }
+
+      a {
+        color: $text-muted;
+        text-decoration: none;
+        transition: color 0.2s;
+
+        &:hover {
+          color: $text-primary;
+        }
+      }
+    }
+  }
+
+  .btn-scroll-top {
+    background: $bg-card;
+    border: 1px solid $border-color;
+    border-radius: 10px;
+    padding: 0.45rem 0.95rem;
+    color: $text-secondary;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.82rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      transition: transform 0.2s ease;
+    }
+
+    &:hover {
+      background: $bg-card-hover;
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.2);
+
+      mat-icon {
+        transform: translateY(-2px);
+      }
+    }
+  }
+}
+
+// ==========================================================================
+// RESPONSIVE — EXTRA LARGE (≤ 1280px)
+// ==========================================================================
+@media (max-width: $bp-xl) {
+  .footer-grid {
+    gap: 2rem;
+  }
+}
+
+// ==========================================================================
+// RESPONSIVE — LARGE (≤ 1024px)
+// ==========================================================================
+@media (max-width: $bp-lg) {
+  .site-footer {
+    margin-top: 4rem;
+  }
+
+  .footer-container {
+    padding: 0 1.25rem;
+  }
+
+  // Newsletter goes vertical
+  .newsletter-card {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1.75rem 2rem;
+    gap: 1.5rem;
+
+    .newsletter-text {
+      justify-content: center;
+      text-align: center;
+      flex-direction: row;
+    }
+
+    .newsletter-form {
+      max-width: 100%;
+      width: 100%;
+    }
+  }
+
+  // Grid becomes 2 columns
+  .footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2.5rem;
+    padding: 2.5rem 0 2rem;
+  }
+}
+
+// ==========================================================================
+// RESPONSIVE — TABLET (≤ 768px)
+// ==========================================================================
+@media (max-width: $bp-md) {
+  .site-footer {
+    margin-top: 3rem;
+  }
+
+  .newsletter-wrapper {
+    padding: 2rem 0 1rem;
+  }
+
+  .newsletter-card {
+    padding: 1.5rem;
+    border-radius: 16px;
+
+    .newsletter-text {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 0.85rem;
+
+      .newsletter-content {
+        h3 {
+          font-size: 1.15rem;
+        }
+
+        p {
+          font-size: 0.85rem;
+        }
+      }
+    }
+  }
+
+  .footer-grid {
+    gap: 2rem;
+    padding: 2rem 0 1.5rem;
+  }
+
+  .brand-col .brand-desc {
+    font-size: 0.85rem;
+  }
+
+  .col-heading {
+    font-size: 1rem !important;
+    margin-bottom: 1rem !important;
+  }
+}
+
+// ==========================================================================
+// RESPONSIVE — MOBILE (≤ 640px)
+// ==========================================================================
+@media (max-width: $bp-sm) {
+  .site-footer {
+    margin-top: 2.5rem;
+  }
+
+  .footer-container {
+    padding: 0 1rem;
+  }
+
+  .newsletter-wrapper {
+    padding: 1.5rem 0 0.5rem;
+  }
+
+  .newsletter-card {
+    padding: 1.25rem;
+    gap: 1.25rem;
+
+    .newsletter-text {
+      .newsletter-icon {
+        width: 44px;
+        height: 44px;
+        min-width: 44px;
+        border-radius: 12px;
+
+        mat-icon {
+          font-size: 22px;
+          width: 22px;
+          height: 22px;
+        }
+      }
+
+      .newsletter-content {
+        h3 {
+          font-size: 1.05rem;
+        }
+
+        p {
+          font-size: 0.8rem;
+        }
+      }
+    }
+
+    .newsletter-form .input-group {
+      flex-direction: column;
+      background: transparent;
+      border: none;
+      padding: 0;
+      gap: 0.5rem;
+
+      &:focus-within {
+        box-shadow: none;
+      }
+
+      input {
+        background: rgba(15, 23, 42, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        padding: 0.8rem 1rem;
+        width: 100%;
+        box-sizing: border-box;
+
+        &:focus {
+          border-color: #6366f1;
+          box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+      }
+
+      button {
+        width: 100%;
+        justify-content: center;
+        padding: 0.75rem 1rem;
+        border-radius: 10px;
+      }
+    }
+  }
+
+  // Grid becomes 1 column
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding: 1.75rem 0 1.5rem;
+    text-align: right;
+  }
+
+  .brand-col {
+    .brand-header {
+      justify-content: flex-start;
+    }
+  }
+
+  .social-links {
+    justify-content: flex-start;
+  }
+
+  // Center map & badges
+  .contact-col {
+    .map-wrapper {
+      height: 160px;
+    }
+
+    .trust-badges {
+      justify-content: flex-start;
+    }
+  }
+
+  // Bottom bar stacks
+  .footer-bottom {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 1.25rem;
+    padding: 1.5rem 0;
+
+    .bottom-legal {
+      flex-direction: column;
+      gap: 0.5rem;
+      align-items: center;
+
+      p {
+        font-size: 0.8rem;
+      }
+
+      .legal-links {
+        justify-content: center;
+      }
+    }
+
+    .btn-scroll-top {
+      order: -1; // Show at top on mobile
+    }
+  }
+}
+
+// ==========================================================================
+// RESPONSIVE — SMALL MOBILE (≤ 480px)
+// ==========================================================================
+@media (max-width: $bp-xs) {
+  .footer-container {
+    padding: 0 0.85rem;
+  }
+
+  .newsletter-card {
+    padding: 1rem;
+    border-radius: 14px;
+
+    .newsletter-text {
+      .newsletter-icon {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+      }
+
+      .newsletter-content {
+        h3 {
+          font-size: 1rem;
+        }
+
+        p {
+          font-size: 0.78rem;
+          line-height: 1.5;
+        }
+      }
+    }
+
+    .newsletter-form .input-group {
+      input {
+        padding: 0.7rem 0.85rem;
+        font-size: 0.85rem;
+      }
+
+      button {
+        padding: 0.7rem;
+        font-size: 0.85rem;
+      }
+    }
+  }
+
+  .footer-grid {
+    gap: 1.75rem;
+  }
+
+  .brand-col {
+    .brand-header {
+      .brand-logo {
+        width: 36px;
+        height: 36px;
+
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+      }
+
+      .brand-title {
+        font-size: 1.1rem;
+      }
+    }
+
+    .brand-desc {
+      font-size: 0.82rem;
+      line-height: 1.75;
+    }
+  }
+
+  .social-links {
+    gap: 0.5rem;
+
+    a {
+      width: 36px;
+      height: 36px;
+
+      svg {
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+
+  .footer-links a {
+    font-size: 0.85rem;
+  }
+
+  .contact-col {
+    .contact-info .contact-item {
+      font-size: 0.82rem;
+    }
+
+    .map-wrapper {
+      height: 140px;
+      border-radius: 10px;
+    }
+
+    .trust-badges {
+      gap: 0.5rem;
+
+      .badge-placeholder {
+        padding: 0.4rem 0.7rem;
+        font-size: 0.72rem;
+
+        mat-icon {
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+        }
+      }
+    }
+  }
+
+  .footer-bottom {
+    padding: 1.25rem 0;
+
+    .bottom-legal p {
+      font-size: 0.75rem;
+    }
+
+    .btn-scroll-top {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.78rem;
+
+      .scroll-text {
+        display: none;
+      }
+    }
+  }
+}
+
+// ==========================================================================
+// RESPONSIVE — VERY SMALL (≤ 360px)
+// ==========================================================================
+@media (max-width: 360px) {
+  .newsletter-card {
+    .newsletter-text {
+      .newsletter-icon {
+        display: none;
+      }
+    }
+  }
+
+  .brand-col .brand-desc {
+    font-size: 0.8rem;
+  }
+
+  .footer-links a {
+    font-size: 0.82rem;
+  }
+
+  .trust-badges {
+    flex-direction: column;
+    align-items: stretch;
+
+    .badge-placeholder {
+      justify-content: center;
+    }
+  }
+}

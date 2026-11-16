@@ -1,0 +1,383 @@
+<div class="admin-users" dir="rtl">
+  <!-- ==========================================
+       PAGE HEADER
+       ========================================== -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="breadcrumb">
+        <a routerLink="/admin/dashboard">
+          <mat-icon>dashboard</mat-icon>
+          پنل مدیریت
+        </a>
+        <mat-icon class="breadcrumb-sep">chevron_left</mat-icon>
+        <span>مدیریت کاربران</span>
+      </div>
+
+      <div class="header-main">
+        <div class="header-title-wrap">
+          <div class="header-icon">
+            <mat-icon>group</mat-icon>
+          </div>
+          <div>
+            <h1>مدیریت کاربران</h1>
+            <p>مشاهده، جستجو و مدیریت کاربران، مدرسان و مدیران سیستم</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <button class="btn-refresh" (click)="loadUsers(); loadStats()">
+            <mat-icon>refresh</mat-icon>
+            <span>بروزرسانی</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       STATS CARDS
+       ========================================== -->
+  <section class="stats-grid">
+    <div
+      class="stat-card"
+      data-color="indigo"
+      [class.active]="roleFilter() === ''"
+      (click)="setRoleFilter('')"
+    >
+      <div class="stat-icon"><mat-icon>group</mat-icon></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ totalAllUsers() | number }}</span>
+        <span class="stat-label">کل کاربران</span>
+      </div>
+    </div>
+
+    <div
+      class="stat-card"
+      data-color="blue"
+      [class.active]="roleFilter() === 'student'"
+      (click)="setRoleFilter('student')"
+    >
+      <div class="stat-icon"><mat-icon>school</mat-icon></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ countStudents() | number }}</span>
+        <span class="stat-label">دانشجو</span>
+      </div>
+    </div>
+
+    <div
+      class="stat-card"
+      data-color="purple"
+      [class.active]="roleFilter() === 'instructor'"
+      (click)="setRoleFilter('instructor')"
+    >
+      <div class="stat-icon"><mat-icon>co_present</mat-icon></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ countInstructors() | number }}</span>
+        <span class="stat-label">مدرس</span>
+      </div>
+    </div>
+
+    <div
+      class="stat-card"
+      data-color="red"
+      [class.active]="statusFilter() === 'banned'"
+      (click)="setStatusFilter(statusFilter() === 'banned' ? 'all' : 'banned')"
+    >
+      <div class="stat-icon"><mat-icon>block</mat-icon></div>
+      <div class="stat-info">
+        <span class="stat-value">{{ countBanned() | number }}</span>
+        <span class="stat-label">مسدود شده</span>
+      </div>
+      <div class="stat-pulse" *ngIf="countBanned() > 0"></div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       TOOLBAR
+       ========================================== -->
+  <section class="toolbar">
+    <div class="filter-tabs">
+      <button
+        *ngFor="let rf of roleFilters"
+        class="filter-tab"
+        [class.active]="roleFilter() === rf.value"
+        [attr.data-color]="rf.color"
+        (click)="setRoleFilter(rf.value)"
+      >
+        <mat-icon>{{ rf.icon }}</mat-icon>
+        <span>{{ rf.label }}</span>
+      </button>
+    </div>
+
+    <div class="toolbar-right">
+      <div class="status-select">
+        <mat-icon>filter_list</mat-icon>
+        <select [ngModel]="statusFilter()" (ngModelChange)="setStatusFilter($event)">
+          <option *ngFor="let s of statusFilters" [value]="s.value">
+            {{ s.label }}
+          </option>
+        </select>
+        <mat-icon class="arrow">expand_more</mat-icon>
+      </div>
+
+      <div class="search-box">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input
+          type="text"
+          placeholder="جستجوی نام، ایمیل یا موبایل..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearchChange($event)"
+        />
+        <button class="btn-clear" *ngIf="searchQuery()" (click)="onSearchChange('')">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       TABLE
+       ========================================== -->
+  <section class="table-section">
+    <!-- Loading -->
+    <div class="skeleton-table" *ngIf="isLoading()">
+      <div class="skel-row shimmer" *ngFor="let s of skeletonArray"></div>
+    </div>
+
+    <!-- Empty -->
+    <div class="empty-state" *ngIf="!isLoading() && users().length === 0">
+      <div class="empty-illustration">
+        <div class="empty-circle"></div>
+        <mat-icon>person_off</mat-icon>
+      </div>
+      <h3>کاربری یافت نشد</h3>
+      <p>
+        <ng-container *ngIf="searchQuery()">
+          نتیجه‌ای برای «{{ searchQuery() }}» پیدا نشد.
+        </ng-container>
+        <ng-container *ngIf="!searchQuery()"> در این دسته‌بندی کاربری وجود ندارد. </ng-container>
+      </p>
+      <button
+        class="btn-reset"
+        *ngIf="searchQuery() || roleFilter() || statusFilter() !== 'all'"
+        (click)="searchQuery.set(''); roleFilter.set(''); statusFilter.set('all'); loadUsers()"
+      >
+        <mat-icon>refresh</mat-icon>
+        پاک‌سازی فیلترها
+      </button>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-wrap" *ngIf="!isLoading() && users().length > 0">
+      <table class="users-table">
+        <thead>
+          <tr>
+            <th>کاربر</th>
+            <th>نقش</th>
+            <th>وضعیت</th>
+            <th>تاریخ عضویت</th>
+            <th>آخرین ورود</th>
+            <th>عملیات</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr
+            *ngFor="let user of users(); trackBy: trackByUser"
+            [class.is-banned]="user.isBanned"
+            [class.processing]="processingId() === user._id"
+          >
+            <!-- User Info -->
+            <td class="col-user">
+              <div class="user-cell">
+                <div class="user-avatar">
+                  <img
+                    *ngIf="user.avatar"
+                    [src]="user.avatar"
+                    [alt]="user.fullName"
+                    appImageFallback
+                  />
+                  <div class="avatar-fallback" *ngIf="!user.avatar">
+                    {{ getInitials(user.fullName) }}
+                  </div>
+                  <span class="online-dot" *ngIf="!user.isBanned && user.isActive !== false"></span>
+                </div>
+                <div class="user-meta">
+                  <span class="user-name">{{ user.fullName || '—' }}</span>
+                  <span class="user-email">{{ user.email || user.mobile || '—' }}</span>
+                </div>
+              </div>
+            </td>
+
+            <!-- Role -->
+            <td class="col-role">
+              <span class="role-badge" [attr.data-role]="user.role">
+                <mat-icon>{{ getRoleIcon(user.role) }}</mat-icon>
+                {{ getRoleLabel(user.role) }}
+              </span>
+            </td>
+
+            <!-- Status -->
+            <td class="col-status">
+              <span class="status-badge" [attr.data-color]="getStatusInfo(user).color">
+                <mat-icon>{{ getStatusInfo(user).icon }}</mat-icon>
+                {{ getStatusInfo(user).label }}
+              </span>
+              <span class="ban-reason" *ngIf="user.isBanned && user.banReason">
+                {{ user.banReason }}
+              </span>
+            </td>
+
+            <!-- Created -->
+            <td class="col-date">
+              <span class="date-main">{{ user.createdAt | jalaliDate }}</span>
+            </td>
+
+            <!-- Last Login -->
+            <td class="col-date">
+              <span class="date-main" *ngIf="user.lastLogin">
+                {{ user.lastLogin | jalaliDate }}
+              </span>
+              <span class="date-muted" *ngIf="!user.lastLogin">—</span>
+            </td>
+
+            <!-- Actions -->
+            <td class="col-actions">
+              <div class="actions-wrap">
+                <!-- Ban -->
+                <button
+                  *ngIf="!user.isBanned && user.role !== 'admin'"
+                  class="btn-act btn-ban"
+                  (click)="openBanModal(user)"
+                  [disabled]="processingId() === user._id"
+                  title="مسدود کردن"
+                >
+                  <mat-icon>block</mat-icon>
+                  <span>مسدود</span>
+                </button>
+
+                <!-- Unban -->
+                <button
+                  *ngIf="user.isBanned"
+                  class="btn-act btn-unban"
+                  (click)="unbanUser(user)"
+                  [disabled]="processingId() === user._id"
+                  title="رفع مسدودیت"
+                >
+                  <div class="mini-spinner" *ngIf="processingId() === user._id"></div>
+                  <mat-icon *ngIf="processingId() !== user._id">lock_open</mat-icon>
+                  <span>رفع مسدودیت</span>
+                </button>
+
+                <!-- Admin locked -->
+                <span class="admin-lock" *ngIf="user.role === 'admin' && !user.isBanned">
+                  <mat-icon>shield</mat-icon>
+                  محافظت‌شده
+                </span>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Footer + Pagination -->
+    <div class="table-footer" *ngIf="!isLoading() && users().length > 0">
+      <span class="footer-count">
+        نمایش صفحه <strong>{{ currentPage() }}</strong> از <strong>{{ totalPages() }}</strong>
+        <span *ngIf="totalUsers() > 0"> ({{ totalUsers() | number }} کاربر) </span>
+      </span>
+
+      <app-pagination
+        [currentPage]="currentPage()"
+        [totalPages]="totalPages()"
+        (pageChange)="onPageChange($event)"
+      ></app-pagination>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       BAN MODAL
+       ========================================== -->
+  <div class="modal-backdrop" *ngIf="showBanModal()" (click)="closeBanModal()">
+    <div class="modal-box" (click)="$event.stopPropagation()" *ngIf="selectedUser() as u">
+      <div class="modal-header">
+        <div class="modal-title-row">
+          <div class="modal-icon danger">
+            <mat-icon>gpp_bad</mat-icon>
+          </div>
+          <div>
+            <h2>مسدود کردن کاربر</h2>
+            <p>این عمل دسترسی کاربر به سیستم را قطع می‌کند</p>
+          </div>
+        </div>
+        <button class="btn-close" (click)="closeBanModal()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <!-- User preview -->
+        <div class="user-preview">
+          <div class="user-avatar lg">
+            <img *ngIf="u.avatar" [src]="u.avatar" [alt]="u.fullName" appImageFallback />
+            <div class="avatar-fallback" *ngIf="!u.avatar">
+              {{ getInitials(u.fullName) }}
+            </div>
+          </div>
+          <div>
+            <strong>{{ u.fullName }}</strong>
+            <span>{{ u.email || u.mobile }}</span>
+            <span class="role-badge sm" [attr.data-role]="u.role">
+              {{ getRoleLabel(u.role) }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Reason -->
+        <div class="form-field">
+          <label>
+            دلیل مسدودیت
+            <span class="req">*</span>
+          </label>
+          <app-rich-text-editor
+            [ngModel]="banReason()"
+            (ngModelChange)="banReason.set($event)"
+            placeholder="دلیل مسدود کردن این کاربر را بنویسید..."
+            minHeight="120px"
+            [autoExpand]="true"
+          ></app-rich-text-editor>
+          <div class="field-meta">
+            <span class="hint">
+              <mat-icon>info</mat-icon>
+              این متن برای کاربر قابل مشاهده است
+            </span>
+            <span class="count">{{ banReason().length }}/300</span>
+          </div>
+        </div>
+
+        <!-- Quick reasons -->
+        <div class="quick-reasons">
+          <span class="qr-label">دلایل رایج:</span>
+          <div class="qr-chips">
+            <button *ngFor="let r of banReasons" class="qr-chip" (click)="banReason.set(r)">
+              {{ r }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeBanModal()">انصراف</button>
+        <button
+          class="btn-danger"
+          (click)="confirmBan()"
+          [disabled]="banReason().trim().length < 3 || processingId()"
+        >
+          <div class="mini-spinner light" *ngIf="processingId()"></div>
+          <mat-icon *ngIf="!processingId()">block</mat-icon>
+          <span>{{ processingId() ? 'در حال اعمال...' : 'مسدود کردن' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

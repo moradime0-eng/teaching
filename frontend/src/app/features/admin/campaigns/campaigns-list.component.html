@@ -1,0 +1,453 @@
+<div class="campaigns-page" dir="rtl">
+  <!-- ===== BACK BUTTON ===== -->
+  <div class="back-nav">
+    <button class="btn-back" (click)="goToDashboard()" matTooltip="بازگشت به داشبورد">
+      <mat-icon>arrow_forward</mat-icon>
+      <span>بازگشت به داشبورد</span>
+    </button>
+  </div>
+
+  <!-- ===== HERO HEADER ===== -->
+  <header class="hero-header">
+    <div class="hero-bg-glow"></div>
+    <div class="hero-content">
+      <div class="hero-text">
+        <div class="hero-badge">
+          <mat-icon>campaign</mat-icon>
+          <span>مرکز مدیریت کمپین</span>
+        </div>
+        <h1 class="hero-title">کمپین‌های تخفیف</h1>
+        <p class="hero-subtitle">طراحی، زمان‌بندی و مدیریت تخفیف‌های سراسری سایت از این‌جا</p>
+      </div>
+
+      <button class="btn-create" (click)="createNew()">
+        <span class="btn-glow"></span>
+        <mat-icon>add_circle</mat-icon>
+        <span>کمپین جدید</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ===== STATS CARDS ===== -->
+  <section class="stats-grid">
+    <button class="stat-card" [class.active]="activeFilter() === 'all'" (click)="setFilter('all')">
+      <div class="stat-icon stat-icon-all">
+        <mat-icon>view_module</mat-icon>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats().total.toLocaleString('fa-IR') }}</span>
+        <span class="stat-label">کل کمپین‌ها</span>
+      </div>
+    </button>
+
+    <button
+      class="stat-card stat-active-card"
+      [class.active]="activeFilter() === 'active'"
+      (click)="setFilter('active')"
+    >
+      <div class="stat-icon stat-icon-active">
+        <mat-icon>bolt</mat-icon>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats().active.toLocaleString('fa-IR') }}</span>
+        <span class="stat-label">در حال اجرا</span>
+      </div>
+      @if (stats().active > 0) {
+        <span class="live-dot"></span>
+      }
+    </button>
+
+    <button
+      class="stat-card"
+      [class.active]="activeFilter() === 'scheduled'"
+      (click)="setFilter('scheduled')"
+    >
+      <div class="stat-icon stat-icon-scheduled">
+        <mat-icon>schedule</mat-icon>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats().scheduled.toLocaleString('fa-IR') }}</span>
+        <span class="stat-label">زمان‌بندی شده</span>
+      </div>
+    </button>
+
+    <button
+      class="stat-card"
+      [class.active]="activeFilter() === 'expired'"
+      (click)="setFilter('expired')"
+    >
+      <div class="stat-icon stat-icon-expired">
+        <mat-icon>history</mat-icon>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ stats().expired.toLocaleString('fa-IR') }}</span>
+        <span class="stat-label">پایان‌یافته</span>
+      </div>
+    </button>
+  </section>
+
+  <!-- ===== TOOLBAR ===== -->
+  <section class="toolbar">
+    <div class="search-wrapper">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input
+        type="text"
+        class="search-input"
+        placeholder="جست‌وجو در عنوان یا متن کمپین..."
+        [ngModel]="searchQuery()"
+        (ngModelChange)="onSearchChange($event)"
+      />
+      @if (searchQuery()) {
+        <button class="search-clear" (click)="clearSearch()" aria-label="پاک کردن">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </div>
+
+    <div class="view-toggle">
+      <button
+        class="view-btn"
+        [class.active]="viewMode() === 'grid'"
+        (click)="setViewMode('grid')"
+        matTooltip="نمای کارتی"
+      >
+        <mat-icon>grid_view</mat-icon>
+      </button>
+      <button
+        class="view-btn"
+        [class.active]="viewMode() === 'list'"
+        (click)="setViewMode('list')"
+        matTooltip="نمای لیستی"
+      >
+        <mat-icon>view_list</mat-icon>
+      </button>
+    </div>
+  </section>
+
+  <!-- ===== ERROR STATE ===== -->
+  @if (error()) {
+    <div class="state-banner state-error">
+      <mat-icon>error_outline</mat-icon>
+      <div class="state-text">
+        <strong>خطا در بارگذاری</strong>
+        <span>{{ error() }}</span>
+      </div>
+      <button class="btn-retry" (click)="loadCampaigns()">
+        <mat-icon>refresh</mat-icon>
+        تلاش مجدد
+      </button>
+    </div>
+  }
+
+  <!-- ===== LOADING STATE ===== -->
+  @if (isLoading()) {
+    <div class="state-loading">
+      <div class="loading-pulse">
+        <mat-icon>campaign</mat-icon>
+      </div>
+      <p>در حال بارگذاری کمپین‌ها...</p>
+    </div>
+  }
+
+  <!-- ===== EMPTY STATE ===== -->
+  @if (!isLoading() && !error() && filteredCampaigns().length === 0) {
+    <div class="state-empty">
+      <div class="empty-illustration">
+        <mat-icon>campaign</mat-icon>
+      </div>
+      @if (campaigns().length === 0) {
+        <h3>هنوز کمپینی ایجاد نشده</h3>
+        <p>اولین کمپین تخفیف خود را بسازید و فروش را افزایش دهید</p>
+        <button class="btn-create btn-create-secondary" (click)="createNew()">
+          <mat-icon>add_circle</mat-icon>
+          <span>ایجاد اولین کمپین</span>
+        </button>
+      } @else {
+        <h3>نتیجه‌ای یافت نشد</h3>
+        <p>کمپینی با فیلترهای انتخابی شما مطابقت ندارد</p>
+        <button class="btn-reset" (click)="clearSearch(); setFilter('all')">
+          <mat-icon>restart_alt</mat-icon>
+          پاک کردن فیلترها
+        </button>
+      }
+    </div>
+  }
+
+  <!-- ===== CAMPAIGNS GRID VIEW ===== -->
+  @if (!isLoading() && !error() && filteredCampaigns().length > 0 && viewMode() === 'grid') {
+    <section class="campaigns-grid">
+      @for (campaign of filteredCampaigns(); track trackByCampaignId($index, campaign)) {
+        <article
+          class="campaign-card"
+          [attr.data-theme]="campaign.theme"
+          [attr.data-status]="getCampaignStatus(campaign)"
+        >
+          <!-- Card Header with theme gradient -->
+          <div class="card-ribbon">
+            <div class="ribbon-left">
+              <div class="theme-icon">
+                <mat-icon>{{ getThemeIcon(campaign.theme) }}</mat-icon>
+              </div>
+              <span class="theme-name">{{ getThemeLabel(campaign.theme) }}</span>
+            </div>
+            <div class="status-pill" [class]="getStatusMeta(campaign).class">
+              <mat-icon>{{ getStatusMeta(campaign).icon }}</mat-icon>
+              <span>{{ getStatusMeta(campaign).label }}</span>
+            </div>
+          </div>
+
+          <!-- Card Body -->
+          <div class="card-body">
+            <h3 class="card-title">{{ campaign.title }}</h3>
+            @if (campaign.bannerText) {
+              <p class="card-banner-preview">
+                <mat-icon>format_quote</mat-icon>
+                <span>{{ campaign.bannerText }}</span>
+              </p>
+            }
+
+            <!-- Discount & Scope badges -->
+            <div class="card-badges">
+              <div class="badge-discount">
+                <mat-icon>sell</mat-icon>
+                <span class="discount-value">{{ getDiscountLabel(campaign) }}</span>
+                <span class="discount-type">
+                  {{ campaign.discountType === 'percentage' ? 'تخفیف' : 'تومان تخفیف' }}
+                </span>
+              </div>
+              <div class="badge-scope">
+                <mat-icon>{{ campaign.scope === 'all' ? 'public' : 'category' }}</mat-icon>
+                <span>{{ getScopeLabel(campaign) }}</span>
+              </div>
+            </div>
+
+            @if (campaign.maxDiscount && campaign.discountType === 'percentage') {
+              <div class="card-note">
+                <mat-icon>info</mat-icon>
+                <span
+                  >حداکثر تخفیف:
+                  {{ getMaxDiscountToman(campaign).toLocaleString('fa-IR') }} تومان</span
+                >
+              </div>
+            }
+
+            <!-- Countdown for active campaigns -->
+            @if (getRemainingTime(campaign); as remaining) {
+              <div class="countdown-section">
+                <div class="countdown-label">
+                  <mat-icon>timer</mat-icon>
+                  <span>زمان باقی‌مانده</span>
+                </div>
+                <div class="countdown-timer">
+                  <div class="time-block">
+                    <span class="time-value">{{ remaining.days.toLocaleString('fa-IR') }}</span>
+                    <span class="time-label">روز</span>
+                  </div>
+                  <span class="time-sep">:</span>
+                  <div class="time-block">
+                    <span class="time-value">{{
+                      remaining.hours.toString().padStart(2, '0')
+                    }}</span>
+                    <span class="time-label">ساعت</span>
+                  </div>
+                  <span class="time-sep">:</span>
+                  <div class="time-block">
+                    <span class="time-value">{{ remaining.mins.toString().padStart(2, '0') }}</span>
+                    <span class="time-label">دقیقه</span>
+                  </div>
+                  <span class="time-sep">:</span>
+                  <div class="time-block">
+                    <span class="time-value">{{ remaining.secs.toString().padStart(2, '0') }}</span>
+                    <span class="time-label">ثانیه</span>
+                  </div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" [style.width.%]="getProgressPercent(campaign)"></div>
+                </div>
+              </div>
+            }
+
+            <!-- Starts-in notice for scheduled -->
+            @if (getTimeUntilStart(campaign); as timeUntil) {
+              <div class="scheduled-notice">
+                <mat-icon>hourglass_top</mat-icon>
+                <span>شروع تا {{ timeUntil }}</span>
+              </div>
+            }
+
+            <!-- Dates footer -->
+            <div class="card-dates">
+              <div class="date-item">
+                <mat-icon>play_circle</mat-icon>
+                <div>
+                  <span class="date-label">شروع</span>
+                  <span class="date-value"
+                    >{{ formatDate(campaign.startAt) }} • {{ formatTime(campaign.startAt) }}</span
+                  >
+                </div>
+              </div>
+              <div class="date-item">
+                <mat-icon>stop_circle</mat-icon>
+                <div>
+                  <span class="date-label">پایان</span>
+                  <span class="date-value"
+                    >{{ formatDate(campaign.endAt) }} • {{ formatTime(campaign.endAt) }}</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Actions -->
+          <div class="card-actions">
+            <button
+              class="action-btn action-primary"
+              (click)="editCampaign(campaign)"
+              matTooltip="ویرایش"
+            >
+              <mat-icon>edit</mat-icon>
+              <span>ویرایش</span>
+            </button>
+            <button
+              class="action-btn"
+              (click)="toggleActive(campaign)"
+              [matTooltip]="campaign.isActive ? 'غیرفعال کردن' : 'فعال کردن'"
+            >
+              <mat-icon>{{ campaign.isActive ? 'pause' : 'play_arrow' }}</mat-icon>
+            </button>
+            <button class="action-btn" (click)="duplicateCampaign(campaign)" matTooltip="کپی">
+              <mat-icon>content_copy</mat-icon>
+            </button>
+            <button
+              class="action-btn action-danger"
+              (click)="confirmDelete(campaign)"
+              matTooltip="حذف"
+            >
+              <mat-icon>delete_outline</mat-icon>
+            </button>
+          </div>
+        </article>
+      }
+    </section>
+  }
+
+  <!-- ===== CAMPAIGNS LIST VIEW ===== -->
+  @if (!isLoading() && !error() && filteredCampaigns().length > 0 && viewMode() === 'list') {
+    <section class="campaigns-list">
+      @for (campaign of filteredCampaigns(); track trackByCampaignId($index, campaign)) {
+        <div
+          class="list-row"
+          [attr.data-theme]="campaign.theme"
+          [attr.data-status]="getCampaignStatus(campaign)"
+        >
+          <div class="row-theme-strip"></div>
+
+          <div class="row-main">
+            <div class="row-icon">
+              <mat-icon>{{ getThemeIcon(campaign.theme) }}</mat-icon>
+            </div>
+            <div class="row-info">
+              <div class="row-title-wrap">
+                <h4 class="row-title">{{ campaign.title }}</h4>
+                <span class="status-pill" [class]="getStatusMeta(campaign).class">
+                  <mat-icon>{{ getStatusMeta(campaign).icon }}</mat-icon>
+                  <span>{{ getStatusMeta(campaign).label }}</span>
+                </span>
+              </div>
+              @if (campaign.bannerText) {
+                <p class="row-text">{{ campaign.bannerText }}</p>
+              }
+            </div>
+          </div>
+
+          <div class="row-stats">
+            <div class="row-stat">
+              <span class="row-stat-label">تخفیف</span>
+              <span class="row-stat-value discount-highlight">{{
+                getDiscountLabel(campaign)
+              }}</span>
+            </div>
+            <div class="row-stat">
+              <span class="row-stat-label">محدوده</span>
+              <span class="row-stat-value">{{ getScopeLabel(campaign) }}</span>
+            </div>
+            <div class="row-stat">
+              <span class="row-stat-label">پایان</span>
+              <span class="row-stat-value">{{ formatDate(campaign.endAt) }}</span>
+            </div>
+            @if (getRemainingTime(campaign); as remaining) {
+              <div class="row-stat row-countdown">
+                <span class="row-stat-label">باقی‌مانده</span>
+                <span class="row-stat-value countdown-mini">
+                  {{ remaining.days.toLocaleString('fa-IR') }}د
+                  {{ remaining.hours.toString().padStart(2, '0') }}:{{
+                    remaining.mins.toString().padStart(2, '0')
+                  }}:{{ remaining.secs.toString().padStart(2, '0') }}
+                </span>
+              </div>
+            }
+          </div>
+
+          <div class="row-actions">
+            <button class="icon-btn" (click)="editCampaign(campaign)" matTooltip="ویرایش">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button class="icon-btn" [matMenuTriggerFor]="menu" matTooltip="بیشتر">
+              <mat-icon>more_vert</mat-icon>
+            </button>
+            <mat-menu #menu="matMenu" xPosition="before">
+              <button mat-menu-item (click)="toggleActive(campaign)">
+                <mat-icon>{{ campaign.isActive ? 'pause_circle' : 'play_circle' }}</mat-icon>
+                <span>{{ campaign.isActive ? 'غیرفعال کردن' : 'فعال کردن' }}</span>
+              </button>
+              <button mat-menu-item (click)="duplicateCampaign(campaign)">
+                <mat-icon>content_copy</mat-icon>
+                <span>تکثیر کمپین</span>
+              </button>
+              <button mat-menu-item (click)="confirmDelete(campaign)" class="danger-item">
+                <mat-icon>delete</mat-icon>
+                <span>حذف</span>
+              </button>
+            </mat-menu>
+          </div>
+        </div>
+      }
+    </section>
+  }
+
+  <!-- ===== PAGINATION ===== -->
+  @if (!isLoading() && !error() && filteredCampaigns().length > 0 && totalPages() > 1) {
+    <div class="pagination-footer">
+      <span class="footer-count">
+        نمایش صفحه <strong>{{ currentPage() }}</strong> از <strong>{{ totalPages() }}</strong>
+        @if (totalCampaigns() > 0) {
+          <span>({{ totalCampaigns() | number }} کمپین)</span>
+        }
+      </span>
+
+      <app-pagination
+        [currentPage]="currentPage()"
+        [totalPages]="totalPages()"
+        (pageChange)="onPageChange($event)"
+      ></app-pagination>
+    </div>
+  }
+
+  <!-- ===== CONFIRM DELETE MODAL ===== -->
+  <app-confirm-modal
+    [isOpen]="showConfirmModal()"
+    title="حذف کمپین"
+    [message]="
+      'آیا از حذف کمپین «' +
+      (campaignToDelete()?.title || '') +
+      '» اطمینان دارید؟ این عملیات غیرقابل بازگشت است.'
+    "
+    confirmText="حذف کمپین"
+    cancelText="انصراف"
+    [isLoading]="deletingId() === campaignToDelete()?._id"
+    confirmColor="warn"
+    (confirm)="deleteCampaign()"
+    (cancel)="cancelDelete()"
+  >
+  </app-confirm-modal>
+</div>

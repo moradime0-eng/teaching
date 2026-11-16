@@ -1,0 +1,319 @@
+<div class="auth-page" dir="rtl">
+  <!-- Animated Background -->
+  <div class="bg-decoration">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <div class="grid-pattern"></div>
+  </div>
+
+  <!-- Theme Toggle -->
+  <button class="theme-toggle-floating" (click)="toggleTheme()"
+    [attr.aria-label]="themeService.isDark() ? 'حالت روشن' : 'حالت تیره'">
+    <mat-icon>{{ themeService.isDark() ? 'light_mode' : 'dark_mode' }}</mat-icon>
+  </button>
+
+  <!-- Back Home -->
+  <a routerLink="/" class="home-btn-floating">
+    <mat-icon>arrow_forward</mat-icon>
+    <span>بازگشت به سایت</span>
+  </a>
+
+  <div class="auth-container">
+    <!-- Left Side - Branding -->
+    <aside class="auth-branding">
+      <div class="branding-content">
+        <a routerLink="/" class="logo-wrapper">
+          <div class="logo-icon"><mat-icon>school</mat-icon></div>
+          <div class="logo-text">
+            <h1>همایون</h1>
+            <span>مرکز تخصصی آموزش</span>
+          </div>
+        </a>
+
+        <div class="branding-body">
+          <div class="welcome-badge">
+            <span class="pulse-dot"></span>
+            <span>عضویت رایگان</span>
+          </div>
+          <h2 class="branding-title">
+            به جامعه‌ای از
+            <span class="gradient-text">یادگیرندگان حرفه‌ای</span>
+            بپیوندید
+          </h2>
+          <p class="branding-desc">
+            دسترسی به صدها دوره تخصصی، اساتید مجرب و محتوای باکیفیت در انتظار شماست.
+          </p>
+          <div class="features-list">
+            <div class="feature-item">
+              <div class="feature-icon"><mat-icon>verified</mat-icon></div>
+              <div class="feature-text"><h4>گواهی معتبر</h4><p>مدرک دو زبانه قابل استعلام</p></div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon"><mat-icon>groups</mat-icon></div>
+              <div class="feature-text"><h4>جامعه فعال</h4><p>ارتباط با دانشجویان و اساتید</p></div>
+            </div>
+            <div class="feature-item">
+              <div class="feature-icon"><mat-icon>support_agent</mat-icon></div>
+              <div class="feature-text"><h4>پشتیبانی ۲۴ ساعته</h4><p>همیشه در کنار شما</p></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats">
+          <div class="stat-item"><span class="stat-number">+۱۰K</span><span class="stat-label">دانشجو</span></div>
+          <div class="stat-divider"></div>
+          <div class="stat-item"><span class="stat-number">+۵۰۰</span><span class="stat-label">دوره</span></div>
+          <div class="stat-divider"></div>
+          <div class="stat-item"><span class="stat-number">۹۸٪</span><span class="stat-label">رضایت</span></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right Side - Form -->
+    <main class="auth-card">
+      <div class="card-header">
+        <h2>ایجاد حساب کاربری</h2>
+        <p>در چند مرحله ساده ثبت‌نام کنید</p>
+
+        <!-- Step Progress Indicator (3 steps) -->
+        <div class="step-progress">
+          <div class="step-item" [class.active]="currentStep() >= 1" [class.completed]="currentStep() > 1">
+            <div class="step-circle">
+              <span *ngIf="currentStep() <= 1">۱</span>
+              <mat-icon *ngIf="currentStep() > 1">check</mat-icon>
+            </div>
+            <span class="step-label">ایمیل</span>
+          </div>
+          <div class="step-connector" [class.active]="currentStep() > 1"></div>
+          <div class="step-item" [class.active]="currentStep() >= 2" [class.completed]="currentStep() > 2">
+            <div class="step-circle">
+              <span *ngIf="currentStep() <= 2">۲</span>
+              <mat-icon *ngIf="currentStep() > 2">check</mat-icon>
+            </div>
+            <span class="step-label">رمز عبور</span>
+          </div>
+          <div class="step-connector" [class.active]="currentStep() > 2"></div>
+          <div class="step-item" [class.active]="currentStep() >= 3">
+            <div class="step-circle"><span>۳</span></div>
+            <span class="step-label">تکمیل</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alerts -->
+      <div class="alert alert-error" *ngIf="errorMessage()" @fadeSlide>
+        <mat-icon>error_outline</mat-icon>
+        <span>{{ errorMessage() }}</span>
+        <button class="alert-close" type="button" (click)="errorMessage.set('')"><mat-icon>close</mat-icon></button>
+      </div>
+      <div class="alert alert-success" *ngIf="successMessage()" @fadeSlide>
+        <mat-icon>check_circle</mat-icon>
+        <span>{{ successMessage() }}</span>
+      </div>
+
+      <!-- ==================== STEP 1: EMAIL ==================== -->
+      <form *ngIf="currentStep() === 1" [formGroup]="emailForm" (ngSubmit)="onEmailNext()" class="auth-form" @stepChange>
+        <div class="step-title">
+          <mat-icon class="step-icon">alternate_email</mat-icon>
+          <div>
+            <h3>ایمیل خود را وارد کنید</h3>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-email"><mat-icon>alternate_email</mat-icon> آدرس ایمیل</label>
+          <div class="input-wrapper">
+            <input id="reg-email" type="email" formControlName="email" placeholder="example@gmail.com"
+              [class.invalid]="isInvalid(emailForm, 'email')" [class.valid]="isValid(emailForm, 'email')" autocomplete="email" dir="ltr" />
+            <mat-icon class="input-status success" *ngIf="isValid(emailForm, 'email')">check_circle</mat-icon>
+            <mat-icon class="input-status error" *ngIf="isInvalid(emailForm, 'email')">error</mat-icon>
+          </div>
+          <span class="validation-error" *ngIf="isInvalid(emailForm, 'email')" @fadeSlide>
+            <mat-icon>info</mat-icon> لطفاً یک ایمیل معتبر وارد کنید
+          </span>
+        </div>
+
+        <button type="submit" class="btn-submit">
+          <span class="btn-content">
+            <span>مرحله بعد</span>
+            <mat-icon>arrow_back</mat-icon>
+          </span>
+        </button>
+
+        <div class="social-divider"><span>یا</span></div>
+
+        <div class="social-buttons">
+          <button type="button" class="btn-social btn-google" (click)="loginWithGoogle()">
+            <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+            <span>ورود با گوگل</span>
+          </button>
+          <button type="button" class="btn-social btn-github" (click)="loginWithGithub()">
+            <mat-icon>code</mat-icon>
+            <span>ورود با گیت‌هاب</span>
+          </button>
+        </div>
+
+        <div class="auth-link">
+          <span>قبلاً ثبت‌نام کرده‌اید؟</span>
+          <a routerLink="/auth/login">وارد شوید</a>
+        </div>
+      </form>
+
+      <!-- ==================== STEP 2: PASSWORD ==================== -->
+      <form *ngIf="currentStep() === 2" [formGroup]="passwordForm" (ngSubmit)="onPasswordNext()" class="auth-form" @stepChange>
+        <button type="button" class="btn-back" (click)="goBack()">
+          <mat-icon>arrow_forward</mat-icon>
+          <span>بازگشت</span>
+        </button>
+
+        <div class="step-title">
+          <mat-icon class="step-icon">lock</mat-icon>
+          <div>
+            <h3>رمز عبور خود را تنظیم کنید</h3>
+            <p>رمز عبور باید حداقل ۸ کاراکتر باشد</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-password"><mat-icon>lock</mat-icon> رمز عبور</label>
+          <div class="input-wrapper password-input">
+            <input id="reg-password" [type]="showPassword() ? 'text' : 'password'" formControlName="password"
+              placeholder="حداقل ۸ کاراکتر با حروف بزرگ و کوچک"
+              [class.invalid]="isInvalid(passwordForm, 'password')" [class.valid]="isValid(passwordForm, 'password')"
+              autocomplete="new-password" />
+            <button type="button" class="eye-btn" (click)="toggleShowPassword()" tabindex="-1">
+              <mat-icon>{{ showPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </div>
+
+          <div class="password-strength" *ngIf="passwordForm.get('password')?.value">
+            <div class="strength-bars">
+              <span class="bar" *ngFor="let bar of [1,2,3,4]" [class.active]="passwordStrength >= bar"
+                [attr.data-level]="passwordStrength"></span>
+            </div>
+            <span class="strength-text" [style.color]="strengthColor">{{ strengthLabel }}</span>
+          </div>
+
+          <div class="password-hints" *ngIf="passwordForm.get('password')?.value">
+            <div class="hint" [class.met]="hasMinLength()">
+              <mat-icon>{{ hasMinLength() ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+              <span>حداقل ۸ کاراکتر</span>
+            </div>
+            <div class="hint" [class.met]="hasUpperCase()">
+              <mat-icon>{{ hasUpperCase() ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+              <span>یک حرف بزرگ (A-Z)</span>
+            </div>
+            <div class="hint" [class.met]="hasLowerCase()">
+              <mat-icon>{{ hasLowerCase() ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+              <span>یک حرف کوچک (a-z)</span>
+            </div>
+            <div class="hint" [class.met]="hasNumber()">
+              <mat-icon>{{ hasNumber() ? 'check_circle' : 'radio_button_unchecked' }}</mat-icon>
+              <span>حداقل یک عدد</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-confirmPassword"><mat-icon>lock_reset</mat-icon> تکرار رمز عبور</label>
+          <div class="input-wrapper password-input">
+            <input id="reg-confirmPassword" [type]="showConfirmPassword() ? 'text' : 'password'"
+              formControlName="confirmPassword" placeholder="رمز عبور را دوباره وارد کنید"
+              [class.invalid]="passwordForm.hasError('mismatch') && passwordForm.get('confirmPassword')?.touched"
+              [class.valid]="!passwordForm.hasError('mismatch') && passwordForm.get('confirmPassword')?.value && passwordForm.get('confirmPassword')?.touched"
+              autocomplete="new-password" />
+            <button type="button" class="eye-btn" (click)="toggleShowConfirmPassword()" tabindex="-1">
+              <mat-icon>{{ showConfirmPassword() ? 'visibility_off' : 'visibility' }}</mat-icon>
+            </button>
+          </div>
+          <span class="validation-error" *ngIf="passwordForm.hasError('mismatch') && passwordForm.get('confirmPassword')?.touched" @fadeSlide>
+            <mat-icon>info</mat-icon> رمز عبور و تکرار آن مطابقت ندارند
+          </span>
+        </div>
+
+        <button type="submit" class="btn-submit">
+          <span class="btn-content">
+            <span>مرحله بعد</span>
+            <mat-icon>arrow_back</mat-icon>
+          </span>
+        </button>
+      </form>
+
+      <!-- ==================== STEP 3: ROLE SELECTION ==================== -->
+      <form *ngIf="currentStep() === 3" [formGroup]="roleForm" (ngSubmit)="onSubmit()" class="auth-form" @stepChange>
+        <button type="button" class="btn-back" (click)="goBack()">
+          <mat-icon>arrow_forward</mat-icon>
+          <span>بازگشت</span>
+        </button>
+
+        <div class="step-title">
+          <mat-icon class="step-icon">person_add</mat-icon>
+          <div>
+            <h3>نقش خود را انتخاب کنید</h3>
+            <p>می‌خواهید در پلتفرم چه نقشی داشته باشید؟</p>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="reg-fullName"><mat-icon>badge</mat-icon> نام و نام خانوادگی</label>
+          <div class="input-wrapper">
+            <input id="reg-fullName" type="text" formControlName="fullName" placeholder="مثلاً علیرضا محمدی"
+              [class.invalid]="isInvalid(roleForm, 'fullName')" [class.valid]="isValid(roleForm, 'fullName')" autocomplete="name" />
+            <mat-icon class="input-status success" *ngIf="isValid(roleForm, 'fullName')">check_circle</mat-icon>
+            <mat-icon class="input-status error" *ngIf="isInvalid(roleForm, 'fullName')">error</mat-icon>
+          </div>
+          <span class="validation-error" *ngIf="isInvalid(roleForm, 'fullName')" @fadeSlide>
+            <mat-icon>info</mat-icon> نام باید حداقل ۳ کاراکتر باشد
+          </span>
+        </div>
+
+        <div class="role-selector">
+          <label class="role-label">می‌خواهید چه کاری کنید؟</label>
+          <div class="role-cards">
+            <!-- ادمین فقط برای اولین کاربر -->
+            <button *ngIf="isFirstUser()" type="button" class="role-card role-card-admin selected" (click)="selectRole('admin')">
+              <div class="role-icon admin"><mat-icon>shield</mat-icon></div>
+              <div class="role-info">
+                <h4>ادمین</h4>
+                <p>مدیریت کامل سایت</p>
+              </div>
+              <mat-icon class="role-check">check_circle</mat-icon>
+            </button>
+
+            <!-- مدرس و دانشجو فقط برای کاربران بعدی -->
+            <ng-container *ngIf="!isFirstUser()">
+              <button type="button" class="role-card" [class.selected]="selectedRole() === 'student'" (click)="selectRole('student')">
+                <div class="role-icon"><mat-icon>menu_book</mat-icon></div>
+                <div class="role-info">
+                  <h4>دانشجو</h4>
+                  <p>می‌خواهم یاد بگیرم</p>
+                </div>
+                <mat-icon class="role-check">check_circle</mat-icon>
+              </button>
+              <button type="button" class="role-card" [class.selected]="selectedRole() === 'instructor'" (click)="selectRole('instructor')">
+                <div class="role-icon"><mat-icon>co_present</mat-icon></div>
+                <div class="role-info">
+                  <h4>مدرس</h4>
+                  <p>می‌خواهم تدریس کنم</p>
+                </div>
+                <mat-icon class="role-check">check_circle</mat-icon>
+              </button>
+            </ng-container>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-submit" [disabled]="isSubmitting()">
+          <span class="btn-content" *ngIf="!isSubmitting()">
+            <span>تکمیل ثبت‌نام</span>
+            <mat-icon>check</mat-icon>
+          </span>
+          <span class="btn-loading" *ngIf="isSubmitting()">
+            <span class="spinner"></span>
+            <span>در حال ایجاد حساب...</span>
+          </span>
+        </button>
+      </form>
+    </main>
+  </div>
+</div>

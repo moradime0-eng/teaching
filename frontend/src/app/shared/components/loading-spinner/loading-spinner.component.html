@@ -1,0 +1,41 @@
+<div
+  class="spinner-wrapper"
+  [class.overlay-fullscreen]="isFullscreen"
+  [class.overlay-container]="isContainerOverlay"
+  role="status"
+  aria-live="polite"
+  aria-busy="true"
+  dir="rtl"
+>
+  <div
+    class="spinner-content"
+    [class.frosted-card]="(isFullscreen || isContainerOverlay) && showCard"
+  >
+    <!-- Ambient Backdrop Glow -->
+    <div class="ambient-glow" [ngClass]="color"></div>
+
+    <!-- Active Spinner Core with Dynamic Color Classes -->
+    <div class="spinner-core" [ngClass]="color">
+      <mat-spinner [diameter]="diameter" [strokeWidth]="strokeWidth"></mat-spinner>
+    </div>
+
+    <!-- Text Group -->
+    @if (message || subMessage) {
+      <div class="text-group">
+        @if (message) {
+          <p class="spinner-message">
+            <span class="message-text">{{ message }}</span>
+            <span class="loading-dots" aria-hidden="true">
+              <span class="dot">.</span>
+              <span class="dot">.</span>
+              <span class="dot">.</span>
+            </span>
+          </p>
+        }
+        @if (subMessage) {
+          <p class="spinner-submessage">{{ subMessage }}</p>
+        }
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,14 @@
+<!-- Global Floating Ticket Widget -->
+@if (shouldShow() && isVisible()) {
+  <button
+    class="floating-ticket-btn"
+    (click)="openDialog()"
+    matTooltip="ثبت تیکت پشتیبانی"
+    matTooltipPosition="left"
+    aria-label="ثبت تیکت پشتیبانی"
+    type="button"
+  >
+    <mat-icon class="btn-icon">support_agent</mat-icon>
+    <span class="btn-pulse"></span>
+  </button>
+}

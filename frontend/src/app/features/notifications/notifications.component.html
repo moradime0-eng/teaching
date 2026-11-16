@@ -1,0 +1,158 @@
+<div class="noti-page" dir="rtl">
+  <!-- ========== Hero Header ========== -->
+  <header class="noti-hero">
+    <div class="hero-inner">
+      <nav class="breadcrumb" aria-label="مسیر راهنما">
+        <a routerLink="/" class="breadcrumb-link">
+          <mat-icon>home</mat-icon>
+          صفحه اصلی
+        </a>
+        <mat-icon class="separator">chevron_left</mat-icon>
+        <span class="breadcrumb-current">اعلان‌ها</span>
+      </nav>
+
+      <div class="hero-content">
+        <div class="title-wrap">
+          <div class="icon-badge">
+            <mat-icon>notifications</mat-icon>
+            <span class="badge-cnt" *ngIf="unreadCount() > 0">{{ unreadCount() | faNum }}</span>
+          </div>
+          <div>
+            <h1 class="hero-title">اعلان‌ها</h1>
+            <p class="hero-subtitle">
+              پرداخت‌ها، ثبت‌نام‌ها، پرسش و پاسخ‌ها و به‌روزرسانی دوره‌هایتان را دنبال کنید
+            </p>
+          </div>
+        </div>
+
+        <div class="hero-actions" *ngIf="unreadCount() > 0">
+          <button class="btn-ghost" (click)="markAllRead()">
+            <mat-icon>done_all</mat-icon>
+            <span>خواندن همه</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========== Main ========== -->
+  <main class="noti-container">
+    <!-- Toolbar -->
+    <div class="noti-toolbar">
+      <div class="tb-filters">
+        <button class="tb-chip" [class.active]="filter() === 'all'" (click)="setFilter('all')">
+          <mat-icon>apps</mat-icon>
+          همه
+        </button>
+        <button
+          class="tb-chip"
+          [class.active]="filter() === 'unread'"
+          (click)="setFilter('unread')"
+        >
+          <mat-icon>mark_email_unread</mat-icon>
+          خوانده‌نشده
+          <span class="chip-cnt" *ngIf="unreadCount() > 0">{{ unreadCount() | faNum }}</span>
+        </button>
+      </div>
+
+      <button
+        class="btn-delete-all"
+        *ngIf="notificationService.notifications().length > 0"
+        [class.confirming]="confirmDeleteAll()"
+        (click)="deleteAll()"
+      >
+        <mat-icon>{{ confirmDeleteAll() ? 'warning' : 'delete_sweep' }}</mat-icon>
+        <span>{{ confirmDeleteAll() ? 'حذف همه؟' : 'حذف همه' }}</span>
+      </button>
+    </div>
+
+    <!-- Loading -->
+    <div class="noti-loading" *ngIf="isLoading()">
+      <div class="sk-item" *ngFor="let i of [1, 2, 3, 4]">
+        <div class="sk-icon shimmer"></div>
+        <div class="sk-lines">
+          <div class="sk-line shimmer w40"></div>
+          <div class="sk-line shimmer w80"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty -->
+    <div class="noti-empty" *ngIf="!isLoading() && items().length === 0">
+      <mat-icon>{{ filter() === 'unread' ? 'mark_email_read' : 'notifications_off' }}</mat-icon>
+      <h3>{{ filter() === 'unread' ? 'اعلان خوانده‌نشده‌ای ندارید' : 'اعلانی ثبت نشده است' }}</h3>
+      <p *ngIf="filter() === 'unread'">همه اعلان‌ها را خوانده‌اید — آفرین!</p>
+      <p *ngIf="filter() === 'all'">
+        اعلان‌های مربوط به پرداخت، ثبت‌نام و فعالیت دوره‌هایتان اینجا نمایش داده می‌شوند.
+      </p>
+      <button class="btn-ghost" *ngIf="filter() === 'unread'" (click)="setFilter('all')">
+        نمایش همه اعلان‌ها
+      </button>
+    </div>
+
+    <!-- List -->
+    <ul class="noti-list" *ngIf="!isLoading() && items().length > 0">
+      <li
+        class="noti-item"
+        *ngFor="let n of items(); trackBy: trackById"
+        [class.unread]="!n.isRead"
+        (click)="open(n)"
+        role="button"
+        tabindex="0"
+        (keydown.enter)="open(n)"
+      >
+        <!-- Unread dot -->
+        <span class="unread-dot" *ngIf="!n.isRead" aria-label="خوانده‌نشده"></span>
+
+        <!-- Type icon -->
+        <div class="item-icon" [ngClass]="typeMeta(n.type).cls">
+          <mat-icon>{{ typeMeta(n.type).icon }}</mat-icon>
+        </div>
+
+        <!-- Content -->
+        <div class="item-body">
+          <div class="item-top">
+            <div class="item-sender">
+              <img *ngIf="senderAvatar(n) as av" [src]="av" alt="" class="sender-avatar" />
+              <span class="sender-initial" *ngIf="!senderAvatar(n)">{{ senderInitial(n) }}</span>
+              <span class="item-title">{{ n.title }}</span>
+            </div>
+            <span class="item-date">{{ n.createdAt | jalaliDate: 'YYYY/MM/DD HH:mm' }}</span>
+          </div>
+
+          <p class="item-message">{{ n.message }}</p>
+
+          <div class="item-tags" *ngIf="n.link">
+            <span class="go-hint">
+              مشاهده
+              <mat-icon>arrow_back</mat-icon>
+            </span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="item-actions" (click)="$event.stopPropagation()">
+          <button
+            class="act-btn"
+            *ngIf="!n.isRead"
+            (click)="markRead($event, n)"
+            title="علامت‌گذاری به‌عنوان خوانده‌شده"
+          >
+            <mat-icon>done</mat-icon>
+          </button>
+          <button class="act-btn danger" (click)="removeItem($event, n)" title="حذف اعلان">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+      </li>
+    </ul>
+
+    <!-- Load more -->
+    <div class="load-more" *ngIf="!isLoading() && hasMore()">
+      <button class="btn-ghost" (click)="loadMore()">
+        <mat-icon>expand_more</mat-icon>
+        بارگذاری اعلان‌های بیشتر
+      </button>
+    </div>
+  </main>
+</div>

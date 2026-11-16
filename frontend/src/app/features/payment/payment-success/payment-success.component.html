@@ -1,0 +1,160 @@
+<div class="payment-page">
+
+  <!-- ==================== LOADING STATE ==================== -->
+  @if (viewState === 'loading') {
+    <div class="result-card skeleton-card" role="status" aria-label="در حال بارگذاری">
+      <div class="skeleton-circle"></div>
+      <div class="skeleton-line skeleton-title"></div>
+      <div class="skeleton-line skeleton-text"></div>
+      <div class="skeleton-info">
+        <div class="skeleton-line skeleton-row"></div>
+        <div class="skeleton-line skeleton-row"></div>
+        <div class="skeleton-line skeleton-row"></div>
+      </div>
+      <div class="skeleton-actions">
+        <div class="skeleton-btn"></div>
+        <div class="skeleton-btn"></div>
+      </div>
+      <span class="sr-only">در حال دریافت اطلاعات پرداخت…</span>
+    </div>
+  }
+
+  <!-- ==================== SUCCESS STATE ==================== -->
+  @if (viewState === 'success' && paymentDetails) {
+    <div class="result-card success-card animate-in">
+
+      <!-- Animated Checkmark -->
+      <div class="checkmark-wrapper">
+        <svg class="checkmark-svg" viewBox="0 0 80 80" aria-hidden="true">
+          <circle class="checkmark-circle" cx="40" cy="40" r="36" />
+          <path class="checkmark-check" d="M24 42 L35 53 L56 30" />
+        </svg>
+      </div>
+
+      <h1 class="title">پرداخت موفق</h1>
+      <p class="subtitle">
+        پرداخت شما با موفقیت انجام شد و دوره‌ها به حساب کاربری شما اضافه شدند.
+      </p>
+
+      <!-- Payment Details -->
+      <div class="details-panel">
+        <div class="detail-row">
+          <span class="detail-label">شماره سفارش</span>
+          <span class="detail-value">
+            <strong>{{ paymentDetails.orderNumber }}</strong>
+            <button
+              class="copy-btn"
+              (click)="copyToClipboard(paymentDetails.orderNumber, 'order')"
+              [attr.aria-label]="'کپی شماره سفارش'"
+              type="button"
+            >
+              @if (copiedField === 'order') {
+                <svg viewBox="0 0 24 24" class="icon icon-copied"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+              } @else {
+                <svg viewBox="0 0 24 24" class="icon"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2zm0 16H8V7h11v14z"/></svg>
+              }
+            </button>
+          </span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">مبلغ پرداختی</span>
+          <span class="detail-value amount">
+            {{ paymentDetails.finalAmount | number }}
+            <small>تومان</small>
+          </span>
+        </div>
+
+        <div class="detail-row">
+          <span class="detail-label">تاریخ پرداخت</span>
+          <span class="detail-value">
+            {{ paymentDetails.paidAt | date:'yyyy/MM/dd  HH:mm' }}
+          </span>
+        </div>
+
+        @if (paymentDetails.status) {
+          <div class="detail-row">
+            <span class="detail-label">وضعیت</span>
+            <span class="detail-value">
+              <span class="status-badge">
+                <span class="status-dot"></span>
+                تأیید شده
+              </span>
+            </span>
+          </div>
+        }
+      </div>
+
+      <!-- Purchased Courses (optional) -->
+      @if (paymentDetails.courses?.length) {
+        <div class="courses-panel">
+          <h3 class="courses-title">دوره‌های خریداری‌شده</h3>
+          <ul class="courses-list">
+            @for (course of paymentDetails.courses; track course.title) {
+              <li class="course-item">
+                <svg viewBox="0 0 24 24" class="icon icon-course"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z"/></svg>
+                {{ course.title }}
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Actions -->
+      <div class="actions">
+        <a routerLink="/dashboard/my-courses" class="btn btn-primary">
+          <svg viewBox="0 0 24 24" class="icon"><path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3z"/></svg>
+          مشاهده دوره‌های من
+        </a>
+        <a routerLink="/courses" class="btn btn-secondary">
+          <svg viewBox="0 0 24 24" class="icon"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          ادامه خرید
+        </a>
+      </div>
+    </div>
+  }
+
+  <!-- ==================== ERROR STATE ==================== -->
+  @if (viewState === 'error') {
+    <div class="result-card error-card animate-in">
+      <div class="error-icon-wrapper">
+        <svg viewBox="0 0 80 80" class="error-svg" aria-hidden="true">
+          <circle class="error-circle" cx="40" cy="40" r="36" />
+          <line class="error-x1" x1="28" y1="28" x2="52" y2="52" />
+          <line class="error-x2" x1="52" y1="28" x2="28" y2="52" />
+        </svg>
+      </div>
+      <h1 class="title error-title">خطا در دریافت اطلاعات</h1>
+      <p class="subtitle">
+        پرداخت شما انجام شده اما متأسفانه در دریافت جزئیات مشکلی پیش آمد.
+        لطفاً دوباره تلاش کنید یا با پشتیبانی تماس بگیرید.
+      </p>
+      <div class="actions">
+        <button class="btn btn-primary" (click)="retry()" type="button">
+          <svg viewBox="0 0 24 24" class="icon"><path d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 1 0 8 8h-2a6 6 0 1 1-1.76-4.24L14 10h7V3l-3.35 3.35z"/></svg>
+          تلاش مجدد
+        </button>
+        <a routerLink="/dashboard/my-courses" class="btn btn-secondary">
+          رفتن به داشبورد
+        </a>
+      </div>
+    </div>
+  }
+
+  <!-- ==================== NO DATA STATE ==================== -->
+  @if (viewState === 'no-data') {
+    <div class="result-card empty-card animate-in">
+      <div class="empty-icon">🔍</div>
+      <h1 class="title">اطلاعاتی یافت نشد</h1>
+      <p class="subtitle">
+        شناسه پرداخت در آدرس یافت نشد. ممکن است لینک منقضی شده باشد.
+      </p>
+      <div class="actions">
+        <a routerLink="/dashboard/my-courses" class="btn btn-primary">
+          رفتن به داشبورد
+        </a>
+      </div>
+    </div>
+  }
+
+</div>

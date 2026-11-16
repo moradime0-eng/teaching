@@ -1,0 +1,89 @@
+@if (availableTenants().length > 0) {
+  <div class="tenant-switcher-container" dir="rtl">
+    <!-- Trigger Button -->
+    <button
+      type="button"
+      [matMenuTriggerFor]="tenantMenu"
+      #menuTrigger="matMenuTrigger"
+      class="tenant-switcher-btn"
+      [class.active-open]="menuTrigger.menuOpen"
+      aria-label="انتخاب و تغییر آموزشگاه"
+    >
+      <!-- Tenant Initial Avatar Badge -->
+      <div class="tenant-avatar" aria-hidden="true">
+        <span>{{ getTenantInitial(currentTenantName()) }}</span>
+      </div>
+
+      <!-- Current Tenant Details -->
+      <div class="tenant-info-stack">
+        <span class="tenant-name" [title]="currentTenantName()">
+          {{ currentTenantName() }}
+        </span>
+        @if (currentTenantRole(); as role) {
+          <span class="tenant-role-hint">{{ getRoleLabel(role) }}</span>
+        }
+      </div>
+
+      <!-- Dropdown Arrow -->
+      <mat-icon class="arrow-icon">unfold_more</mat-icon>
+    </button>
+
+    <!-- Modern Dropdown Menu -->
+    <mat-menu #tenantMenu="matMenu" class="modern-tenant-menu" xPosition="before">
+      <!-- Header -->
+      <div class="menu-header">
+        <span class="menu-header-title">آموزشگاه‌های من</span>
+        <span class="tenant-count-badge">{{ availableTenants().length }} شعبه</span>
+      </div>
+
+      <!-- Tenants List -->
+      <div class="tenants-scroll-list">
+        @for (tenant of availableTenants(); track tenant.tenantId) {
+          <button
+            mat-menu-item
+            (click)="switchTenant(tenant.tenantId)"
+            [class.is-selected]="tenant.tenantId === currentTenantId()"
+            class="tenant-item-row"
+          >
+            <!-- Avatar -->
+            <div class="item-avatar">
+              <span>{{ getTenantInitial(tenant.tenantName) }}</span>
+            </div>
+
+            <!-- Title & Role -->
+            <div class="item-meta">
+              <span class="item-name">{{ tenant.tenantName }}</span>
+              <span class="role-pill" [ngClass]="tenant.role">
+                {{ getRoleLabel(tenant.role) }}
+              </span>
+            </div>
+
+            <!-- Active Checkmark Indicator -->
+            @if (tenant.tenantId === currentTenantId()) {
+              <mat-icon class="check-icon">check</mat-icon>
+            }
+          </button>
+        }
+      </div>
+
+      <mat-divider></mat-divider>
+
+      <!-- Footer Actions -->
+      <div class="menu-footer">
+        <button mat-menu-item (click)="navigateTo('/dashboard/tenants')">
+          <mat-icon>tune</mat-icon>
+          <span>مدیریت و تنظیمات شعبه‌ها</span>
+        </button>
+
+        <button
+          mat-menu-item
+          (click)="navigateTo('/dashboard/tenants/new')"
+          class="create-tenant-action"
+        >
+          <mat-icon>add_circle_outline</mat-icon>
+          <span>ایجاد شعبه / آموزشگاه جدید</span>
+        </button>
+      </div>
+    </mat-menu>
+  </div>
+}

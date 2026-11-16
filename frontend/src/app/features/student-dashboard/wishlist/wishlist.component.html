@@ -1,0 +1,164 @@
+<div class="wishlist-page" dir="rtl">
+  <!-- ========== Hero Header ========== -->
+  <header class="wishlist-hero">
+    <div class="hero-inner">
+      <nav class="breadcrumb" aria-label="مسیر راهنما">
+        <a routerLink="/" class="breadcrumb-link">
+          <mat-icon>home</mat-icon>
+          صفحه اصلی
+        </a>
+        <mat-icon class="separator">chevron_left</mat-icon>
+        <span class="breadcrumb-current">علاقه‌مندی‌ها</span>
+      </nav>
+
+      <div class="hero-content">
+        <div class="title-wrap">
+          <div class="icon-badge">
+            <mat-icon>favorite</mat-icon>
+          </div>
+          <div>
+            <h1 class="hero-title">
+              لیست علاقه‌مندی‌ها
+              <span class="count-pill" *ngIf="!isLoading()"> {{ totalCount() }} دوره </span>
+            </h1>
+            <p class="hero-subtitle">
+              دوره‌هایی که نشان کرده‌اید تا در آینده یادگیری آن‌ها را شروع کنید
+            </p>
+          </div>
+        </div>
+
+        <a routerLink="/courses" class="btn-catalog">
+          <mat-icon>add</mat-icon>
+          <span>افزودن دوره جدید</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- ========== Main Content ========== -->
+  <main class="wishlist-container">
+    <!-- ========== Summary Card (Visible if courses exist) ========== -->
+    <div class="summary-card" *ngIf="!isLoading() && totalCount() > 0">
+      <div class="summary-info">
+        <div class="info-group">
+          <span class="info-title">تعداد دوره‌های ذخیره شده:</span>
+          <strong class="info-value">{{ totalCount() }} مورد</strong>
+        </div>
+
+        <div class="info-divider"></div>
+
+        <div class="info-group">
+          <span class="info-title">مجموع مبلغ دوره‌ها:</span>
+          <div class="price-box">
+            <strong class="info-value text-primary"> {{ totalPrice() | number }} تومان </strong>
+            <span class="original-price" *ngIf="totalDiscount() > 0">
+              {{ totalOriginalPrice() | number }} تومان
+            </span>
+          </div>
+        </div>
+
+        <div class="discount-badge" *ngIf="totalDiscount() > 0">
+          <mat-icon>local_offer</mat-icon>
+          <span>{{ totalDiscount() | number }} تومان سود شما از تخفیف‌ها</span>
+        </div>
+      </div>
+
+      <div class="summary-actions">
+        <button class="btn-clear" (click)="clearAllWishlist()" [disabled]="isClearing()">
+          <mat-icon>delete_sweep</mat-icon>
+          <span>پاک‌سازی همه</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ========== Toolbar (Search & Sort) ========== -->
+    <div class="toolbar" *ngIf="totalCount() > 0 || isLoading()">
+      <div class="search-box">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input
+          type="text"
+          placeholder="جستجو در بین دوره‌های نشان‌شده..."
+          [(ngModel)]="searchQuery"
+        />
+        <button class="clear-search-btn" *ngIf="searchQuery()" (click)="clearSearch()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="sort-box">
+        <mat-icon class="sort-icon">tune</mat-icon>
+        <select [(ngModel)]="sortBy">
+          <option value="newest">جدیدترین‌های ذخیره شده</option>
+          <option value="price_low">ارزان‌ترین</option>
+          <option value="price_high">گران‌ترین</option>
+          <option value="rating">بالاترین امتیاز</option>
+        </select>
+        <mat-icon class="chevron-icon">expand_more</mat-icon>
+      </div>
+    </div>
+
+    <!-- ========== Skeleton Loading State ========== -->
+    <div class="wishlist-grid" *ngIf="isLoading()">
+      <div class="skeleton-card" *ngFor="let s of skeletonArray">
+        <div class="skel-thumb shimmer"></div>
+        <div class="skel-body">
+          <div class="skel-line tag shimmer"></div>
+          <div class="skel-line title shimmer"></div>
+          <div class="skel-line title-sm shimmer"></div>
+          <div class="skel-line meta shimmer"></div>
+          <div class="skel-footer shimmer"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========== Empty State: Wishlist is completely empty ========== -->
+    <div class="empty-state" *ngIf="!isLoading() && totalCount() === 0">
+      <div class="empty-illustration">
+        <div class="pulse-heart">
+          <mat-icon>favorite_border</mat-icon>
+        </div>
+        <div class="sparkles"><span></span><span></span><span></span></div>
+      </div>
+      <h2>لیست علاقه‌مندی‌های شما خالی است!</h2>
+      <p>
+        دوره‌هایی که قصد دارید در آینده تهیه و یادگیری آن‌ها را شروع کنید را با کلیک روی آیکون قلب
+        نشان کنید.
+      </p>
+      <div class="empty-actions">
+        <a routerLink="/courses" class="btn-primary-action">
+          <mat-icon>travel_explore</mat-icon>
+          مشاهده و انتخاب دوره‌ها
+        </a>
+      </div>
+    </div>
+
+    <!-- ========== Empty State: Filter / Search found 0 items ========== -->
+    <div
+      class="empty-state search-empty"
+      *ngIf="!isLoading() && totalCount() > 0 && filteredCourses().length === 0"
+    >
+      <div class="empty-illustration">
+        <div class="pulse-heart warning">
+          <mat-icon>search_off</mat-icon>
+        </div>
+      </div>
+      <h3>دوره‌ای با این مشخصات در علاقه‌مندی‌های شما پیدا نشد!</h3>
+      <p>عبارت جستجو را تغییر دهید یا فیلتر را ریست کنید.</p>
+      <button class="btn-secondary-action" (click)="clearSearch()">
+        <mat-icon>refresh</mat-icon>
+        نمایش تمام علاقه‌مندی‌ها
+      </button>
+    </div>
+
+    <!-- ========== Courses Grid ========== -->
+    <div class="wishlist-grid" *ngIf="!isLoading() && filteredCourses().length > 0">
+      <app-course-card
+        *ngFor="let course of filteredCourses(); trackBy: trackByCourse; let i = index"
+        [course]="course"
+        [index]="i"
+        class="card-anim"
+        [style.animation-delay]="i * 50 + 'ms'"
+      ></app-course-card>
+    </div>
+  </main>
+</div>

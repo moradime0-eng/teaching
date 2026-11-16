@@ -1,0 +1,136 @@
+// ==========================================================================
+// ❓ FAQ — Accordion
+// ==========================================================================
+$ease: cubic-bezier(0.16, 1, 0.3, 1);
+
+:host { display: block; }
+
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.32rem 0.8rem; border-radius: 99px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.28);
+  color: #7c3aed;
+  font-size: 0.72rem; font-weight: 800; margin-bottom: 0.75rem;
+  mat-icon { font-size: 15px; width: 15px; height: 15px; }
+}
+
+.block {
+  padding: 3.25rem 0 0;
+  &__head {
+    display: flex; align-items: flex-start; justify-content: center;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: 800px;
+    margin: 0 auto 1.75rem;
+  }
+  &__title {
+    margin: 0; font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+    font-weight: 800; line-height: 1.5;
+    color: var(--text-primary, #0f172a);
+  }
+}
+
+// ─── List ───
+.faq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+// ─── Item ───
+.faq-item {
+  border-radius: 16px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-surface, #ffffff);
+  overflow: hidden;
+  transition: border-color 0.25s ease, box-shadow 0.25s ease;
+  animation: faq-rise 0.4s $ease both;
+
+  @for $i from 1 through 8 {
+    &:nth-child(#{$i}) { animation-delay: #{$i * 40}ms; }
+  }
+
+  &--open {
+    border-color: color-mix(in srgb, var(--primary-color, #4f46e5) 30%, transparent);
+    box-shadow: 0 6px 16px -6px rgba(15, 23, 42, 0.08);
+  }
+
+  &__trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 1.1rem 1.3rem;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    text-align: right;
+    font-family: inherit;
+    transition: background 0.18s ease;
+    &:hover { background: color-mix(in srgb, var(--primary-color, #4f46e5) 4%, transparent); }
+  }
+
+  &__question {
+    flex: 1;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--text-primary, #0f172a);
+    line-height: 1.6;
+  }
+
+  &__chevron {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+    color: var(--text-muted, #94a3b8);
+    flex-shrink: 0;
+    transition: transform 0.3s $ease, color 0.2s ease;
+    &--open {
+      transform: rotate(180deg);
+      color: var(--primary-color, #4f46e5);
+    }
+  }
+
+  &__panel {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s $ease, padding 0.35s $ease;
+    &--open {
+      max-height: 300px;
+    }
+  }
+
+  &__answer {
+    margin: 0;
+    padding: 0 1.3rem 1.2rem;
+    font-size: 0.86rem;
+    font-weight: 500;
+    line-height: 1.9;
+    color: var(--text-secondary, #64748b);
+  }
+}
+
+@keyframes faq-rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// ═══════════════ Dark Theme ═══════════════
+:host-context(.dark-theme),
+:host-context(.dark-mode),
+:host-context(.dark),
+:host-context([data-theme='dark']) {
+  .faq-item {
+    box-shadow: 0 4px 8px -4px rgba(0, 0, 0, 0.3);
+    &--open { box-shadow: 0 6px 16px -6px rgba(0, 0, 0, 0.4); }
+  }
+}
+
+// ═══════════════ Responsive ═══════════════
+@media (max-width: 760px) {
+  .faq-item__trigger { padding: 0.9rem 1rem; }
+  .faq-item__answer { padding: 0 1rem 1rem; }
+}

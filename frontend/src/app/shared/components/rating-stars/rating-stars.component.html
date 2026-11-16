@@ -1,0 +1,47 @@
+<div
+  class="rating-container"
+  [ngClass]="size"
+  [class.interactive]="!readonly"
+  (mouseleave)="onMouseLeave()"
+  dir="rtl"
+>
+  <!-- Accessible Star Group -->
+  <div
+    class="stars-group"
+    [attr.role]="readonly ? 'img' : 'radiogroup'"
+    [attr.aria-label]="readonly ? 'امتیاز ' + ratingSignalValue() + ' از ' + maxStars : 'انتخاب امتیاز'"
+  >
+    @for (star of stars; track star) {
+      @if (readonly) {
+        <!-- Readonly View: Static Icons -->
+        <mat-icon class="star-icon" [ngClass]="getStarState(star)" aria-hidden="true">
+          {{ getStarIcon(star) }}
+        </mat-icon>
+      } @else {
+        <!-- Interactive Mode: Focusable Radio Buttons -->
+        <button
+          type="button"
+          class="star-btn"
+          role="radio"
+          [attr.aria-checked]="Math.round(effectiveRating()) === star"
+          [attr.aria-label]="star + ' ستاره - ' + (ratingLabels[star] || '')"
+          [tabindex]="Math.round(effectiveRating()) === star || (effectiveRating() === 0 && star === 1) ? 0 : -1"
+          (mouseenter)="onStarHover(star)"
+          (click)="onRate(star)"
+          (keydown)="handleKeyDown($event, star)"
+        >
+          <mat-icon class="star-icon" [ngClass]="getStarState(star)">
+            {{ getStarIcon(star) }}
+          </mat-icon>
+        </button>
+      }
+    }
+  </div>
+
+  <!-- Optional Descriptive Label (e.g. "عالی") -->
+  @if (showLabel && currentLabel()) {
+    <span class="rating-label-tag" [class.highlight]="hoveredRating() !== null">
+      {{ currentLabel() }}
+    </span>
+  }
+</div>

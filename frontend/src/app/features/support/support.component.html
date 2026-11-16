@@ -1,0 +1,585 @@
+<div class="support-page" dir="rtl">
+  <!-- ========================================
+       HERO HEADER
+       ======================================== -->
+  <section class="support-hero">
+    <div class="hero-bg-decoration">
+      <div class="deco-blob blob-1"></div>
+      <div class="deco-blob blob-2"></div>
+      <div class="deco-grid"></div>
+    </div>
+
+    <div class="hero-content">
+      <div class="hero-badge">
+        <mat-icon>support_agent</mat-icon>
+        <span>مرکز پشتیبانی ۲۴/۷</span>
+      </div>
+
+      <h1 class="hero-title">چطور می‌تونیم کمکتون کنیم؟</h1>
+      <p class="hero-subtitle">
+        تیم پشتیبانی ما آماده پاسخگویی به سوالات شماست. تیکت جدید ایجاد کنید یا از راه‌های ارتباطی
+        زیر استفاده نمایید.
+      </p>
+
+      <!-- Search Bar -->
+      <div class="hero-search">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input
+          type="text"
+          placeholder="سوال یا مشکل خود را جستجو کنید..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+        />
+        <button class="btn-hero-cta" (click)="openNewTicketForm()">
+          <mat-icon>add</mat-icon>
+          <span>تیکت جدید</span>
+        </button>
+      </div>
+
+      <!-- Quick Contact Options -->
+      <div class="quick-contacts">
+        <div class="contact-chip">
+          <mat-icon>schedule</mat-icon>
+          <span>پاسخگویی در کمتر از ۲ ساعت</span>
+        </div>
+        <div class="contact-chip">
+          <mat-icon>verified</mat-icon>
+          <span>پشتیبانی تخصصی</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="support-container">
+    <!-- ========================================
+         STATS CARDS
+         ======================================== -->
+    <section class="stats-grid" *ngIf="tickets().length > 0">
+      <div class="stat-card">
+        <div class="stat-icon-wrap indigo">
+          <mat-icon>confirmation_number</mat-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ ticketStats().total }}</span>
+          <span class="stat-label">کل تیکت‌ها</span>
+        </div>
+        <div class="stat-trend">
+          <mat-icon>trending_up</mat-icon>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon-wrap amber">
+          <mat-icon>mark_email_unread</mat-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ ticketStats().open }}</span>
+          <span class="stat-label">تیکت‌های باز</span>
+        </div>
+        <div class="pulse-indicator" *ngIf="ticketStats().open > 0"></div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon-wrap blue">
+          <mat-icon>sync</mat-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ ticketStats().inProgress }}</span>
+          <span class="stat-label">در حال بررسی</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon-wrap green">
+          <mat-icon>check_circle</mat-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ ticketStats().resolved }}</span>
+          <span class="stat-label">حل شده</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================
+         MAIN CONTENT: 2 Columns
+         ======================================== -->
+    <div class="content-grid">
+      <!-- LEFT: Tickets Panel -->
+      <section class="tickets-panel">
+        <!-- Ticket Detail View -->
+        <app-ticket-detail
+          *ngIf="selectedTicket()"
+          [ticket]="selectedTicket()"
+          (close)="closeTicketDetail()"
+          (replied)="onTicketReplied()"
+        ></app-ticket-detail>
+
+        <!-- Ticket List View -->
+        <ng-container *ngIf="!selectedTicket()">
+          <!-- Panel Header with Filters -->
+          <div class="panel-header">
+            <div class="panel-title-row">
+              <div class="panel-title">
+                <mat-icon>inbox</mat-icon>
+                <h2>تیکت‌های من</h2>
+                <span class="count-badge" *ngIf="tickets().length > 0">
+                  {{ tickets().length }}
+                </span>
+              </div>
+
+              <button
+                class="btn-new-ticket-alt"
+                (click)="openNewTicketForm()"
+                *ngIf="tickets().length > 0"
+              >
+                <mat-icon>add</mat-icon>
+                <span>تیکت جدید</span>
+              </button>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="filter-tabs" *ngIf="tickets().length > 0">
+              <button
+                class="filter-tab"
+                [class.active]="activeFilter() === 'all'"
+                (click)="setFilter('all')"
+              >
+                <mat-icon>list</mat-icon>
+                همه
+                <span class="tab-count">{{ ticketStats().total }}</span>
+              </button>
+              <button
+                class="filter-tab"
+                [class.active]="activeFilter() === 'open'"
+                (click)="setFilter('open')"
+              >
+                <mat-icon>mark_email_unread</mat-icon>
+                باز
+                <span class="tab-count" *ngIf="ticketStats().open > 0">
+                  {{ ticketStats().open }}
+                </span>
+              </button>
+              <button
+                class="filter-tab"
+                [class.active]="activeFilter() === 'in_progress'"
+                (click)="setFilter('in_progress')"
+              >
+                <mat-icon>sync</mat-icon>
+                در حال بررسی
+                <span class="tab-count" *ngIf="ticketStats().inProgress > 0">
+                  {{ ticketStats().inProgress }}
+                </span>
+              </button>
+              <button
+                class="filter-tab"
+                [class.active]="activeFilter() === 'resolved'"
+                (click)="setFilter('resolved')"
+              >
+                <mat-icon>check_circle</mat-icon>
+                حل شده
+                <span class="tab-count" *ngIf="ticketStats().resolved > 0">
+                  {{ ticketStats().resolved }}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Panel Body -->
+          <div class="panel-body">
+            <!-- Skeleton Loaders -->
+            <div class="skeleton-list" *ngIf="isLoading()">
+              <div class="skel-ticket" *ngFor="let s of skeletonArray">
+                <div class="skel-icon shimmer"></div>
+                <div class="skel-content">
+                  <div class="skel-line skel-title shimmer"></div>
+                  <div class="skel-line skel-meta shimmer"></div>
+                </div>
+                <div class="skel-badge shimmer"></div>
+              </div>
+            </div>
+
+            <!-- Empty State -->
+            <div class="empty-state" *ngIf="!isLoading() && tickets().length === 0">
+              <div class="empty-illustration">
+                <div class="empty-circle-bg"></div>
+                <mat-icon>inbox</mat-icon>
+                <div class="empty-dot dot-1"></div>
+                <div class="empty-dot dot-2"></div>
+              </div>
+              <h3>هنوز تیکتی ثبت نکرده‌اید</h3>
+              <p>
+                اگر سوال یا مشکلی دارید، اولین تیکت خود را ایجاد کنید تا تیم پشتیبانی بررسی نماید.
+              </p>
+              <button class="btn-primary-lg" (click)="openNewTicketForm()">
+                <mat-icon>add_circle</mat-icon>
+                ایجاد اولین تیکت
+              </button>
+            </div>
+
+            <!-- No Search Results -->
+            <div
+              class="empty-state compact"
+              *ngIf="!isLoading() && tickets().length > 0 && filteredTickets().length === 0"
+            >
+              <mat-icon class="empty-search">search_off</mat-icon>
+              <h4>نتیجه‌ای یافت نشد</h4>
+              <p>تیکتی با این مشخصات پیدا نشد. فیلتر را تغییر دهید.</p>
+            </div>
+
+            <!-- Ticket List -->
+            <div class="tickets-list" *ngIf="!isLoading() && filteredTickets().length > 0">
+              <article
+                *ngFor="let ticket of filteredTickets(); trackBy: trackByTicketId"
+                class="ticket-card"
+                [attr.data-status]="ticket.status"
+              >
+                <!-- Left: Category Icon -->
+                <div
+                  class="ticket-icon"
+                  [attr.data-color]="getCategoryInfo(ticket.category)?.color"
+                >
+                  <mat-icon>{{
+                    getCategoryInfo(ticket.category)?.icon || 'help_outline'
+                  }}</mat-icon>
+                </div>
+
+                <!-- Middle: Details -->
+                <div class="ticket-details">
+                  <div class="ticket-header-row">
+                    <h3 class="ticket-subject">{{ ticket.subject }}</h3>
+
+                    <!-- Priority Badge -->
+                    <span
+                      class="priority-tag"
+                      [attr.data-priority]="ticket.priority"
+                      *ngIf="ticket.priority"
+                    >
+                      <mat-icon>{{ getPriorityInfo(ticket.priority)?.icon }}</mat-icon>
+                      {{ getPriorityInfo(ticket.priority)?.label }}
+                    </span>
+                  </div>
+
+                  <div class="ticket-meta">
+                    <div class="meta-item">
+                      <mat-icon>tag</mat-icon>
+                      <span>{{ ticket.ticketNumber }}</span>
+                    </div>
+                    <div class="meta-divider"></div>
+                    <div class="meta-item">
+                      <mat-icon>category</mat-icon>
+                      <span>{{ getCategoryInfo(ticket.category)?.label }}</span>
+                    </div>
+                    <div class="meta-divider"></div>
+                    <div class="meta-item">
+                      <mat-icon>schedule</mat-icon>
+                      <span>{{ ticket.createdAt | jalaliDate }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Right: Status & Action -->
+                <div class="ticket-actions">
+                  <div class="status-badge" [attr.data-status]="ticket.status">
+                    <mat-icon>{{ getStatusIcon(ticket.status) }}</mat-icon>
+                    <span>{{ getStatusLabel(ticket.status) }}</span>
+                  </div>
+
+                  <button class="btn-view-ticket" title="مشاهده" (click)="openTicketDetail(ticket)">
+                    <mat-icon>arrow_back</mat-icon>
+                  </button>
+                </div>
+              </article>
+            </div>
+          </div>
+        </ng-container>
+      </section>
+
+      <!-- RIGHT: Sidebar (FAQ + Contact) -->
+      <aside class="support-sidebar">
+        <!-- Contact Card -->
+        <div class="sidebar-card contact-card">
+          <div class="card-icon-header">
+            <mat-icon>contact_support</mat-icon>
+          </div>
+          <h3>راه‌های ارتباطی</h3>
+          <p>در سریع‌ترین زمان با ما در تماس باشید</p>
+
+          <div class="contact-list">
+            <a href="tel:02100000000" class="contact-item">
+              <div class="contact-icon phone">
+                <mat-icon>call</mat-icon>
+              </div>
+              <div class="contact-info">
+                <span class="contact-label">تلفن پشتیبانی</span>
+                <span class="contact-value">در حال ثبت...</span>
+              </div>
+            </a>
+
+            <a href="mailto:support@example.com" class="contact-item">
+              <div class="contact-icon email">
+                <mat-icon>mail</mat-icon>
+              </div>
+              <div class="contact-info">
+                <span class="contact-label">ایمیل</span>
+                <span class="contact-value">در حال ثبت...</span>
+              </div>
+            </a>
+
+            <div class="contact-item">
+              <div class="contact-icon time">
+                <mat-icon>schedule</mat-icon>
+              </div>
+              <div class="contact-info">
+                <span class="contact-label">ساعت پاسخگویی</span>
+                <span class="contact-value">شنبه تا پنج‌شنبه، ۹ الی ۱۸</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ Card -->
+        <div class="sidebar-card faq-card">
+          <div class="card-header">
+            <h3>
+              <mat-icon>quiz</mat-icon>
+              سوالات متداول
+            </h3>
+          </div>
+
+          <div class="faq-list">
+            <div class="faq-item" *ngFor="let faq of faqs; let i = index" [class.open]="faq.isOpen">
+              <button class="faq-question" (click)="toggleFaq(i)">
+                <span>{{ faq.question }}</span>
+                <mat-icon class="faq-chevron">expand_more</mat-icon>
+              </button>
+              <div class="faq-answer" *ngIf="faq.isOpen">
+                <p>{{ faq.answer }}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ========================================
+       NEW TICKET MODAL (Multi-step Wizard)
+       ======================================== -->
+  <div class="modal-backdrop" *ngIf="showNewTicketForm()" (click)="closeForm()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon">
+            <mat-icon>edit_note</mat-icon>
+          </div>
+          <div>
+            <h2>ایجاد تیکت جدید</h2>
+            <p>لطفاً اطلاعات را با دقت وارد کنید</p>
+          </div>
+        </div>
+        <button class="btn-close" (click)="closeForm()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Progress Steps -->
+      <div class="modal-steps">
+        <div class="step" [class.active]="currentStep() >= 1" [class.done]="currentStep() > 1">
+          <div class="step-circle">
+            <mat-icon *ngIf="currentStep() > 1">check</mat-icon>
+            <span *ngIf="currentStep() <= 1">1</span>
+          </div>
+          <span class="step-label">دسته‌بندی</span>
+        </div>
+        <div class="step-line" [class.active]="currentStep() >= 2"></div>
+        <div class="step" [class.active]="currentStep() >= 2" [class.done]="currentStep() > 2">
+          <div class="step-circle">
+            <mat-icon *ngIf="currentStep() > 2">check</mat-icon>
+            <span *ngIf="currentStep() <= 2">2</span>
+          </div>
+          <span class="step-label">جزئیات</span>
+        </div>
+        <div class="step-line" [class.active]="currentStep() >= 3"></div>
+        <div class="step" [class.active]="currentStep() >= 3">
+          <div class="step-circle">
+            <span>3</span>
+          </div>
+          <span class="step-label">پیام</span>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="modal-body">
+        <!-- STEP 1: Category Selection -->
+        <div class="wizard-step" *ngIf="currentStep() === 1">
+          <div class="step-heading">
+            <h3>موضوع درخواست شما چیست؟</h3>
+            <p>یک دسته‌بندی مناسب انتخاب کنید تا تیکت شما به تیم مربوطه ارجاع داده شود</p>
+          </div>
+
+          <div class="category-grid">
+            <button
+              type="button"
+              *ngFor="let cat of categories"
+              class="category-card"
+              [class.selected]="newTicket.category === cat.value"
+              [attr.data-color]="cat.color"
+              (click)="selectCategory(cat.value)"
+            >
+              <div class="cat-icon">
+                <mat-icon>{{ cat.icon }}</mat-icon>
+              </div>
+              <div class="cat-text">
+                <span class="cat-label">{{ cat.label }}</span>
+                <span class="cat-desc">{{ cat.description }}</span>
+              </div>
+              <div class="cat-check">
+                <mat-icon>check_circle</mat-icon>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        <!-- STEP 2: Subject & Priority -->
+        <div class="wizard-step" *ngIf="currentStep() === 2">
+          <div class="step-heading">
+            <h3>جزئیات تیکت</h3>
+            <p>موضوع و اولویت درخواست خود را مشخص کنید</p>
+          </div>
+
+          <div class="form-field">
+            <label>
+              موضوع تیکت
+              <span class="required">*</span>
+            </label>
+            <div class="input-wrap">
+              <mat-icon class="input-icon">title</mat-icon>
+              <input
+                type="text"
+                [(ngModel)]="newTicket.subject"
+                placeholder="مثال: مشکل در پخش ویدیو دوره آنگولار"
+                maxlength="100"
+              />
+              <span class="char-count"> {{ newTicket.subject.length }}/100 </span>
+            </div>
+            <span class="field-hint">
+              <mat-icon>info</mat-icon>
+              حداقل ۵ کاراکتر (توضیح کوتاه و شفاف)
+            </span>
+          </div>
+
+          <div class="form-field">
+            <label>اولویت درخواست</label>
+            <div class="priority-grid">
+              <button
+                type="button"
+                *ngFor="let pri of priorities"
+                class="priority-card"
+                [class.selected]="newTicket.priority === pri.value"
+                [attr.data-priority]="pri.value"
+                (click)="selectPriority(pri.value)"
+              >
+                <mat-icon>{{ pri.icon }}</mat-icon>
+                <span>{{ pri.label }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP 3: Message -->
+        <div class="wizard-step" *ngIf="currentStep() === 3">
+          <div class="step-heading">
+            <h3>شرح مشکل یا سوال</h3>
+            <p>هرچه توضیحات دقیق‌تر باشد، سریع‌تر می‌توانیم کمک کنیم</p>
+          </div>
+
+          <!-- Review Summary -->
+          <div class="review-summary">
+            <div class="summary-item">
+              <mat-icon>{{ getCategoryInfo(newTicket.category)?.icon }}</mat-icon>
+              <span class="sum-label">دسته:</span>
+              <span class="sum-value">{{ getCategoryInfo(newTicket.category)?.label }}</span>
+            </div>
+            <div class="summary-divider"></div>
+            <div class="summary-item">
+              <mat-icon>{{ getPriorityInfo(newTicket.priority)?.icon }}</mat-icon>
+              <span class="sum-label">اولویت:</span>
+              <span class="sum-value priority-text" [attr.data-priority]="newTicket.priority">
+                {{ getPriorityInfo(newTicket.priority)?.label }}
+              </span>
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label>
+              متن پیام
+              <span class="required">*</span>
+            </label>
+            <div class="textarea-wrap">
+              <app-rich-text-editor
+                [(ngModel)]="newTicket.message"
+                placeholder="لطفاً مشکل خود را با جزئیات کامل توضیح دهید..."
+                minHeight="200px"
+                [autoExpand]="true"
+              ></app-rich-text-editor>
+              <span class="char-count-tx"> {{ newTicket.message.length }}/1000 </span>
+            </div>
+            <span class="field-hint">
+              <mat-icon>info</mat-icon>
+              حداقل ۱۰ کاراکتر (توضیحات دقیق سرعت پاسخگویی را افزایش می‌دهد)
+            </span>
+          </div>
+
+          <!-- Tips Box -->
+          <div class="tips-box">
+            <div class="tips-header">
+              <mat-icon>lightbulb</mat-icon>
+              <span>نکات مفید برای دریافت پاسخ سریع‌تر</span>
+            </div>
+            <ul>
+              <li>شماره دوره یا لینک صفحه مربوطه را ذکر کنید</li>
+              <li>در صورت مشکل فنی، از خطای دریافتی اسکرین‌شات پیوست کنید</li>
+              <li>مرورگر و سیستم‌عامل خود را مشخص نمایید</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="prevStep()" *ngIf="currentStep() > 1">
+          <mat-icon>arrow_forward</mat-icon>
+          مرحله قبل
+        </button>
+
+        <button class="btn-secondary" (click)="closeForm()" *ngIf="currentStep() === 1">
+          انصراف
+        </button>
+
+        <div class="footer-progress">مرحله {{ currentStep() }} از ۳</div>
+
+        <button
+          class="btn-primary"
+          (click)="nextStep()"
+          [disabled]="!canProceedStep()"
+          *ngIf="currentStep() < 3"
+        >
+          مرحله بعد
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+
+        <button
+          class="btn-primary"
+          (click)="submitTicket()"
+          [disabled]="!canSubmit() || isSubmitting()"
+          *ngIf="currentStep() === 3"
+        >
+          <mat-icon *ngIf="!isSubmitting()">send</mat-icon>
+          <div class="spinner-mini" *ngIf="isSubmitting()"></div>
+          {{ isSubmitting() ? 'در حال ارسال...' : 'ارسال تیکت' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

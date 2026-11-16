@@ -1,0 +1,87 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     🎁 Free Courses — دوره‌های رایگان
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="free block">
+  <header class="block__head">
+    <div>
+      <span class="eyebrow eyebrow--green">
+        <mat-icon>redeem</mat-icon> ۱۰۰٪ رایگان
+      </span>
+      <h2 class="block__title">{{ sectionTitle() }}</h2>
+      <p class="block__sub">دوره‌های رایگان با کیفیت پولی — همین الان یاد بگیر</p>
+    </div>
+    <a
+      routerLink="/courses"
+      class="link-all"
+      [queryParams]="activeCategory() ? { isFree: true, category: activeCategory() } : { isFree: true }"
+    >
+      <span>مشاهده‌ی همه‌ی دوره‌های رایگان</span>
+      <mat-icon>arrow_back</mat-icon>
+    </a>
+  </header>
+
+  <!-- ─── Category filter bar ─── -->
+  <app-category-filter-bar
+    [categories]="categories()"
+    [activeId]="activeCategory()"
+    [loading]="isLoadingCategories()"
+    allLabel="همه رایگان‌ها"
+    ariaLabel="فیلتر دسته‌بندی دوره‌های رایگان"
+    (categoryChange)="onCategoryChange($event)"
+  ></app-category-filter-bar>
+
+  @if (isLoading()) {
+    <div class="free-grid">
+      @for (i of skeletonItems; track $index) {
+        <div class="free-sk">
+          <span class="free-sk__thumb sh"></span>
+          <span class="free-sk__body">
+            <span class="sh" style="width:75%;height:13px"></span>
+            <span class="sh" style="width:55%;height:10px"></span>
+            <span class="sh" style="width:40%;height:10px"></span>
+          </span>
+        </div>
+      }
+    </div>
+  } @else if (courses().length > 0) {
+    <div class="free-grid">
+      @for (course of courses(); track course._id || course.id || course.slug; let i = $index) {
+        <div class="free-item" [style.animation-delay]="(i * 60) + 'ms'">
+          <app-course-card [course]="course" [index]="i"></app-course-card>
+        </div>
+      }
+    </div>
+  } @else if (error()) {
+    <div class="empty empty--error">
+      <div class="empty__icon-wrap">
+        <mat-icon>cloud_off</mat-icon>
+      </div>
+      <h3>دریافت دوره‌ها ناموفق بود</h3>
+      <p>اتصال اینترنت خود را بررسی کنید و دوباره تلاش کنید.</p>
+      <button type="button" class="retry-btn" (click)="retry()">
+        <mat-icon>refresh</mat-icon>
+        <span>تلاش مجدد</span>
+      </button>
+    </div>
+  } @else {
+    <div class="empty">
+      <div class="empty__icon-wrap">
+        <mat-icon>redeem</mat-icon>
+      </div>
+      <h3>
+        @if (activeCategoryName()) {
+          در دسته‌ی «{{ activeCategoryName() }}» دوره‌ی رایگانی نیست
+        } @else {
+          دوره‌ی رایگانی یافت نشد
+        }
+      </h3>
+      <p>دسته‌بندی دیگری را انتخاب کنید یا همه‌ی دوره‌های رایگان را ببینید.</p>
+      @if (activeCategory()) {
+        <button type="button" class="retry-btn" (click)="onCategoryChange(null)">
+          <mat-icon>apps</mat-icon>
+          <span>مشاهده‌ی همه‌ی رایگان‌ها</span>
+        </button>
+      }
+    </div>
+  }
+</section>

@@ -1,0 +1,106 @@
+<div class="ticket-detail" dir="rtl">
+  <!-- Header -->
+  <div class="detail-header">
+    <button class="btn-back" (click)="close.emit()">
+      <mat-icon>arrow_forward</mat-icon>
+      <span>بازگشت</span>
+    </button>
+
+    <div class="header-info">
+      <h2>{{ ticket?.subject }}</h2>
+      <div class="header-meta">
+        <span class="ticket-number">{{ ticket?.ticketNumber }}</span>
+        <span class="status-badge" [attr.data-status]="ticket?.status">
+          <mat-icon>{{ getStatusIcon(ticket?.status || '') }}</mat-icon>
+          {{ getStatusLabel(ticket?.status || '') }}
+        </span>
+        <span class="priority-tag" [attr.data-priority]="ticket?.priority">
+          {{ getPriorityLabel(ticket?.priority || '') }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages Thread -->
+  <div class="messages-thread" #messagesContainer>
+    <!-- Loading skeleton -->
+    <div *ngIf="isLoadingMessages()" class="loading-messages">
+      <div class="skel-msg" *ngFor="let s of [1, 2, 3]">
+        <div class="skel-avatar shimmer"></div>
+        <div class="skel-body">
+          <div class="skel-line shimmer"></div>
+          <div class="skel-line short shimmer"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Empty state -->
+    <div *ngIf="!isLoadingMessages() && messages().length === 0" class="no-messages">
+      <mat-icon>chat_bubble_outline</mat-icon>
+      <p>هنوز پیامی ثبت نشده است</p>
+    </div>
+
+    <!-- Messages list -->
+    <div
+      *ngFor="let msg of messages(); let i = index"
+      class="message-row"
+      [class.admin-row]="isFromAdmin(msg)"
+      [class.user-row]="!isFromAdmin(msg)"
+    >
+      <div
+        class="msg-bubble"
+        [class.admin-bubble]="isFromAdmin(msg)"
+        [class.user-bubble]="!isFromAdmin(msg)"
+      >
+        <div class="msg-header">
+          <span class="msg-sender">{{ isFromAdmin(msg) ? 'تیم پشتیبانی' : 'شما' }}</span>
+          <span class="msg-time">{{ msg.createdAt | jalaliDate }}</span>
+        </div>
+        <div class="msg-content" [innerHTML]="msg.content | sanitizeHtml"></div>
+        <div class="msg-attachments" *ngIf="msg.attachments && msg.attachments.length > 0">
+          <a
+            *ngFor="let att of msg.attachments"
+            [href]="att.url"
+            target="_blank"
+            class="attachment-chip"
+          >
+            <mat-icon>attach_file</mat-icon>
+            {{ att.name }}
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Reply Box -->
+  <div class="reply-box" *ngIf="ticket?.status !== 'closed'">
+    <div class="reply-input-wrap">
+      <app-rich-text-editor
+        [(ngModel)]="replyText"
+        placeholder="پاسخ خود را بنویسید..."
+        minHeight="120px"
+        [autoExpand]="true"
+      ></app-rich-text-editor>
+    </div>
+    <div class="reply-actions">
+      <span class="char-count" [class.warning]="replyText.length > 4900">
+        {{ replyText.length }} / ۵۰۰۰
+      </span>
+      <button
+        class="btn-send-reply"
+        [disabled]="!canReply() || isSendingReply()"
+        (click)="sendReply()"
+      >
+        <mat-icon *ngIf="!isSendingReply()">send</mat-icon>
+        <span class="spinner" *ngIf="isSendingReply()"></span>
+        <span>{{ isSendingReply() ? 'در حال ارسال...' : 'ارسال پاسخ' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Closed ticket notice -->
+  <div class="closed-notice" *ngIf="ticket?.status === 'closed'">
+    <mat-icon>lock</mat-icon>
+    <span>این تیکت بسته شده و امکان ارسال پاسخ وجود ندارد.</span>
+  </div>
+</div>

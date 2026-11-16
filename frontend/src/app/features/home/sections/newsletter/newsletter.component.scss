@@ -1,0 +1,178 @@
+// ==========================================================================
+// 📧 Newsletter
+// ==========================================================================
+$ease: cubic-bezier(0.16, 1, 0.3, 1);
+$grad-brand: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+
+:host { display: block; }
+
+.newsletter {
+  padding: 3rem 0;
+
+  &__inner {
+    padding: 2.5rem 3rem;
+    border-radius: 24px;
+    text-align: center;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    background:
+      radial-gradient(110% 160% at 50% -30%, rgba(139, 92, 246, 0.15), transparent 60%),
+      var(--bg-surface, #ffffff);
+    animation: nl-rise 0.7s $ease both;
+  }
+
+  &__content {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  &__icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+    color: var(--primary-color, #4f46e5);
+    margin-bottom: 0.8rem;
+  }
+
+  &__title {
+    margin: 0 0 0.5rem;
+    font-size: clamp(1.1rem, 2vw, 1.4rem);
+    font-weight: 900;
+    color: var(--text-primary, #0f172a);
+  }
+
+  &__desc {
+    margin: 0 0 1.5rem;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-secondary, #64748b);
+  }
+
+  &__form {
+    display: flex;
+    gap: 0.6rem;
+    max-width: 440px;
+    margin: 0 auto;
+  }
+
+  &__input-wrap {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0 0.8rem;
+    border-radius: 12px;
+    border: 1.5px solid var(--border-color, #e2e8f0);
+    background: var(--bg-secondary, #f8fafc);
+    transition: border-color 0.2s ease;
+    &:focus-within {
+      border-color: var(--primary-color, #4f46e5);
+    }
+  }
+
+  &__input-icon {
+    font-size: 19px;
+    width: 19px;
+    height: 19px;
+    color: var(--text-muted, #94a3b8);
+    flex-shrink: 0;
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    padding: 0.75rem 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--text-primary, #0f172a);
+    &::placeholder { color: var(--text-muted, #94a3b8); }
+    &:disabled { opacity: 0.6; }
+  }
+
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.75rem 1.4rem;
+    border: none;
+    border-radius: 12px;
+    background: $grad-brand;
+    color: #fff;
+    font-family: inherit;
+    font-size: 0.88rem;
+    font-weight: 800;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: 0 8px 20px -6px rgba(192, 38, 211, 0.4);
+    transition: transform 0.2s ease, filter 0.2s ease, opacity 0.2s ease;
+    mat-icon { font-size: 17px; width: 17px; height: 17px; }
+    &:hover:not(:disabled) {
+      transform: translateY(-1px);
+      filter: brightness(1.08);
+    }
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  &__spinner {
+    width: 18px;
+    height: 18px;
+    border: 2.5px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: nl-spin 0.7s linear infinite;
+  }
+
+  &__msg {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin-top: 1rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    mat-icon { font-size: 16px; width: 16px; height: 16px; }
+    &--success { color: #059669; }
+    &--error { color: #dc2626; }
+  }
+}
+
+@keyframes nl-rise {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes nl-spin {
+  to { transform: rotate(360deg); }
+}
+
+// ═══════════════ Dark Theme ═══════════════
+:host-context(.dark-theme),
+:host-context(.dark-mode),
+:host-context(.dark),
+:host-context([data-theme='dark']) {
+  .newsletter__inner {
+    box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.4);
+    background:
+      radial-gradient(110% 160% at 50% -30%, rgba(139, 92, 246, 0.2), transparent 60%),
+      #1e293b;
+  }
+  .newsletter__input-wrap {
+    background: rgba(15, 23, 42, 0.5);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+// ═══════════════ Responsive ═══════════════
+@media (max-width: 640px) {
+  .newsletter { padding: 2rem 0; }
+  .newsletter__inner { padding: 1.8rem 1.2rem; }
+  .newsletter__form {
+    flex-direction: column;
+  }
+  .newsletter__btn { width: 100%; justify-content: center; }
+}

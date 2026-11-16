@@ -1,0 +1,140 @@
+version: '3.8'
+
+services:
+  # ─── MongoDB ───
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    command: ['--replSet', 'rs0', '--bind_ip_all']
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS:-changeme}
+    healthcheck:
+
+      test:
+        - CMD-SHELL
+        - |
+          JS='try{quit(rs.status().ok?0:1)}catch(e){try{rs.initiate({_id:"rs0",members:[{_id:0,host:"localhost:27017"}]})}catch(e2){};quit(1)}'
+          if [ -n "$$MONGO_INITDB_ROOT_USERNAME" ] && mongosh --quiet -u "$$MONGO_INITDB_ROOT_USERNAME" -p "$$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "$$JS"; then exit 0; fi
+          exec mongosh --quiet --eval "$$JS"
+      interval: 5s
+      timeout: 30s
+      start_period: 10s
+      retries: 30
+
+  # ─── Redis ───
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ─── API Server ───
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - '${PORT:-5000}:5000'
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      # replicaSet=rs0 → تراکنش‌ها فعال شوند | directConnection=true چون عضویت
+      # replica set با نام `localhost:27017` ثبت شده و از داخل کانتینر قابل resolve نیست
+      MONGODB_URI: mongodb://${MONGO_USER:-admin}:${MONGO_PASS:-changeme}@mongo:27017/${MONGO_DB:-iranian-udemy}?authSource=admin&replicaSet=rs0&directConnection=true
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      S3_REGION: ${S3_REGION:-ir-thr-at1}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_BUCKET: ${S3_BUCKET:-iranian-udemy-videos}
+      S3_FORCE_PATH_STYLE: 'true'
+      FFMPEG_PATH: /usr/bin/ffmpeg
+      FFPROBE_PATH: /usr/bin/ffprobe
+      TEMP_DIR: /home/app/scratch
+      CLIENT_URL: ${CLIENT_URL:-http://localhost:4200}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      # ✅ Worker جداگانه اجرا می‌شود — inline worker غیرفعال
+      DISABLE_INLINE_WORKER: 'true'
+      MULTI_TENANT_ENABLED: ${MULTI_TENANT_ENABLED:-false}
+    volumes:
+      # Scratch directory for video processing (survives restarts)
+      - scratch_data:/home/app/scratch
+      # Local uploads for avatars/thumbnails (Cloudinary images)
+      - uploads_data:/app/uploads
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+
+  # ─── Video Processor Worker ───
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    command: ['node', 'dist/workers/videoProcessor.worker.js']
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: mongodb://${MONGO_USER:-admin}:${MONGO_PASS:-changeme}@mongo:27017/${MONGO_DB:-iranian-udemy}?authSource=admin&replicaSet=rs0&directConnection=true
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      S3_ENDPOINT: ${S3_ENDPOINT}
+      S3_REGION: ${S3_REGION:-ir-thr-at1}
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY}
+      S3_SECRET_KEY: ${S3_SECRET_KEY}
+      S3_BUCKET: ${S3_BUCKET:-iranian-udemy-videos}
+      S3_FORCE_PATH_STYLE: 'true'
+      FFMPEG_PATH: /usr/bin/ffmpeg
+      FFPROBE_PATH: /usr/bin/ffprobe
+      TEMP_DIR: /home/app/scratch
+      MULTIPART_CONCURRENT: '2'
+    volumes:
+      # Shared scratch directory with API for video processing
+      - scratch_data:/home/app/scratch
+    deploy:
+      resources:
+        limits:
+          # FFmpeg needs memory for transcoding
+          # 5GB source → ~1.5GB RAM during transcode
+          memory: 3G
+          cpus: '2.0'
+
+volumes:
+  mongo_data:
+  redis_data:
+  scratch_data:
+    # Named volume for video processing temp files
+    # For production: mount a fast SSD-backed volume
+    driver: local
+  uploads_data:
+    # Local uploads (avatars, thumbnails via Cloudinary)
+    driver: local

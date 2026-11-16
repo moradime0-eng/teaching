@@ -1,0 +1,197 @@
+<footer class="site-footer" dir="rtl">
+  <!-- Newsletter CTA Strip -->
+  <div class="newsletter-wrapper">
+    <div class="footer-container">
+      <div class="newsletter-card">
+        <div class="newsletter-text">
+          <div class="newsletter-icon">
+            <mat-icon>mail_outline</mat-icon>
+          </div>
+          <div class="newsletter-content">
+            <h3>عضویت در خبرنامه همایون</h3>
+            <p>از جدیدترین دوره‌ها، مقالات و تخفیف‌های ویژه زودتر از همه باخبر شوید.</p>
+          </div>
+        </div>
+
+        <form class="newsletter-form" (submit)="onSubscribeNewsletter($event)">
+          <div class="input-group">
+            <input
+              type="email"
+              [(ngModel)]="newsletterEmail"
+              name="email"
+              placeholder="ایمیل خود را وارد کنید..."
+              required
+              [disabled]="isSubscribed"
+            />
+            <button type="submit" [disabled]="isSubscribed">
+              @if (isSubscribed) {
+                <span>عضو شدید! ✓</span>
+              } @else {
+                <span class="btn-text">عضویت</span>
+                <mat-icon class="btn-arrow">arrow_left</mat-icon>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Footer Content -->
+  <div class="footer-container">
+    <div class="footer-grid">
+      <!-- Col 1: Brand & Bio -->
+      <div class="footer-col brand-col">
+        <div class="brand-header">
+          <div class="brand-logo">
+            <mat-icon>school</mat-icon>
+          </div>
+          <span class="brand-title">آموزشگاه همایون</span>
+        </div>
+        <p class="brand-desc">
+          بزرگ‌ترین پلتفرم تخصصی آموزش آنلاین در ایران؛ همراه شما در مسیر یادگیری مهارت‌های
+          برنامه‌نویسی، طراحی و هوش مصنوعی برای ورود حرفه‌ای به بازار کار.
+        </p>
+
+        <!-- Social Media Links -->
+        <div class="social-links">
+          <a
+            href="https://t.me/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="تلگرام"
+            title="به‌زودی"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path
+                d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.75-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"
+              />
+            </svg>
+          </a>
+          <a
+            href="https://www.instagram.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="اینستاگرام"
+            title="به‌زودی"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path
+                d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"
+              />
+            </svg>
+          </a>
+          <a
+            href="https://www.linkedin.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="لینکدین"
+            title="به‌زودی"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path
+                d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.2a1.66 1.66 0 0 0-1.66 1.66c0 .92.74 1.66 1.66 1.66.92 0 1.66-.74 1.66-1.66 0-.92-.74-1.66-1.66-1.66z"
+              />
+            </svg>
+          </a>
+          <a
+            href="https://youtube.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="یوتیوب"
+          >
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path
+                d="M21.58 7.19c-.23-.86-.91-1.54-1.77-1.77C18.25 5 12 5 12 5s-6.25 0-7.81.42c-.86.23-1.54.91-1.77 1.77C2 8.75 2 12 2 12s0 3.25.42 4.81c.23.86.91 1.54 1.77 1.77C5.75 19 12 19 12 19s6.25 0 7.81-.42c.86-.23 1.54-.91 1.77-1.77C22 15.25 22 12 22 12s0-3.25-.42-4.81zM9.75 15.02V8.98L15 12l-5.25 3.02z"
+              />
+            </svg>
+          </a>
+        </div>
+      </div>
+
+      <!-- Col 2: Quick Links -->
+      <div class="footer-col">
+        <h4 class="col-heading">دسترسی سریع</h4>
+        <nav class="footer-links">
+          <a routerLink="/courses">همه دوره‌های آموزشی</a>
+          <a routerLink="/instructor/dashboard">تدریس در همایون</a>
+          <!-- ✅ FIX #8: لینک شکسته /roadmap به /learning-paths تغییر کرد -->
+          <a routerLink="/learning-paths">مسیرهای یادگیری</a>
+          <span class="disabled-link" title="به‌زودی">وبلاگ و مقالات</span>
+          <a routerLink="/support">مرکز پشتیبانی و تیکت</a>
+        </nav>
+      </div>
+
+      <!-- Col 3: Categories — داینامیک از API -->
+      <div class="footer-col">
+        <h4 class="col-heading">دسته‌بندی‌ها</h4>
+        <nav class="footer-links">
+          @for (cat of visibleCategories(); track cat._id) {
+            <a [routerLink]="['/courses']" [queryParams]="{ category: cat._id }">{{ cat.name }}</a>
+          } @empty {
+            <span class="disabled-link" title="به‌زودی">به‌زودی</span>
+          }
+        </nav>
+      </div>
+
+      <!-- Col 4: Contact, Map & Badges -->
+      <div class="footer-col contact-col">
+        <h4 class="col-heading">ارتباط با ما</h4>
+        <address class="contact-info">
+          <a [href]="'mailto:' + settingsService.supportEmail()" class="contact-item">
+            <mat-icon>alternate_email</mat-icon>
+            <span>{{ settingsService.supportEmail() || 'info&#64;example.com' }}</span>
+          </a>
+          <a [href]="'tel:' + settingsService.supportPhone()" class="contact-item">
+            <mat-icon>call</mat-icon>
+            <span dir="ltr">{{ settingsService.supportPhone() || 'در حال ثبت...' }}</span>
+          </a>
+          <div class="contact-item">
+            <mat-icon>location_on</mat-icon>
+            <span>{{ settingsService.settings()?.address || 'اصفهان، مبارکه' }}</span>
+          </div>
+        </address>
+
+        <!-- Real Map Container -->
+        <div class="map-wrapper">
+          <div id="footer-map" class="footer-map-canvas"></div>
+        </div>
+
+        <!-- Trust Badges -->
+        <div class="trust-badges">
+          <div class="badge-placeholder" title="نماد اعتماد الکترونیکی">
+            <mat-icon>verified_user</mat-icon>
+            <span>اینماد</span>
+          </div>
+          <div class="badge-placeholder" title="نشان ملی ثبت رسانه‌های دیجیتال">
+            <mat-icon>gavel</mat-icon>
+            <span>ساماندهی</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="footer-bottom">
+      <div class="bottom-legal">
+        <p>© {{ currentPersianYear }} آموزش همایون. تمامی حقوق محفوظ است.</p>
+        <div class="legal-links">
+          <span class="disabled-link" title="به‌زودی">حریم خصوصی</span>
+          <span>•</span>
+          <span class="disabled-link" title="به‌زودی">قوانین و مقررات</span>
+        </div>
+      </div>
+
+      <!-- Back to Top Button -->
+      <button
+        type="button"
+        class="btn-scroll-top"
+        (click)="scrollToTop()"
+        aria-label="بازگشت به بالای صفحه"
+      >
+        <span class="scroll-text">بازگشت به بالا</span>
+        <mat-icon>keyboard_arrow_up</mat-icon>
+      </button>
+    </div>
+  </div>
+</footer>

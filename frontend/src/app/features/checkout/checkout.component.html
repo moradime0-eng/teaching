@@ -1,0 +1,343 @@
+<div class="checkout-page" dir="rtl" *ngIf="cartService.cart() as cartData">
+  <!-- Page Header -->
+  <div class="checkout-header">
+    <div class="header-decoration"></div>
+    <div class="header-icon">
+      <mat-icon>shopping_cart_checkout</mat-icon>
+    </div>
+    <div class="header-text">
+      <h1>تسویه حساب نهایی</h1>
+      <p>آخرین قدم تا شروع یادگیری شما 🚀</p>
+    </div>
+  </div>
+
+  <!-- Progress Steps -->
+  <div class="progress-steps">
+    <div class="step completed">
+      <div class="step-circle">
+        <mat-icon>check</mat-icon>
+      </div>
+      <span>سبد خرید</span>
+    </div>
+    <div class="step-line completed"></div>
+    <div class="step active">
+      <div class="step-circle">
+        <mat-icon>payment</mat-icon>
+      </div>
+      <span>پرداخت</span>
+    </div>
+    <div class="step-line"></div>
+    <div class="step">
+      <div class="step-circle">
+        <mat-icon>celebration</mat-icon>
+      </div>
+      <span>تکمیل</span>
+    </div>
+  </div>
+
+  <div class="checkout-grid">
+    <!-- ==================== LEFT: Payment Setup ==================== -->
+    <div class="checkout-main">
+      <!-- Payment Methods Card -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-icon">
+            <mat-icon>account_balance_wallet</mat-icon>
+          </div>
+          <div>
+            <h3>انتخاب روش پرداخت</h3>
+            <p>روش دلخواه خود را انتخاب کنید</p>
+          </div>
+        </div>
+
+        <div class="payment-methods">
+          <!-- NikPal Gateway -->
+          <label class="payment-option" [class.selected]="paymentMethod === 'nikpal'">
+            <input type="radio" name="payMethod" value="nikpal" [(ngModel)]="paymentMethod" />
+            <div class="option-content">
+              <div class="option-icon gateway-icon">
+                <mat-icon>credit_card</mat-icon>
+              </div>
+              <div class="option-info">
+                <h4>پرداخت آنلاین (NikPal)</h4>
+                <p>پرداخت امن با تمامی کارت‌های عضو شتاب</p>
+              </div>
+              <div class="option-badges">
+                <span class="badge shaparak">
+                  <mat-icon>verified</mat-icon>
+                  شاپرک
+                </span>
+                <span class="badge secure">
+                  <mat-icon>verified_user</mat-icon>
+                  امن
+                </span>
+              </div>
+            </div>
+            <div class="option-check">
+              <mat-icon>check_circle</mat-icon>
+            </div>
+          </label>
+
+          <!-- Wallet -->
+          <label
+            class="payment-option"
+            [class.selected]="paymentMethod === 'wallet'"
+            [class.disabled]="!canPayWithWallet()"
+            (click)="onWalletOptionClick()"
+          >
+            <input
+              type="radio"
+              name="payMethod"
+              value="wallet"
+              [(ngModel)]="paymentMethod"
+              [disabled]="!canPayWithWallet()"
+            />
+            <div class="option-content">
+              <div class="option-icon wallet-icon">
+                <mat-icon>account_balance_wallet</mat-icon>
+              </div>
+              <div class="option-info">
+                <h4>پرداخت از کیف پول</h4>
+                <p>
+                  موجودی کیف پول شما:
+                  <strong>{{ walletBalance | toman }}</strong>
+                </p>
+                <p class="wallet-warning" *ngIf="!canPayWithWallet() && getCalculatedPrice() > 0">
+                  <mat-icon>warning</mat-icon>
+                  موجودی کافی نیست — ابتدا کیف پول را شارژ کنید
+                </p>
+              </div>
+              <div class="option-badges">
+                <span class="badge instant" *ngIf="canPayWithWallet()">
+                  <mat-icon>bolt</mat-icon>
+                  آنی
+                </span>
+                <a
+                  routerLink="/wallet"
+                  class="badge charge"
+                  title="رفتن به صفحه شارژ کیف پول"
+                  (click)="$event.stopPropagation()"
+                >
+                  <mat-icon>add_circle</mat-icon>
+                  شارژ کیف پول
+                </a>
+              </div>
+            </div>
+            <div class="option-check">
+              <mat-icon>check_circle</mat-icon>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- Cart Items Preview -->
+      <div class="section-card">
+        <div class="section-header">
+          <div class="section-icon items-icon">
+            <mat-icon>shopping_bag</mat-icon>
+          </div>
+          <div>
+            <h3>محصولات سبد خرید</h3>
+            <p>
+              <span class="items-count">{{ cartData.items.length || 0 }}</span>
+              محصول در سبد شما
+            </p>
+          </div>
+        </div>
+
+        <div class="cart-items-preview">
+          <div class="cart-item-mini" *ngFor="let item of cartData.items; let i = index">
+            <div class="item-number">{{ i + 1 }}</div>
+            <div class="item-thumb">
+              <img
+                *ngIf="getCourse(item)?.thumbnail"
+                [src]="getCourse(item)!.thumbnail"
+                [alt]="getCourse(item)!.title"
+                loading="lazy"
+              />
+              <div class="thumb-placeholder" *ngIf="!getCourse(item)?.thumbnail">
+                <mat-icon>menu_book</mat-icon>
+              </div>
+            </div>
+            <div class="item-info">
+              <h5>{{ getCourse(item)?.title || 'دوره' }}</h5>
+              <span class="item-instructor" *ngIf="getCourse(item)?.instructor?.fullName">
+                <mat-icon>person</mat-icon>
+                {{ getCourse(item)!.instructor.fullName }}
+              </span>
+            </div>
+            <div class="item-price">
+              {{ item.priceAtAdd | toman }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Security Info -->
+      <div class="security-info">
+        <div class="security-item">
+          <div class="security-icon-wrapper secure-icon">
+            <mat-icon>lock</mat-icon>
+          </div>
+          <div>
+            <strong>پرداخت امن</strong>
+            <span>اطلاعات شما رمزنگاری می‌شود</span>
+          </div>
+        </div>
+        <div class="security-item">
+          <div class="security-icon-wrapper refund-icon">
+            <mat-icon>replay</mat-icon>
+          </div>
+          <div>
+            <strong>گارانتی بازگشت</strong>
+            <span>۷ روز تضمین بازگشت وجه</span>
+          </div>
+        </div>
+        <div class="security-item">
+          <div class="security-icon-wrapper support-icon">
+            <mat-icon>support_agent</mat-icon>
+          </div>
+          <div>
+            <strong>پشتیبانی ۲۴/۷</strong>
+            <span>در هر لحظه در کنار شما</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== RIGHT: Summary ==================== -->
+    <div class="checkout-sidebar">
+      <!-- Summary Card -->
+      <div class="summary-card">
+        <div class="summary-header">
+          <mat-icon>receipt_long</mat-icon>
+          <h3>خلاصه فاکتور</h3>
+        </div>
+
+        <div class="summary-body">
+          <div class="summary-row">
+            <span class="label">
+              <mat-icon>shopping_cart</mat-icon>
+              مبلغ خرید
+              <span class="items-badge">{{ cartData.items.length }} عدد</span>
+            </span>
+            <span class="value">{{ cartService.totalPrice() | toman }}</span>
+          </div>
+
+          <div class="summary-row discount" *ngIf="discount() > 0">
+            <span class="label">
+              <mat-icon>local_offer</mat-icon>
+              تخفیف اعمال شده
+            </span>
+            <span class="value discount-value">- {{ discount() | toman }}</span>
+          </div>
+
+          <div class="summary-divider"></div>
+
+          <div class="summary-row total">
+            <span class="label">مبلغ قابل پرداخت</span>
+            <div class="total-value">
+              <strong>{{ getCalculatedPrice() | toman }}</strong>
+              <small *ngIf="discount() > 0">
+                <mat-icon>trending_down</mat-icon>
+                {{ getDiscountPercent() }}٪ صرفه‌جویی
+              </small>
+            </div>
+          </div>
+        </div>
+
+        <div class="pay-button-wrapper">
+          <button class="btn-pay" (click)="submitOrder()" [disabled]="isProcessing">
+            <mat-icon *ngIf="!isProcessing">lock</mat-icon>
+            <span class="spinner-btn" *ngIf="isProcessing"></span>
+            <span>{{ isProcessing ? 'در حال پردازش...' : 'تأیید و پرداخت نهایی' }}</span>
+            <mat-icon class="arrow-icon" *ngIf="!isProcessing">arrow_back</mat-icon>
+          </button>
+        </div>
+
+        <div class="payment-note">
+          <mat-icon>info</mat-icon>
+          <span>
+            با کلیک بر روی دکمه، شما با
+            <a class="terms-link disabled" title="به‌زودی">قوانین و مقررات</a>
+            موافقت می‌کنید
+          </span>
+        </div>
+      </div>
+
+      <!-- Coupon Card -->
+      <div class="coupon-card">
+        <div class="coupon-header">
+          <mat-icon>redeem</mat-icon>
+          <h4>کد تخفیف دارید؟</h4>
+        </div>
+
+        <div class="coupon-body">
+          <div class="coupon-input-group">
+            <input
+              type="text"
+              placeholder="کد تخفیف خود را وارد کنید"
+              [(ngModel)]="couponCode"
+              [disabled]="couponApplied()"
+              (keyup.enter)="applyCoupon()"
+            />
+            <button
+              class="btn-apply"
+              (click)="applyCoupon()"
+              [disabled]="couponApplied() || !couponCode.trim()"
+            >
+              <mat-icon *ngIf="!couponApplied()">check</mat-icon>
+              <mat-icon *ngIf="couponApplied()">verified</mat-icon>
+              {{ couponApplied() ? 'اعمال شد' : 'اعمال' }}
+            </button>
+          </div>
+
+          <div class="coupon-message error" *ngIf="errorMessage">
+            <mat-icon>error_outline</mat-icon>
+            <span>{{ errorMessage }}</span>
+          </div>
+
+          <div class="coupon-message success" *ngIf="couponApplied()">
+            <mat-icon>check_circle</mat-icon>
+            <span>کد تخفیف با موفقیت اعمال شد</span>
+            <button class="btn-remove-coupon" (click)="removeCoupon()">
+              <mat-icon>close</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Support Card -->
+      <div class="support-card">
+        <div class="support-icon-wrapper">
+          <mat-icon>headset_mic</mat-icon>
+        </div>
+        <div>
+          <h5>نیاز به راهنمایی دارید؟</h5>
+          <p>با تیم پشتیبانی ما در تماس باشید</p>
+        </div>
+        <a href="tel:02112345678" class="support-btn">
+          <mat-icon>phone</mat-icon>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Empty Cart State -->
+<div
+  class="empty-checkout"
+  dir="rtl"
+  *ngIf="!cartService.cart() || cartService.cart()!.items?.length === 0"
+>
+  <div class="empty-illustration">
+    <div class="empty-circle-bg"></div>
+    <mat-icon>remove_shopping_cart</mat-icon>
+  </div>
+  <h2>سبد خرید شما خالی است</h2>
+  <p>ابتدا دوره مورد نظر خود را به سبد خرید اضافه کنید</p>
+  <a routerLink="/courses" class="btn-browse">
+    <mat-icon>explore</mat-icon>
+    مشاهده دوره‌ها
+  </a>
+</div>

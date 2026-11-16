@@ -1,0 +1,162 @@
+<div class="image-viewer-backdrop" *ngIf="isOpen" (click)="onBackdropClick($event)">
+  <div
+    class="image-viewer-modal"
+    role="dialog"
+    aria-modal="true"
+    aria-label="نمایشگر تصویر"
+    (click)="$event.stopPropagation()"
+  >
+    <!-- Toolbar -->
+    <header class="image-viewer-toolbar">
+      <div class="toolbar-left">
+        <!-- In RTL, "previous" visually is right chevron -->
+        <button
+          class="toolbar-btn"
+          (click)="goPrevious()"
+          [disabled]="!canGoPrevious()"
+          matTooltip="تصویر قبلی"
+          matTooltipPosition="below"
+          aria-label="تصویر قبلی"
+        >
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+        <span class="image-counter" aria-live="polite">
+          {{ currentIndex() + 1 }} از {{ totalImages() }}
+        </span>
+        <button
+          class="toolbar-btn"
+          (click)="goNext()"
+          [disabled]="!canGoNext()"
+          matTooltip="تصویر بعدی"
+          matTooltipPosition="below"
+          aria-label="تصویر بعدی"
+        >
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+      </div>
+
+      <div class="toolbar-center">
+        <h3 class="image-title">{{ currentImage()?.title || 'تصویر آموزشی' }}</h3>
+      </div>
+
+      <div class="toolbar-right">
+        <div class="zoom-controls" role="group" aria-label="کنترل‌های زوم">
+          <button
+            class="toolbar-btn"
+            (click)="zoomOut()"
+            [disabled]="!canZoomOut()"
+            matTooltip="کوچک‌نمایی (Ctrl + -)"
+            matTooltipPosition="below"
+            aria-label="کوچک‌نمایی"
+          >
+            <mat-icon>zoom_out</mat-icon>
+          </button>
+
+          <span class="zoom-level" aria-live="polite">{{ zoomPercent() }}%</span>
+
+          <button
+            class="toolbar-btn"
+            (click)="zoomIn()"
+            [disabled]="!canZoomIn()"
+            matTooltip="بزرگ‌نمایی (Ctrl + +)"
+            matTooltipPosition="below"
+            aria-label="بزرگ‌نمایی"
+          >
+            <mat-icon>zoom_in</mat-icon>
+          </button>
+
+          <button
+            class="toolbar-btn reset-zoom"
+            (click)="resetZoom()"
+            [class.active]="zoomLevel() === 1"
+            matTooltip="بازنشانی زوم (Ctrl + 0)"
+            matTooltipPosition="below"
+            aria-label="بازنشانی زوم"
+          >
+            <mat-icon>crop_free</mat-icon>
+          </button>
+        </div>
+
+        <button
+          class="toolbar-btn download-btn"
+          (click)="downloadImage()"
+          matTooltip="دانلود تصویر اصلی"
+          matTooltipPosition="below"
+          aria-label="دانلود تصویر"
+        >
+          <mat-icon>download</mat-icon>
+        </button>
+
+        <button
+          class="toolbar-btn close-btn"
+          (click)="close()"
+          matTooltip="بستن (Esc)"
+          matTooltipPosition="below"
+          aria-label="بستن نمایشگر"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </header>
+
+    <!-- Image Container -->
+    <div
+      class="image-viewer-container"
+      (wheel)="onWheel($event)"
+      (mousedown)="onMouseDown($event)"
+      (touchstart)="onTouchStart($event)"
+      (touchmove)="onTouchMove($event)"
+      (touchend)="onTouchEnd($event)"
+      [class.panning]="isPanning()"
+      [class.zoomed]="zoomLevel() > 1"
+    >
+      <!-- Loading State -->
+      <div class="image-loading" *ngIf="isLoading() && !loadError()">
+        <div class="loading-spinner"></div>
+        <p>در حال بارگذاری تصویر...</p>
+      </div>
+
+      <!-- Error State -->
+      <div class="image-error" *ngIf="loadError()">
+        <mat-icon class="error-icon">broken_image</mat-icon>
+        <h4>خطا در بارگذاری تصویر</h4>
+        <p>امکان نمایش این تصویر وجود ندارد.</p>
+        <button class="retry-btn" (click)="retryLoad()">تلاش مجدد</button>
+      </div>
+
+      <!-- Image Wrapper -->
+      <div
+        class="image-wrapper"
+        [style.transform]="getImageTransform()"
+        [style.transform-origin]="'center center'"
+        [style.transition]="isPanning() ? 'none' : 'transform 0.15s ease-out'"
+        [class.hidden]="isLoading() || loadError()"
+      >
+        <img
+          *ngIf="currentImage() as img"
+          [src]="img.url"
+          [alt]="img.title || 'تصویر آموزشی'"
+          (load)="onImageLoad($event)"
+          (error)="onImageError()"
+          class="viewer-image"
+          draggable="false"
+        />
+      </div>
+
+      <!-- Image Description Overlay -->
+      <div class="image-info-overlay" *ngIf="currentImage()?.description && !isLoading() && !loadError()">
+        <p>{{ currentImage()!.description }}</p>
+      </div>
+    </div>
+
+    <!-- Keyboard Hints -->
+    <div class="keyboard-hints" *ngIf="isBrowser">
+      <kbd>←</kbd><span>بعدی</span>
+      <kbd>→</kbd><span>قبلی</span>
+      <kbd>Esc</kbd><span>بستن</span>
+      <kbd>Ctrl +</kbd><span>بزرگ‌نمایی</span>
+      <kbd>Ctrl -</kbd><span>کوچک‌نمایی</span>
+      <kbd>Ctrl 0</kbd><span>بازنشانی</span>
+    </div>
+  </div>
+</div>

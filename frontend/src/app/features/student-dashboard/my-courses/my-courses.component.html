@@ -1,0 +1,272 @@
+<div class="my-courses-page" dir="rtl">
+  <!-- ================= Header & Stats ================= -->
+  <header class="page-header">
+    <div class="header-main">
+      <div class="title-group">
+        <h1 class="page-title">
+          <span>میز یادگیری من</span>
+          <span class="count-badge" *ngIf="!isLoading()">{{ enrollments().length }} دوره</span>
+        </h1>
+        <p class="page-subtitle">تمام دوره‌های آموزشی ثبت‌نام‌شده و سوابق پیشرفت یادگیری شما</p>
+      </div>
+
+      <a routerLink="/courses" class="btn-browse">
+        <mat-icon>add_circle_outline</mat-icon>
+        <span>کاوش دوره‌های جدید</span>
+      </a>
+    </div>
+
+    <!-- Stats Dashboard Strip -->
+    <div class="stats-grid" *ngIf="!isLoading() && enrollments().length > 0">
+      <div class="stat-card">
+        <div class="stat-icon-wrap primary">
+          <mat-icon>school</mat-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats().total }}</span>
+          <span class="stat-label">کل دوره‌ها</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon-wrap warning">
+          <mat-icon>hourglass_top</mat-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats().inProgress }}</span>
+          <span class="stat-label">در حال یادگیری</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon-wrap success">
+          <mat-icon>workspace_premium</mat-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats().completed }}</span>
+          <span class="stat-label">تکمیل شده</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon-wrap accent">
+          <mat-icon>trending_up</mat-icon>
+        </div>
+        <div class="stat-info">
+          <span class="stat-value">{{ stats().avgProgress }}%</span>
+          <span class="stat-label">میانگین پیشرفت</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= Filter & Search Bar ================= -->
+  <section class="controls-section" *ngIf="!isLoading() && enrollments().length > 0">
+    <!-- Status Tabs -->
+    <div class="filter-tabs">
+      <button class="tab-btn" [class.active]="activeTab() === 'all'" (click)="setTab('all')">
+        همه دوره‌ها
+        <span class="tab-count">{{ enrollments().length }}</span>
+      </button>
+
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'in-progress'"
+        (click)="setTab('in-progress')"
+      >
+        در حال یادگیری
+        <span class="tab-count">{{ stats().inProgress }}</span>
+      </button>
+
+      <button
+        class="tab-btn"
+        [class.active]="activeTab() === 'completed'"
+        (click)="setTab('completed')"
+      >
+        تکمیل شده
+        <span class="tab-count">{{ stats().completed }}</span>
+      </button>
+    </div>
+
+    <!-- Search & Sort Controls -->
+    <div class="controls-right">
+      <!-- Search Input -->
+      <div class="search-input-wrap">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input
+          type="text"
+          placeholder="جستجو در دوره‌های من..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+        />
+        <button
+          *ngIf="searchQuery()"
+          (click)="clearSearch()"
+          class="btn-clear-search"
+          aria-label="پاک‌سازی جستجو"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <!-- Sort Dropdown -->
+      <div class="sort-select-wrap">
+        <mat-icon class="sort-icon">sort</mat-icon>
+        <select [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)">
+          <option value="recent">جدیدترین‌ها</option>
+          <option value="progress-desc">بیشترین پیشرفت</option>
+          <option value="progress-asc">کمترین پیشرفت</option>
+        </select>
+        <mat-icon class="chevron-icon">expand_more</mat-icon>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= Skeletons Loading ================= -->
+  <div class="courses-grid" *ngIf="isLoading()">
+    <div class="skeleton-card" *ngFor="let s of skeletonArray">
+      <div class="skel-thumb shimmer"></div>
+      <div class="skel-body">
+        <div class="skel-line badge shimmer"></div>
+        <div class="skel-line title shimmer"></div>
+        <div class="skel-line subtitle shimmer"></div>
+        <div class="skel-line bar shimmer"></div>
+        <div class="skel-line btn shimmer"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= Empty State: No Enrollments At All ================= -->
+  <div class="empty-state" *ngIf="!isLoading() && enrollments().length === 0">
+    <div class="empty-illustration">
+      <div class="illustration-circle">
+        <mat-icon>auto_stories</mat-icon>
+      </div>
+    </div>
+    <h2>هنوز در هیچ دوره‌ای شرکت نکرده‌اید!</h2>
+    <p>
+      شروع یادگیری مهارت‌های جدید تنها یک قدم فاصله دارد. همین حالا کاتالوگ دوره‌ها را بررسی کنید و
+      مسیر حرفه‌ای خود را بسازید.
+    </p>
+    <a routerLink="/courses" class="btn-primary-action">
+      <mat-icon>search</mat-icon>
+      <span>مشاهده کاتالوگ دوره‌ها</span>
+    </a>
+  </div>
+
+  <!-- ================= Empty State: Search/Tab Has No Results ================= -->
+  <div
+    class="empty-state empty-filtered"
+    *ngIf="!isLoading() && enrollments().length > 0 && filteredEnrollments().length === 0"
+  >
+    <div class="empty-illustration mini">
+      <mat-icon>search_off</mat-icon>
+    </div>
+    <h3>دوره‌ای با این مشخصات یافت نشد</h3>
+    <p>لطفاً عبارت جستجو را تغییر دهید یا فیلتر تب‌ها را بازنشانی کنید.</p>
+    <button class="btn-reset-filter" (click)="activeTab.set('all'); clearSearch()">
+      <mat-icon>refresh</mat-icon>
+      نمایش همه دوره‌ها
+    </button>
+  </div>
+
+  <!-- ================= Active Courses Grid ================= -->
+  <main class="courses-grid" *ngIf="!isLoading() && filteredEnrollments().length > 0">
+    <div
+      class="learning-card"
+      *ngFor="let item of filteredEnrollments(); trackBy: trackByEnrollment"
+      [class.is-completed]="(item.progress || 0) >= 100"
+    >
+      <!-- Thumbnail & Play Overlay -->
+      <div class="card-thumb-wrap">
+        <img
+          [src]="getCourseDetail(item).thumbnail"
+          [alt]="getCourseDetail(item).title"
+          class="card-thumb"
+          appImageFallback
+        />
+
+        <div class="thumb-overlay">
+          <a
+            [routerLink]="['/learn', getCourseDetail(item)._id]"
+            class="play-action-btn"
+            aria-label="ورود به کلاس"
+          >
+            <mat-icon>play_arrow</mat-icon>
+          </a>
+        </div>
+
+        <!-- Completion or Status Badge -->
+        <span class="status-badge completed" *ngIf="(item.progress || 0) >= 100">
+          <mat-icon>check_circle</mat-icon> تکمیل شده
+        </span>
+        <span
+          class="status-badge in-progress"
+          *ngIf="(item.progress || 0) > 0 && (item.progress || 0) < 100"
+        >
+          <mat-icon>timelapse</mat-icon> {{ item.progress }}% پیشرفت
+        </span>
+        <span class="status-badge not-started" *ngIf="!item.progress || item.progress === 0">
+          <mat-icon>fiber_new</mat-icon> شروع نشده
+        </span>
+      </div>
+
+      <!-- Card Content -->
+      <div class="card-body">
+        <!-- Category & Instructor info -->
+        <div class="card-meta">
+          <span class="category-name" *ngIf="getCourseDetail(item)?.category?.name">
+            {{ getCourseDetail(item).category.name }}
+          </span>
+          <span class="instructor-name" *ngIf="getCourseDetail(item)?.instructor?.fullName">
+            <mat-icon>person</mat-icon>
+            {{ getCourseDetail(item).instructor.fullName }}
+          </span>
+        </div>
+
+        <!-- Course Title -->
+        <h2 class="course-title" [title]="getCourseDetail(item).title">
+          <a [routerLink]="['/learn', getCourseDetail(item)._id]">
+            {{ getCourseDetail(item).title }}
+          </a>
+        </h2>
+
+        <!-- Progress Tracker -->
+        <div class="progress-section">
+          <div class="progress-info">
+            <span class="progress-text">پیشرفت یادگیری</span>
+            <span class="progress-percent font-mono">{{ item.progress || 0 }}%</span>
+          </div>
+
+          <div class="progress-track">
+            <div
+              class="progress-fill"
+              [style.width.%]="item.progress || 0"
+              [class.completed]="(item.progress || 0) >= 100"
+            ></div>
+          </div>
+        </div>
+
+        <!-- Card Footer Actions -->
+        <div class="card-footer">
+          <a
+            [routerLink]="['/learn', getCourseDetail(item)._id]"
+            class="btn-learn"
+            [class.completed-btn]="(item.progress || 0) >= 100"
+          >
+            <mat-icon>{{ (item.progress || 0) >= 100 ? 'replay' : 'play_circle' }}</mat-icon>
+            <span>
+              {{
+                (item.progress || 0) >= 100
+                  ? 'مرور مجدد دوره'
+                  : (item.progress || 0) > 0
+                    ? 'ادامه یادگیری'
+                    : 'شروع یادگیری'
+              }}
+            </span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

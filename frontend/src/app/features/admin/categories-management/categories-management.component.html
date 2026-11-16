@@ -1,0 +1,376 @@
+<div class="admin-categories" dir="rtl">
+  <!-- ==========================================
+       HEADER
+       ========================================== -->
+  <header class="page-header">
+    <nav class="breadcrumb">
+      <a routerLink="/admin/dashboard">
+        <mat-icon>dashboard</mat-icon>
+        <span>پنل مدیریت</span>
+      </a>
+      <mat-icon class="sep">chevron_left</mat-icon>
+      <span class="current">مدیریت دسته‌بندی‌ها</span>
+    </nav>
+
+    <div class="header-main">
+      <div class="header-title-wrap">
+        <div class="header-icon">
+          <mat-icon>category</mat-icon>
+          <span class="icon-glow"></span>
+        </div>
+        <div class="header-text">
+          <h1>مدیریت دسته‌بندی‌ها</h1>
+          <p>ایجاد، ویرایش و سازماندهی دسته‌بندی‌های آموزشی پلتفرم</p>
+        </div>
+      </div>
+
+      <button class="btn-create" (click)="openCreateDialog()">
+        <span class="btn-icon-wrap">
+          <mat-icon>add</mat-icon>
+        </span>
+        <span>دسته‌بندی جدید</span>
+        <span class="btn-shine"></span>
+      </button>
+    </div>
+
+    <!-- Stats Row -->
+    @if (!isLoading()) {
+      <div class="stats-row">
+        <div class="stat-pill primary">
+          <div class="pill-icon"><mat-icon>folder</mat-icon></div>
+          <div class="pill-info">
+            <span class="pill-value">{{ totalCategories() }}</span>
+            <span class="pill-label">دسته کل</span>
+          </div>
+        </div>
+        <div class="stat-pill success">
+          <div class="pill-icon"><mat-icon>check_circle</mat-icon></div>
+          <div class="pill-info">
+            <span class="pill-value">{{ activeCategories() }}</span>
+            <span class="pill-label">فعال</span>
+          </div>
+        </div>
+        <div class="stat-pill warning">
+          <div class="pill-icon"><mat-icon>pause_circle</mat-icon></div>
+          <div class="pill-info">
+            <span class="pill-value">{{ inactiveCategories() }}</span>
+            <span class="pill-label">غیرفعال</span>
+          </div>
+        </div>
+        <div class="stat-pill info">
+          <div class="pill-icon"><mat-icon>account_tree</mat-icon></div>
+          <div class="pill-info">
+            <span class="pill-value">{{ totalSubCategories() }}</span>
+            <span class="pill-label">زیردسته</span>
+          </div>
+        </div>
+        <div class="stat-pill accent">
+          <div class="pill-icon"><mat-icon>school</mat-icon></div>
+          <div class="pill-info">
+            <span class="pill-value">{{ totalCourses() }}</span>
+            <span class="pill-label">دوره</span>
+          </div>
+        </div>
+      </div>
+    }
+  </header>
+
+  <!-- ==========================================
+       TOOLBAR
+       ========================================== -->
+  <section class="toolbar">
+    <div class="search-box" [class.has-value]="searchQuery()">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        placeholder="جستجو در دسته‌بندی‌ها و زیردسته‌ها..."
+      />
+      @if (searchQuery()) {
+        <button class="clear-btn" (click)="clearSearch()" title="پاک کردن">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </div>
+
+    <div class="toolbar-group">
+      <div class="sort-wrap">
+        <mat-icon class="sort-icon">sort</mat-icon>
+        <select class="sort-select" [ngModel]="sortBy()" (ngModelChange)="setSortBy($event)">
+          <option value="name">مرتب‌سازی: نام</option>
+          <option value="courses">مرتب‌سازی: تعداد دوره</option>
+          <option value="newest">مرتب‌سازی: جدیدترین</option>
+        </select>
+      </div>
+
+      <button
+        class="btn-filter"
+        [class.active]="showInactive()"
+        (click)="showInactive.set(!showInactive())"
+        title="نمایش دسته‌های غیرفعال"
+      >
+        <mat-icon>{{ showInactive() ? 'visibility' : 'visibility_off' }}</mat-icon>
+        <span>{{ showInactive() ? 'همه' : 'فقط فعال‌ها' }}</span>
+      </button>
+
+      <div class="view-toggle">
+        <button
+          class="view-btn"
+          [class.active]="viewMode() === 'grid'"
+          (click)="setViewMode('grid')"
+          title="نمای شبکه‌ای"
+        >
+          <mat-icon>grid_view</mat-icon>
+        </button>
+        <button
+          class="view-btn"
+          [class.active]="viewMode() === 'list'"
+          (click)="setViewMode('list')"
+          title="نمای لیستی"
+        >
+          <mat-icon>view_list</mat-icon>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  @if (!isLoading() && filteredCategories().length > 0) {
+    <div class="result-info">
+      <mat-icon>info</mat-icon>
+      <span>
+        {{ filteredCategories().length }} دسته‌بندی
+        @if (searchQuery()) { یافت شد برای «<strong>{{ searchQuery() }}</strong>» }
+        @else { نمایش داده می‌شود }
+      </span>
+    </div>
+  }
+
+  <!-- ==========================================
+       LOADING SKELETON
+       ========================================== -->
+  @if (isLoading()) {
+    <div class="loading-grid">
+      @for (_ of [1, 2, 3, 4, 5, 6]; track _) {
+        <div class="skeleton-card">
+          <div class="sk-header">
+            <div class="sk-icon shimmer"></div>
+            <div class="sk-text">
+              <div class="sk-line w-60 shimmer"></div>
+              <div class="sk-line w-40 shimmer"></div>
+            </div>
+          </div>
+          <div class="sk-body">
+            <div class="sk-line w-full shimmer"></div>
+            <div class="sk-line w-80 shimmer"></div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ==========================================
+       EMPTY STATE
+       ========================================== -->
+  @if (!isLoading() && filteredCategories().length === 0) {
+    <div class="empty-state">
+      <div class="empty-illustration">
+        <div class="empty-blob"></div>
+        <mat-icon>folder_off</mat-icon>
+      </div>
+      @if (searchQuery()) {
+        <h3>نتیجه‌ای یافت نشد</h3>
+        <p>هیچ دسته‌بندی مطابق با «{{ searchQuery() }}» پیدا نشد</p>
+        <button class="btn-secondary" (click)="clearSearch()">
+          <mat-icon>refresh</mat-icon>
+          پاک کردن جستجو
+        </button>
+      } @else {
+        <h3>هنوز دسته‌بندی‌ای ایجاد نکرده‌اید</h3>
+        <p>اولین دسته‌بندی خود را ایجاد کنید تا محتوای پلتفرم را سازماندهی کنید</p>
+        <button class="btn-create" (click)="openCreateDialog()">
+          <span class="btn-icon-wrap"><mat-icon>add</mat-icon></span>
+          <span>ایجاد اولین دسته‌بندی</span>
+          <span class="btn-shine"></span>
+        </button>
+      }
+    </div>
+  }
+
+  <!-- ==========================================
+       GRID VIEW (اصلاح شده)
+       ========================================== -->
+  @if (!isLoading() && filteredCategories().length > 0 && viewMode() === 'grid') {
+    <div class="categories-grid">
+      @for (cat of filteredCategories(); track cat._id; let i = $index) {
+        <div
+          class="cat-card"
+          [class.inactive]="!cat.isActive"
+          [class.no-color]="!hasCategoryColor(cat)"
+          [class.expanded]="isExpanded(cat._id)"
+          [style.animation-delay]="i * 60 + 'ms'"
+        >
+          <div class="card-gradient-bar" [style.background]="catGradient(cat, i)"></div>
+
+          <!-- ساختار جدید هدر کارت -->
+          <div class="cat-card-header">
+            <!-- بخش راست: آیکون و اطلاعات متنی -->
+            <div class="cat-header-content">
+              <div class="cat-icon" [style.background]="catGradient(cat, i)">
+                <app-category-icon
+                  [icon]="cat.icon"
+                  [iconType]="cat.iconType"
+                  [customIconUrl]="cat.customIconUrl"
+                  [size]="26"
+                />
+              </div>
+              <!-- Support for local images: use customIconUrl like '/assets/images/categories/programming.webp' -->
+
+<div class="cat-info">
+  <h3>{{ cat.name }}</h3>
+
+  <!-- ✅ دوره و زیردسته در یک خط -->
+  <div class="cat-meta">
+    <span class="meta-item">
+      <mat-icon>school</mat-icon>
+      <span>{{ cat.totalCourses || 0 }} دوره</span>
+    </span>
+
+    @if (cat.children && cat.children.length > 0) {
+      <span class="meta-dot"></span>
+      <span class="meta-item">
+        <mat-icon>account_tree</mat-icon>
+        <span>{{ cat.children.length }} زیردسته</span>
+      </span>
+    }
+
+    @if (!cat.isActive) {
+      <span class="meta-dot"></span>
+      <span class="meta-item inactive-label">
+        <mat-icon>visibility_off</mat-icon>
+        <span>غیرفعال</span>
+      </span>
+    }
+  </div>
+</div>
+            </div>
+
+            <!-- بخش چپ: دکمه‌های عملیات -->
+            <div class="cat-actions">
+              <button
+                class="btn-icon"
+                [class.btn-toggle-on]="cat.isActive"
+                [class.btn-toggle-off]="!cat.isActive"
+                (click)="toggleActive(cat, $event)"
+                [title]="cat.isActive ? 'غیرفعال‌سازی' : 'فعال‌سازی'"
+              >
+                <mat-icon>{{ cat.isActive ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+              </button>
+              <button class="btn-icon btn-edit" (click)="editCategory(cat, $event)" title="ویرایش">
+                <mat-icon>edit</mat-icon>
+              </button>
+              <button class="btn-icon btn-danger" (click)="deleteCategory(cat, $event)" title="حذف">
+                <mat-icon>delete_outline</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <!-- بخش زیردسته‌ها -->
+          <div class="cat-footer">
+            @if (cat.children && cat.children.length > 0) {
+              <div class="sub-section">
+                <button class="sub-toggle" (click)="toggleExpand(cat._id)">
+                  <div class="toggle-text">
+                    <mat-icon class="toggle-icon" [class.rotated]="isExpanded(cat._id)">expand_more</mat-icon>
+                    <span>مشاهده زیردسته‌ها ({{ cat.children.length }})</span>
+                  </div>
+                </button>
+
+                @if (isExpanded(cat._id)) {
+                  <div class="sub-list">
+                    @for (sub of cat.children; track sub._id) {
+                      <div class="sub-item" [class.inactive]="!sub.isActive">
+                        <div class="sub-marker" [style.background]="catGradient(cat, i)"></div>
+                        <app-category-icon
+                          class="sub-icon"
+                          [icon]="sub.icon"
+                          [iconType]="sub.iconType"
+                          [customIconUrl]="sub.customIconUrl"
+                          [size]="18"
+                        />
+                        <!-- Support for local SVG/images: use customIconUrl like '/assets/images/categories/...' -->
+                        <span class="sub-name">{{ sub.name }}</span>
+                        <span class="sub-count">
+                          <mat-icon>school</mat-icon>
+                          {{ sub.totalCourses || 0 }}
+                        </span>
+                        <button
+                          class="sub-delete"
+                          (click)="deleteSubCategory(sub, $event)"
+                          title="حذف زیردسته"
+                        >
+                          <mat-icon>delete_outline</mat-icon>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+            <button class="add-sub-btn" (click)="openCreateDialog(cat)" title="افزودن زیردسته">
+              <mat-icon>add_circle_outline</mat-icon>
+              افزودن زیردسته جدید
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ==========================================
+       LIST VIEW
+       ========================================== -->
+  @if (!isLoading() && filteredCategories().length > 0 && viewMode() === 'list') {
+    <div class="categories-list">
+      @for (cat of filteredCategories(); track cat._id; let i = $index) {
+        <div class="list-item" [class.inactive]="!cat.isActive" [class.no-color]="!hasCategoryColor(cat)">
+          <div class="list-icon" [style.background]="catGradient(cat, i)">
+            <app-category-icon
+              [icon]="cat.icon"
+              [iconType]="cat.iconType"
+              [customIconUrl]="cat.customIconUrl"
+              [size]="26"
+            />
+            <!-- Support for local images in list view -->
+          </div>
+          <div class="list-content">
+            <h3>
+              {{ cat.name }}
+              @if (!cat.isActive) { <span class="inactive-badge">غیرفعال</span> }
+            </h3>
+            <div class="list-meta">
+              <span><mat-icon>school</mat-icon> {{ cat.totalCourses || 0 }} دوره</span>
+              @if (cat.children && cat.children.length > 0) {
+                <span><mat-icon>account_tree</mat-icon> {{ cat.children.length }} زیردسته</span>
+              }
+            </div>
+          </div>
+          <div class="cat-actions">
+            <button class="btn-icon btn-add-sub" (click)="openCreateDialog(cat)" title="افزودن زیردسته">
+              <mat-icon>add_circle_outline</mat-icon>
+            </button>
+            <button class="btn-icon btn-edit" (click)="editCategory(cat, $event)" title="ویرایش">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button class="btn-icon" [class.btn-toggle-on]="cat.isActive" (click)="toggleActive(cat, $event)">
+              <mat-icon>{{ cat.isActive ? 'toggle_on' : 'toggle_off' }}</mat-icon>
+            </button>
+            <button class="btn-icon btn-danger" (click)="deleteCategory(cat, $event)" title="حذف">
+              <mat-icon>delete_outline</mat-icon>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

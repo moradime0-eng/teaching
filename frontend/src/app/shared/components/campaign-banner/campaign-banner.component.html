@@ -1,0 +1,37 @@
+@if (campaignService.hasActiveCampaign()) {
+  <div class="campaign-banner" [class]="themeClass()" [ngStyle]="customStyle()">
+    <div class="banner-content">
+      <!-- Theme Icon -->
+      <mat-icon class="banner-icon" aria-hidden="true">{{ themeIcon() }}</mat-icon>
+
+      <!-- Title & Text -->
+      <!-- ⚠️ FIX: اگر title و bannerText یکسان باشند (معمولاً پیش‌فرض «کمپین جدید»)
+           فقط یکی نمایش داده می‌شود تا متن تکراری نداشته باشیم. -->
+      <div class="banner-text">
+        @if (campaignService.activeCampaign()?.title) {
+          <span class="banner-title">{{ campaignService.activeCampaign()?.title }}</span>
+        }
+        @if (distinctMessage()) {
+          <span class="banner-message">{{ distinctMessage() }}</span>
+        }
+      </div>
+
+      <!-- Countdown Timer -->
+      <div class="banner-countdown" aria-label="زمان باقی‌مانده تا پایان کمپین">
+        <span class="countdown-label">پایان در:</span>
+        <span class="countdown-value">{{ countdown() }}</span>
+      </div>
+
+      <!-- Dismiss Button -->
+      <button
+        type="button"
+        class="banner-dismiss"
+        (click)="dismiss()"
+        aria-label="بستن بنر کمپین"
+        mat-icon-button
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+}

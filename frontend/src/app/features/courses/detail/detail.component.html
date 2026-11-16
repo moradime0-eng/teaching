@@ -1,0 +1,980 @@
+<!-- Scroll progress bar -->
+<div class="scroll-progress" [style.transform]="'scaleX(' + scrollProgress() + ')'"></div>
+
+<div class="course-detail-page noise bg-grid" dir="rtl">
+  <!-- لایه نوری مجزا -->
+  <div class="ambient-layer" aria-hidden="true">
+    <div class="glow g1"></div>
+    <div class="glow g2"></div>
+    <div class="glow g3"></div>
+  </div>
+
+  <div class="content-wrapper">
+    <!-- ================= LOADING SKELETON ================= -->
+    <div class="skeleton-wrap glass" *ngIf="isLoading()">
+      <div class="sk-line w-40 mb-24"></div>
+      <div class="sk-line w-60 h-40 mb-16"></div>
+      <div class="sk-line w-90 mb-8"></div>
+      <div class="sk-line w-80 mb-24"></div>
+      <div class="sk-chips mb-24">
+        <span class="sk-chip"></span><span class="sk-chip"></span><span class="sk-chip"></span>
+      </div>
+      <div class="sk-grid">
+        <div class="sk-panel"></div>
+        <div class="sk-side"></div>
+      </div>
+    </div>
+
+    <!-- ================= ERROR ================= -->
+    <div class="error-state" *ngIf="!isLoading() && hasError()">
+      <div class="error-content glass-strong">
+        <mat-icon>error_outline</mat-icon>
+        <h2>{{ errorMessage() }}</h2>
+        <p>ممکن است این دوره حذف شده باشد یا آدرس وارد شده اشتباه است.</p>
+        <a routerLink="/courses" class="btn-primary">
+          <mat-icon>arrow_forward</mat-icon>
+          بازگشت به لیست دوره‌ها
+        </a>
+      </div>
+    </div>
+
+    <!-- ================= MAIN CONTENT ================= -->
+    <ng-container *ngIf="!isLoading() && !hasError() && course() as data">
+      <!-- Breadcrumb -->
+      <nav class="breadcrumb" [appReveal]="0">
+        <a routerLink="/">خانه</a>
+        <mat-icon>chevron_left</mat-icon>
+        <a routerLink="/courses">دوره‌ها</a>
+        <ng-container *ngIf="data.category">
+          <mat-icon>chevron_left</mat-icon>
+          <a [routerLink]="['/courses/category', data.category.slug]">{{ data.category.name }}</a>
+        </ng-container>
+        <mat-icon>chevron_left</mat-icon>
+        <span>{{ data.title }}</span>
+      </nav>
+
+      <!-- ===================== HERO ===================== -->
+      <section class="hero-section">
+        <div class="hero-grid">
+          <!-- LEFT: Course Info -->
+          <div class="course-info">
+            <div class="chips-row" [appReveal]="0">
+              <span class="chip chip-primary" *ngIf="data.category">
+                <mat-icon>folder</mat-icon>
+                {{ data.category.name }}
+              </span>
+              <span class="chip chip-ghost" *ngIf="data.level">
+                <mat-icon>signal_cellular_alt</mat-icon>
+                {{ getLevelLabel(data.level) }}
+              </span>
+            </div>
+
+            <h1 class="course-title" [appReveal]="90">{{ data.title }}</h1>
+            <p class="course-subtitle" *ngIf="data.subtitle" [appReveal]="180">
+              {{ data.subtitle }}
+            </p>
+
+            <div class="meta-row" [appReveal]="270">
+              <div class="rating-box">
+                <app-rating-stars [rating]="data.averageRating || 0" size="small" [readonly]="true">
+                </app-rating-stars>
+                <span class="rating-number">{{
+                  data.averageRating || 0 | number: '1.1-1' | faNum
+                }}</span>
+                <span class="reviews-count">({{ data.totalReviews || 0 | faNum }} نظر)</span>
+              </div>
+              <div class="meta-item">
+                <mat-icon>people</mat-icon> {{ data.totalStudents | faNum }} دانشجو
+              </div>
+              <div class="meta-item" *ngIf="totalDurationComputed() > 0">
+                <mat-icon>schedule</mat-icon> {{ totalDurationComputed() | duration }}
+              </div>
+              <div class="meta-item" *ngIf="data.updatedAt">
+                <mat-icon>history</mat-icon> به‌روزرسانی: {{ formatDate(data.updatedAt) | faNum }}
+              </div>
+            </div>
+
+            <!-- Instructor inline card -->
+            <button
+              class="instructor-inline glass"
+              *ngIf="data.instructor"
+              (click)="goToInstructorTab()"
+              [appReveal]="360"
+            >
+              <span class="ring">
+                <img
+                  [src]="getInstructorAvatar()"
+                  [alt]="data.instructor.fullName"
+                  (error)="handleAvatarError($event)"
+                />
+              </span>
+              <span class="info">
+                <span class="name">{{ data.instructor.fullName }}</span>
+                <span class="hl" *ngIf="data.instructor.instructorProfile?.headline as h">{{
+                  h
+                }}</span>
+              </span>
+              <span class="cta">مشاهده رزومه <mat-icon>arrow_back</mat-icon></span>
+            </button>
+
+            <!-- What you learn -->
+            <div class="learn-panel glass" *ngIf="data.learningOutcomes?.length" [appReveal]="450">
+              <div class="lp-head">
+                <span class="ico"><mat-icon>auto_awesome</mat-icon></span>
+                <h3>چه چیزی یاد می‌گیرید؟</h3>
+              </div>
+              <ul>
+                <li *ngFor="let o of data.learningOutcomes.slice(0, 8)">
+                  <mat-icon>check_circle</mat-icon>
+                  <span>{{ o }}</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Prerequisites / پیش‌نیازها -->
+            <div class="prereq-panel glass" *ngIf="data.requirements?.length" [appReveal]="480">
+              <div class="lp-head">
+                <span class="ico"><mat-icon>checklist</mat-icon></span>
+                <h3>پیش‌نیازهای این دوره</h3>
+              </div>
+              <div class="prereq-tags">
+                <ng-container *ngFor="let req of data.requirements">
+                  <!-- اگر دوره مرتبط وجود دارد، لینک مستقیم به صفحه دوره -->
+                  <a
+                    *ngIf="getReqCourse(req, data) as linkedCourse"
+                    class="prereq-tag linked"
+                    [routerLink]="['/course', linkedCourse.slug]"
+                    [title]="'مشاهده دوره: ' + linkedCourse.title"
+                  >
+                    <mat-icon>school</mat-icon>
+                    {{ req }}
+                    <span class="prereq-link-hint">مشاهده دوره</span>
+                  </a>
+                  <!-- اگر دوره مرتبط وجود ندارد، لینک به جستجو -->
+                  <a
+                    *ngIf="!getReqCourse(req, data)"
+                    class="prereq-tag"
+                    [routerLink]="['/courses']"
+                    [queryParams]="{ search: req }"
+                    [title]="'جستجوی دوره‌های مرتبط با ' + req"
+                  >
+                    <mat-icon>local_offer</mat-icon>
+                    {{ req }}
+                  </a>
+                </ng-container>
+              </div>
+              <p class="prereq-hint">
+                <mat-icon>info_outline</mat-icon>
+                روی هر پیش‌نیاز کلیک کنید تا دوره مرتبط را ببینید
+              </p>
+            </div>
+
+            <!-- Share -->
+            <div class="share-row" [appReveal]="540">
+              <span class="lbl">اشتراک‌گذاری:</span>
+              <div class="share-btns">
+                <button (click)="shareOn('telegram')" title="تلگرام">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                    <path
+                      d="M9.036 15.803l-.375 5.29c.539 0 .772-.232 1.052-.51l2.523-2.41 5.23 3.83c.958.528 1.638.25 1.896-.887l3.437-16.107.001-.001c.305-1.41-.508-1.961-1.44-1.615L1.44 9.65c-1.393.54-1.372 1.316-.24 1.667l5.09 1.586L18.06 6.06c.556-.365 1.062-.164.646.201"
+                    />
+                  </svg>
+                </button>
+                <button (click)="shareOn('twitter')" title="X">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                    <path
+                      d="M18.244 2H21.5l-7.5 8.57L23 22h-6.914l-4.63-6.06L5.9 22H2.64l8.02-9.16L1.5 2h7.08l4.18 5.53L18.244 2zm-1.21 18h1.86L7.05 4H5.06l11.974 16z"
+                    />
+                  </svg>
+                </button>
+                <button (click)="shareOn('linkedin')" title="LinkedIn">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                    <path
+                      d="M4.98 3.5C4.98 4.88 3.87 6 2.5 6S0 4.88 0 3.5 1.11 1 2.5 1 4.98 2.12 4.98 3.5zM.5 8h4V24h-4V8zm7.5 0h3.83v2.18h.05c.53-1 1.83-2.18 3.77-2.18C20.4 8 22 10.15 22 13.5V24h-4v-9.3c0-2.22-.04-5.07-3.1-5.07-3.1 0-3.57 2.42-3.57 4.92V24h-4V8z"
+                    />
+                  </svg>
+                </button>
+                <button (click)="copyLink()" title="کپی لینک" [class.copied]="linkCopied()">
+                  <mat-icon *ngIf="!linkCopied()">content_copy</mat-icon>
+                  <mat-icon *ngIf="linkCopied()">check</mat-icon>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT/SIDEBAR: BUY CARD -->
+          <aside class="sticky-sidebar">
+            <div class="buy-card-wrap" [appReveal]="180">
+              <div class="halo"></div>
+              <div class="buy-card glass-strong">
+                <div
+                  class="video-preview"
+                  (click)="hasPromoVideo() && openVideoModal()"
+                  [class.clickable]="hasPromoVideo()"
+                >
+                  <img [src]="data.thumbnail" [alt]="data.title" appImageFallback="course" />
+                  <div class="veil"></div>
+                  <div class="play-overlay" *ngIf="hasPromoVideo()">
+                    <div class="play-btn">
+                      <span class="pulse"></span>
+                      <mat-icon>play_arrow</mat-icon>
+                    </div>
+                    <span class="play-text">تماشای پیش‌نمایش</span>
+                  </div>
+                </div>
+
+                <div class="card-body">
+                  <!-- 🎯 Campaign Banner (کمپین سراسری) -->
+                  <div
+                    class="offer-bar campaign-offer"
+                    *ngIf="showCampaignBanner()"
+                    [ngClass]="'theme-' + (activeCampaign()?.theme || 'fire')"
+                  >
+                    <mat-icon>local_fire_department</mat-icon>
+                    <span>قیمت ویژه کمپین</span>
+                  </div>
+
+                  <!-- 🔥 Countdown Discount Banner -->
+                  <div
+                    class="offer-bar countdown-offer"
+                    *ngIf="isCountdownDiscount() && discountActive() && !campaignApplied()"
+                  >
+                    <mat-icon>local_fire_department</mat-icon>
+                    <span
+                      >🔥 تخفیف ویژه زمان‌دار — {{ countdownDiscountPercent() | faNum }}٪
+                      تخفیف</span
+                    >
+                  </div>
+
+                  <!-- Regular Manual Discount Banner -->
+                  <div
+                    class="offer-bar"
+                    *ngIf="
+                      !isCountdownDiscount() &&
+                      !campaignApplied() &&
+                      data.discountPrice &&
+                      data.discountPercentage
+                    "
+                  >
+                    <mat-icon>local_fire_department</mat-icon>
+                    <span>پیشنهاد ویژه — {{ data.discountPercentage | faNum }}٪ تخفیف</span>
+                  </div>
+
+                  <div class="price-block">
+                    <ng-container *ngIf="data.isFree; else paidPrice">
+                      <div class="free-price">رایگان</div>
+                    </ng-container>
+
+                    <ng-template #paidPrice>
+                      <!-- ⭐ Campaign Discount Price Display (اولویت با کمپین) -->
+                      <ng-container *ngIf="campaignApplied()">
+                        <div class="old-price">{{ displayOldPrice() | toman }}</div>
+                        <div class="current-row">
+                          <span class="current">{{ displayPrice() | toman }}</span>
+                          <span class="off-badge campaign-badge"
+                            >{{ campaignDiscountPercent() | faNum }}٪ تخفیف</span
+                          >
+                        </div>
+                      </ng-container>
+
+                      <!-- ⏱️ Countdown Discount Price Display -->
+                      <ng-container *ngIf="!campaignApplied() && isCountdownDiscount()">
+                        <div class="old-price">{{ countdownOriginalPrice() | toman }}</div>
+                        <div class="current-row">
+                          <span class="current">{{ countdownCurrentPrice() | toman }}</span>
+                          <span class="off-badge"
+                            >{{ countdownDiscountPercent() | faNum }}٪ تخفیف</span
+                          >
+                        </div>
+                        <div class="countdown-timer" *ngIf="countdownActive()">
+                          <div class="countdown-timer-inner">
+                            <mat-icon>timer</mat-icon>
+                            <span class="countdown-label">زمان باقی‌مانده:</span>
+                            <span class="countdown-value">{{ countdownTimer() }}</span>
+                          </div>
+                        </div>
+                        <div class="countdown-expired" *ngIf="countdownExpired()">
+                          <mat-icon>timer_off</mat-icon>
+                          <span>تخفیف به پایان رسید</span>
+                        </div>
+                      </ng-container>
+
+                      <!-- 🎁 Manual Discount Price Display -->
+                      <ng-container
+                        *ngIf="!campaignApplied() && !isCountdownDiscount() && data.discountPrice"
+                      >
+                        <div class="old-price">{{ data.price | toman }}</div>
+                        <div class="current-row">
+                          <span class="current">{{ data.discountPrice | toman }}</span>
+                          <span class="off-badge"
+                            >{{ data.discountPercentage | faNum }}٪ تخفیف</span
+                          >
+                        </div>
+                      </ng-container>
+
+                      <!-- 🏷️ Regular Price -->
+                      <ng-container
+                        *ngIf="!campaignApplied() && !isCountdownDiscount() && !data.discountPrice"
+                      >
+                        <div class="current-row">
+                          <span class="current">{{ displayPrice() | toman }}</span>
+                        </div>
+                      </ng-container>
+                    </ng-template>
+                  </div>
+
+                  <!-- CTA -->
+                  <div class="cta">
+                    <ng-container *ngIf="isFree(); else paidFlow">
+                      <button class="btn-cta btn-success" (click)="goToLearning()">
+                        <mat-icon>play_circle</mat-icon><span>ورود به دوره</span>
+                      </button>
+                    </ng-container>
+                    <ng-template #paidFlow>
+                      <ng-container *ngIf="isEnrolled(); else notEnrolled">
+                        <button class="btn-cta btn-success" (click)="goToLearning()">
+                          <mat-icon>check_circle</mat-icon
+                          ><span>ورود به دوره — شما دانشجو هستید</span>
+                        </button>
+                      </ng-container>
+                      <ng-template #notEnrolled>
+                        <ng-container *ngIf="isInCart(); else buyBtn">
+                          <a routerLink="/cart" class="btn-cta btn-outline-success">
+                            <mat-icon>shopping_bag</mat-icon><span>در سبد شماست — پرداخت</span>
+                          </a>
+                        </ng-container>
+                        <ng-template #buyBtn>
+                          <button
+                            class="btn-cta btn-primary-grad"
+                            (click)="addToCart()"
+                            [disabled]="addingToCart()"
+                          >
+                            <span class="shine"></span>
+                            <ng-container *ngIf="!addingToCart(); else loadingSp">
+                              <mat-icon>shopping_cart</mat-icon><span>افزودن به سبد خرید</span>
+                            </ng-container>
+                            <ng-template #loadingSp>
+                              <span class="spinner sm"></span><span>در حال افزودن...</span>
+                            </ng-template>
+                          </button>
+                        </ng-template>
+                      </ng-template>
+                    </ng-template>
+                  </div>
+
+                  <div class="guarantee" *ngIf="!isFree()">
+                    <mat-icon>verified_user</mat-icon><span>ضمانت ۷ روزه بازگشت وجه</span>
+                  </div>
+
+                  <div class="includes">
+                    <h4>این دوره شامل:</h4>
+                    <ul>
+                      <li *ngIf="totalLecturesComputed() > 0">
+                        <mat-icon>play_lesson</mat-icon> {{ totalLecturesComputed() | faNum }} درس
+                        آموزشی
+                      </li>
+                      <li *ngIf="totalDurationComputed() > 0">
+                        <mat-icon>schedule</mat-icon>
+                        {{ totalDurationComputed() | duration }} محتوای ویدیویی
+                      </li>
+                      <li *ngIf="data.hasLifetimeAccess">
+                        <mat-icon>all_inclusive</mat-icon> دسترسی مادام‌العمر
+                      </li>
+                      <li><mat-icon>devices</mat-icon> مشاهده روی همه دستگاه‌ها</li>
+                      <li *ngIf="freePreviewCount() > 0">
+                        <mat-icon>preview</mat-icon> {{ freePreviewCount() | faNum }} پیش‌نمایش
+                        بدون هزینه
+                      </li>
+                      <li *ngIf="data.hasSupport">
+                        <mat-icon>support_agent</mat-icon> پشتیبانی مدرس
+                      </li>
+                      <li *ngIf="data.hasCertificate">
+                        <mat-icon>workspace_premium</mat-icon> گواهینامه پایان دوره
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ===================== TABS NAVIGATION ===================== -->
+      <div #tabsNav class="tabs-nav glass-strong">
+        <div class="pill" [style.left.px]="pillLeft()" [style.width.px]="pillWidth()"></div>
+        <button
+          class="tab-btn"
+          [class.active]="activeTab() === 'curriculum'"
+          (click)="setActiveTab('curriculum')"
+        >
+          <mat-icon>list</mat-icon><span>سرفصل‌ها</span>
+          <span class="count" *ngIf="totalLecturesComputed() > 0">{{
+            totalLecturesComputed() | faNum
+          }}</span>
+        </button>
+        <button
+          class="tab-btn"
+          [class.active]="activeTab() === 'description'"
+          (click)="setActiveTab('description')"
+        >
+          <mat-icon>description</mat-icon><span>توضیحات</span>
+        </button>
+        <button
+          class="tab-btn"
+          [class.active]="activeTab() === 'instructor'"
+          (click)="setActiveTab('instructor')"
+        >
+          <mat-icon>person</mat-icon><span>مدرس</span>
+        </button>
+        <button
+          class="tab-btn"
+          [class.active]="activeTab() === 'reviews'"
+          (click)="setActiveTab('reviews')"
+        >
+          <mat-icon>star</mat-icon><span>نظرات</span>
+          <span class="count" *ngIf="totalReviewsCount() > 0">{{
+            totalReviewsCount() | faNum
+          }}</span>
+        </button>
+      </div>
+
+      <!-- ===================== TABS CONTENT ===================== -->
+      <div class="tab-content" [attr.data-tab]="activeTab()">
+        <!-- ============ CURRICULUM ============ -->
+        <section class="tab-panel" *ngIf="activeTab() === 'curriculum'">
+          <div class="curriculum-head">
+            <div class="ch-stats">
+              <span
+                ><b>{{ data.sections?.length || 0 | faNum }}</b> فصل</span
+              ><span class="dot">•</span>
+              <span
+                ><b>{{ totalLecturesComputed() | faNum }}</b> درس</span
+              >
+              <span class="dot" *ngIf="totalDurationComputed() > 0">•</span>
+              <span *ngIf="totalDurationComputed() > 0"
+                >مجموعاً <b>{{ totalDurationComputed() | duration }}</b></span
+              >
+              <span class="free-mark" *ngIf="freePreviewCount() > 0">
+                <mat-icon>lock_open</mat-icon> {{ freePreviewCount() | faNum }} پیش‌نمایش رایگان
+              </span>
+            </div>
+            <button
+              class="toggle-all"
+              *ngIf="(data.sections?.length || 0) > 0"
+              (click)="allExpanded() ? collapseAllSections() : expandAllSections()"
+            >
+              <mat-icon>{{ allExpanded() ? 'unfold_less' : 'unfold_more' }}</mat-icon>
+              {{ allExpanded() ? 'بستن همه' : 'باز کردن همه' }}
+            </button>
+          </div>
+
+          <ng-container *ngIf="data.sections?.length; else noCurriculum">
+            <div class="sections">
+              <div
+                class="section-card"
+                *ngFor="let sec of data.sections; let i = index"
+                [class.open]="isSectionExpanded(sec._id)"
+              >
+                <!-- هدر فصل -->
+                <button class="sec-head" (click)="toggleSection(sec._id)">
+                  <span class="t">فصل {{ i + 1 | faNum }}. {{ sec.title }}</span>
+                  <mat-icon class="chev">expand_more</mat-icon>
+                </button>
+
+                <!-- لیست دروس -->
+                <div class="sec-body-grid">
+                  <div class="sec-body">
+                    <div *ngFor="let l of sec.lectures">
+                      <button
+                        class="lecture"
+                        [class.locked]="!canAccessLesson(l)"
+                        [disabled]="!canAccessLesson(l)"
+                        (click)="openLessonPreview(l)"
+                      >
+                        <!-- سمت راست: آیکون نوع فایل + عنوان -->
+                        <div class="lec-right">
+                          <mat-icon class="type-icon">videocam</mat-icon>
+                          <span class="l-title">{{ l.title }}</span>
+                          <span class="badge-free" *ngIf="l.isFreePreview && !isEnrolled()"
+                            >پیش‌نمایش</span
+                          >
+                        </div>
+
+                        <!-- سمت چپ: زمان + آیکون پلی/قفل -->
+                        <div class="lec-left">
+                          <span class="dur" *ngIf="l.duration">{{ l.duration | duration }}</span>
+                          <mat-icon
+                            class="status-icon"
+                            [class.play]="canAccessLesson(l)"
+                            [class.lock]="!canAccessLesson(l)"
+                          >
+                            {{ canAccessLesson(l) ? 'play_arrow' : 'lock_outline' }}
+                          </mat-icon>
+                        </div>
+                      </button>
+
+                      <!-- آیتم‌های محتوای فرعی (در صورت وجود) -->
+                      <div class="content-items-preview" *ngIf="l.contentItems?.length">
+                        <div class="content-item-mini" *ngFor="let item of l.contentItems">
+                          <mat-icon class="ci-icon" [ngClass]="'ci-' + item.type">{{
+                            getContentItemIcon(item.type)
+                          }}</mat-icon>
+                          <span class="ci-title">{{ item.title }}</span>
+                          <span class="ci-type">{{ getContentItemTypeLabel(item.type) }}</span>
+                          <span class="ci-duration" *ngIf="item.videoDuration">{{
+                            item.videoDuration | duration
+                          }}</span>
+                          <span class="ci-duration" *ngIf="item.audioDuration">{{
+                            item.audioDuration | duration
+                          }}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ng-container>
+          <ng-template #noCurriculum>
+            <div class="empty-state glass">
+              <mat-icon>toc</mat-icon>
+              <p>سرفصل‌های دوره به‌زودی اضافه می‌شود</p>
+            </div>
+          </ng-template>
+        </section>
+
+        <!-- ============ DESCRIPTION ============ -->
+        <section class="tab-panel" *ngIf="activeTab() === 'description'">
+          <div class="desc-card glass">
+            <div class="prose" [innerHTML]="data.description | markdown"></div>
+          </div>
+        </section>
+
+        <!-- ============ INSTRUCTOR ============ -->
+        <section class="tab-panel" *ngIf="activeTab() === 'instructor'">
+          <ng-container *ngIf="data.instructor">
+            <div class="ins-card glass">
+              <div class="ins-top">
+                <span class="frame"
+                  ><img
+                    [src]="getInstructorAvatar()"
+                    [alt]="data.instructor.fullName"
+                    (error)="handleAvatarError($event)"
+                /></span>
+                <div class="ins-meta">
+                  <h3>{{ data.instructor.fullName }}</h3>
+                  <p class="hl" *ngIf="data.instructor.instructorProfile?.headline as h">{{ h }}</p>
+                  <div class="stats">
+                    <div class="stat">
+                      <mat-icon>people</mat-icon
+                      ><b>{{ data.instructor.instructorProfile?.totalStudents || 0 | faNum }}</b
+                      ><span>دانشجو</span>
+                    </div>
+                    <div class="stat">
+                      <mat-icon>play_circle</mat-icon
+                      ><b>{{ data.instructor.instructorProfile?.totalCourses || 0 | faNum }}</b
+                      ><span>دوره</span>
+                    </div>
+                    <div class="stat">
+                      <mat-icon>star</mat-icon>
+                      <b>{{
+                        data.instructor.instructorProfile?.averageRating || 0
+                          | number: '1.1-1'
+                          | faNum
+                      }}</b>
+                      <span>میانگین امتیاز</span>
+                    </div>
+                  </div>
+                  <div class="socials" *ngIf="getInstructorSocialLinks() as s">
+                    <a *ngIf="s.linkedin" [href]="s.linkedin" target="_blank" rel="noopener"
+                      ><mat-icon>link</mat-icon></a
+                    >
+                    <a *ngIf="s.twitter" [href]="s.twitter" target="_blank" rel="noopener"
+                      ><mat-icon>alternate_email</mat-icon></a
+                    >
+                    <a *ngIf="s.youtube" [href]="s.youtube" target="_blank" rel="noopener"
+                      ><mat-icon>smart_display</mat-icon></a
+                    >
+                    <a *ngIf="s.instagram" [href]="s.instagram" target="_blank" rel="noopener"
+                      ><mat-icon>camera_alt</mat-icon></a
+                    >
+                    <a *ngIf="s.website" [href]="s.website" target="_blank" rel="noopener"
+                      ><mat-icon>language</mat-icon></a
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="bio-card glass">
+              <div class="bh">
+                <mat-icon>format_quote</mat-icon>
+                <h4>درباره مدرس</h4>
+              </div>
+              <div class="bio-content prose" [innerHTML]="getInstructorBio() | markdown"></div>
+            </div>
+
+            <div class="expert-card glass" *ngIf="getInstructorExpertise().length">
+              <h4>تخصص‌ها</h4>
+              <div class="tags">
+                <span
+                  class="tag"
+                  *ngFor="let e of getInstructorExpertise(); let i = index"
+                  [style.animation-delay.ms]="i * 60"
+                  >{{ e }}</span
+                >
+              </div>
+            </div>
+            <a
+              [routerLink]="['/instructor', data.instructor._id]"
+              class="btn-outline-primary instructor-profile-link"
+            >
+              <mat-icon>person</mat-icon>
+              <span>مشاهده پروفایل کامل مدرس</span>
+              <mat-icon>arrow_back</mat-icon>
+            </a>
+          </ng-container>
+        </section>
+
+        <!-- ============ REVIEWS ============ -->
+        <section class="tab-panel" *ngIf="activeTab() === 'reviews'">
+          <div class="reviews-summary glass">
+            <div class="rating-overview">
+              <div class="big text-gradient-gold">
+                {{ data.averageRating || 0 | number: '1.1-1' | faNum }}
+              </div>
+              <app-rating-stars [rating]="data.averageRating || 0" [readonly]="true">
+              </app-rating-stars>
+              <div class="total">از مجموع {{ data.totalReviews || 0 | faNum }} نظر</div>
+            </div>
+            <div class="divider"></div>
+            <div class="bars">
+              <div class="bar-row" *ngFor="let s of [5, 4, 3, 2, 1]; let i = index">
+                <span class="lbl"><mat-icon>star</mat-icon> {{ s | faNum }} ستاره</span>
+                <div class="bar">
+                  <div
+                    class="fill"
+                    [style.width.%]="getStarPercentage(s)"
+                    [style.animation-delay.ms]="i * 120"
+                  ></div>
+                </div>
+                <span class="cnt">{{ getStarCount(s) | faNum }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- فرم ثبت نظر -->
+          <div class="review-form glass" *ngIf="authService.isAuthenticated()">
+            <h4>
+              <mat-icon>rate_review</mat-icon>
+              {{ canReview() ? 'نظر خود را ثبت کنید' : 'ثبت نظر' }}
+            </h4>
+            <ng-container *ngIf="canReview(); else needEnrollMsg">
+              <div class="star-select">
+                <span
+                  *ngFor="let s of [1, 2, 3, 4, 5]"
+                  class="star"
+                  [class.active]="s <= (reviewHoverRating() || newReviewRating())"
+                  (mouseenter)="setReviewHoverRating(s)"
+                  (mouseleave)="setReviewHoverRating(0)"
+                  (click)="setReviewRating(s)"
+                >
+                  <mat-icon>{{
+                    s <= (reviewHoverRating() || newReviewRating()) ? 'star' : 'star_border'
+                  }}</mat-icon>
+                </span>
+                <span class="star-label" *ngIf="newReviewRating()">
+                  {{ ['', 'خیلی بد', 'بد', 'متوسط', 'خوب', 'عالی'][newReviewRating()] }}
+                </span>
+              </div>
+              <input
+                type="text"
+                class="review-input"
+                placeholder="عنوان نظر (اختیاری)"
+                #reviewTitleInput
+                (input)="newReviewTitle.set(reviewTitleInput.value)"
+                maxlength="100"
+              />
+              <app-rich-text-editor
+                [(ngModel)]="reviewCommentModel"
+                (ngModelChange)="newReviewComment.set($event)"
+                placeholder="متن نظر خود را بنویسید (حداقل ۱۰ کاراکتر) - پشتیبانی از مارک‌داون"
+                minHeight="120px"
+                maxHeight="300px"
+                [compact]="false"
+                [showEmojiButton]="true"
+                [markdownMode]="true"
+                [autoExpand]="true"
+                direction="rtl"
+                class="review-rich-editor"
+              ></app-rich-text-editor>
+              <button
+                class="btn-primary"
+                (click)="submitReview()"
+                [disabled]="
+                  isSubmittingReview() || getReviewCommentLength() < 10 || newReviewRating() < 1
+                "
+              >
+                <span *ngIf="!isSubmittingReview()">ثبت نظر</span>
+                <span class="spinner sm" *ngIf="isSubmittingReview()"></span>
+              </button>
+            </ng-container>
+            <ng-template #needEnrollMsg>
+              <p class="enroll-msg">
+                <mat-icon>lock</mat-icon>
+                برای ثبت نظر باید در این دوره ثبت‌نام کنید.
+              </p>
+            </ng-template>
+          </div>
+          <div class="review-login-msg" *ngIf="!authService.isAuthenticated()">
+            <mat-icon>login</mat-icon>
+            <span>
+              برای ثبت نظر
+              <a [routerLink]="['/auth/login']" [queryParams]="{ returnUrl: router.url }"
+                >وارد شوید</a
+              >.
+            </span>
+          </div>
+
+          <!-- لیست نظرات -->
+          <ng-container *ngIf="reviews().length; else noReviews">
+            <div class="reviews-grid">
+              <article class="review-card glass" *ngFor="let r of reviews()">
+                <div class="rh">
+                  <ng-container *ngIf="getReviewUserAvatar(r) as av; else initialAv">
+                    <img
+                      class="av"
+                      [src]="av"
+                      [alt]="getReviewUserName(r)"
+                      (error)="handleAvatarError($event)"
+                    />
+                  </ng-container>
+                  <ng-template #initialAv>
+                    <span class="av-init" [style.background]="getReviewAvatarGradient(r)">{{
+                      getReviewUserInitial(r)
+                    }}</span>
+                  </ng-template>
+                  <div class="ru">
+                    <h4>
+                      {{ getReviewUserName(r) }} <mat-icon class="verified">verified</mat-icon>
+                    </h4>
+                    <app-rating-stars [rating]="r.rating || 0" size="small" [readonly]="true">
+                    </app-rating-stars>
+                  </div>
+                  <span class="date">{{ formatDate(r.createdAt) | faNum }}</span>
+                </div>
+                <div class="rt prose" [innerHTML]="r.comment | sanitizeHtml"></div>
+              </article>
+            </div>
+            <button
+              class="btn-outline-primary load-more"
+              *ngIf="reviewsPage() < totalReviewsPages() && !isLoadingReviews()"
+              (click)="loadMoreReviews()"
+            >
+              <mat-icon>expand_more</mat-icon>
+              مشاهده نظرات بیشتر
+            </button>
+            <div class="loading-more" *ngIf="isLoadingReviews()">
+              <span class="spinner sm"></span>
+            </div>
+          </ng-container>
+          <ng-template #noReviews>
+            <div class="empty-state glass">
+              <mat-icon>rate_review</mat-icon>
+              <p>هنوز نظری برای این دوره ثبت نشده است</p>
+            </div>
+          </ng-template>
+        </section>
+      </div>
+
+      <!-- ===================== RELATED COURSES ===================== -->
+      <section class="related" *ngIf="relatedCourses().length">
+        <div class="rel-head">
+          <div>
+            <span class="tag-lb">ادامه مسیر یادگیری</span>
+            <h2>دوره‌های مرتبط</h2>
+          </div>
+          <a routerLink="/courses" class="see-all">مشاهده همه <mat-icon>arrow_back</mat-icon></a>
+        </div>
+
+        <div class="rel-grid">
+          <a
+            *ngFor="let c of relatedCourses()"
+            [routerLink]="['/course', c.slug]"
+            class="rel-card glass"
+          >
+            <div class="img">
+              <img [src]="c.thumbnail" [alt]="c.title" appImageFallback="course" />
+              <span class="disc" *ngIf="getCourseDiscountPercent(c) > 0">
+                {{ getCourseDiscountPercent(c) | faNum }}٪
+              </span>
+              <span class="cat glass-strong" *ngIf="c.category">{{ c.category.name }}</span>
+            </div>
+            <div class="body">
+              <h3>{{ c.title }}</h3>
+              <p class="ins" *ngIf="c.instructor">{{ c.instructor.fullName }}</p>
+              <div class="row">
+                <div class="rate">
+                  <app-rating-stars [rating]="c.averageRating || 0" size="small" [readonly]="true">
+                  </app-rating-stars>
+                  <span>({{ c.totalReviews || 0 | faNum }})</span>
+                </div>
+                <div class="stud" *ngIf="c.totalStudents">
+                  <mat-icon>people</mat-icon>{{ c.totalStudents | faNum }}
+                </div>
+              </div>
+              <div class="price">
+                <ng-container *ngIf="c.isFree; else pp">
+                  <span class="free">رایگان</span>
+                </ng-container>
+                <ng-template #pp>
+                  <ng-container *ngIf="getCourseDiscountPercent(c) > 0; else reg">
+                    <span class="old">{{ c.price | toman }}</span>
+                    <span class="cur">{{ getCourseCurrentPrice(c) | toman }}</span>
+                  </ng-container>
+                  <ng-template #reg>
+                    <span class="cur">{{ c.price | toman }}</span>
+                  </ng-template>
+                </ng-template>
+                <span class="arrow"><mat-icon>arrow_back</mat-icon></span>
+              </div>
+            </div>
+          </a>
+        </div>
+      </section>
+    </ng-container>
+  </div>
+
+  <!-- ===================== MODALS ===================== -->
+
+  <!-- Promo Video Modal -->
+  <div class="modal-overlay" *ngIf="showPromoVideoModal()" (click)="closeVideoModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <button class="modal-close" (click)="closeVideoModal()" aria-label="بستن">
+        <mat-icon>close</mat-icon>
+      </button>
+      <div class="video-wrapper">
+        <ng-container *ngIf="getPromoVideoEmbedUrl() as embedUrl; else uploadedPromo">
+          <iframe [src]="embedUrl" allowfullscreen allow="autoplay"></iframe>
+        </ng-container>
+        <ng-template #uploadedPromo>
+          <video
+            *ngIf="isUploadedPromoVideo()"
+            [src]="getPromoVideoUrl()"
+            controls
+            autoplay
+            preload="metadata"
+            playsinline
+            controlsList="nodownload noremoteplayback"
+            (contextmenu)="onVideoContextMenu($event)"
+          >
+            مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
+          </video>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lesson Preview Modal -->
+  <ng-container *ngIf="showLessonModal() && selectedLesson() as lesson">
+    <div class="modal-overlay" (click)="closeLessonModal()">
+      <div class="modal-content lesson-modal" (click)="$event.stopPropagation()">
+        <div class="modal-header glass-strong">
+          <h3><mat-icon>visibility</mat-icon>{{ lesson.title }}</h3>
+          <button class="modal-close static" (click)="closeLessonModal()" aria-label="بستن">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Loading State -->
+          <div *ngIf="isLoadingLessonPreview()" class="preview-loading">
+            <div class="preview-loading-inner">
+              <div class="preview-spinner"></div>
+              <p class="preview-loading-text">در حال آماده‌سازی محتوا...</p>
+              <p class="preview-loading-hint">لطفاً چند لحظه صبر کنید</p>
+            </div>
+          </div>
+
+          <!-- Error State -->
+          <div *ngIf="!isLoadingLessonPreview() && lessonPreviewError()" class="preview-error">
+            <mat-icon class="preview-error-icon">error_outline</mat-icon>
+            <h4>{{ lessonPreviewError() }}</h4>
+            <p>در صورت ادامه مشکل، بعداً دوباره تلاش کنید.</p>
+            <button class="btn-primary" (click)="closeLessonModal()">
+              <mat-icon>close</mat-icon> بستن
+            </button>
+          </div>
+
+          <!-- Content -->
+          <ng-container *ngIf="!isLoadingLessonPreview() && !lessonPreviewError()">
+            <ng-container [ngSwitch]="getLessonFileType(lesson)">
+              <!-- Embed (YouTube/Aparat) -->
+              <ng-container *ngSwitchCase="'embed'">
+                <div class="video-wrapper" *ngIf="getSafeLessonEmbedUrl(lesson) as embedUrl">
+                  <iframe [src]="embedUrl" allowfullscreen allow="autoplay"></iframe>
+                </div>
+              </ng-container>
+
+              <!-- Video -->
+              <ng-container *ngSwitchCase="'video'">
+                <div class="video-wrapper" *ngIf="lessonPreviewVideoUrl() as v">
+                  <app-video-player
+                    [videoUrl]="v"
+                    [title]="lesson.title || ''"
+                    [autoplay]="true"
+                    (urlExpired)="onLessonPreviewUrlExpired()"
+                  ></app-video-player>
+                </div>
+              </ng-container>
+
+              <!-- Image -->
+              <ng-container *ngSwitchCase="'image'">
+                <div class="image-wrapper" *ngIf="lessonPreviewVideoUrl() as img">
+                  <img [src]="img" [alt]="lesson.title" />
+                </div>
+              </ng-container>
+
+              <!-- PDF -->
+              <ng-container *ngSwitchCase="'pdf'">
+                <div class="pdf-wrapper" *ngIf="lessonPreviewVideoUrl() as p">
+                  <iframe [src]="getSafeLessonEmbedUrl(lesson)"></iframe>
+                  <a [href]="p" target="_blank" download class="download-btn">
+                    <mat-icon>download</mat-icon> دانلود PDF
+                  </a>
+                </div>
+              </ng-container>
+
+              <!-- Audio -->
+              <ng-container *ngSwitchCase="'audio'">
+                <div class="audio-wrapper" *ngIf="lessonPreviewVideoUrl() as au">
+                  <mat-icon>graphic_eq</mat-icon>
+                  <audio [src]="au" controls autoplay preload="metadata">
+                    مرورگر شما از پخش صوت پشتیبانی نمی‌کند.
+                  </audio>
+                </div>
+              </ng-container>
+
+              <!-- File (default) -->
+              <ng-container *ngSwitchDefault>
+                <div class="file-wrapper">
+                  <mat-icon>folder_zip</mat-icon>
+                  <h4>فایل ضمیمه</h4>
+                  <a
+                    *ngIf="lessonPreviewVideoUrl() as f"
+                    [href]="f"
+                    target="_blank"
+                    download
+                    class="download-btn"
+                  >
+                    <mat-icon>cloud_download</mat-icon> دانلود فایل
+                  </a>
+                </div>
+              </ng-container>
+            </ng-container>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+  </ng-container>
+</div>

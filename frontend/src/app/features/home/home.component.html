@@ -1,0 +1,314 @@
+<div class="home" dir="rtl">
+
+  <!-- ═══════════════════ ۱. HERO (Simple & Centered) ═══════════════════ -->
+  <section class="hero">
+    <div class="hero__inner">
+      <div class="hero__copy">
+        @if (isLoadingCategories()) {
+          <span class="badge badge--skeleton"><span class="sh shim"></span></span>
+        } @else {
+          <span class="badge">
+            <mat-icon>verified</mat-icon>
+            @if (totalCourses() > 0) {
+              <span>{{ compact(totalCourses()) }} دوره‌ی پروژه‌محور در {{ faNum(categoryCount()) }} مسیر تخصصی</span>
+            } @else {
+              <span>آموزش پروژه‌محور با دسترسی مادام‌العمر</span>
+            }
+            <i class="badge__live"><i></i></i>
+          </span>
+        }
+
+        <h1 class="hero__title">
+          مسیر حرفه‌ای شدنت را با
+          <span class="grad">مهارت‌های نو</span>
+          آغاز کن
+          <mat-icon class="hero__rocket">rocket_launch</mat-icon>
+        </h1>
+
+        <p class="hero__sub">
+          دسترسی آنی و مادام‌العمر به صدها دوره‌ی پروژه‌محور در حوزه‌های برنامه‌نویسی، هوش مصنوعی،
+          UI/UX و مدیریت مالی — زیر نظر برترین اساتید کشور.
+        </p>
+
+        <!-- Search -->
+        <form class="search" (submit)="onSearchSubmit()">
+          <mat-icon class="search__icon">search</mat-icon>
+          <input
+            type="text"
+            name="heroSearch"
+            [(ngModel)]="searchQuery"
+            placeholder="چه مهارتی را دوست داری امروز یاد بگیری؟"
+            autocomplete="off"
+            aria-label="جست‌وجوی دوره"
+          />
+          <button type="submit" class="search__btn">
+            <span>جست‌وجو</span>
+            <mat-icon>arrow_back</mat-icon>
+          </button>
+        </form>
+
+        <!-- Real stats -->
+        <div class="stats">
+          @if (isLoadingCategories()) {
+            @for (_ of [1, 2, 3]; track _) {
+              <div class="stat stat--sk">
+                <span class="sh shim"></span><span class="sh shim sm"></span>
+              </div>
+            }
+          } @else {
+            <div class="stat">
+              <mat-icon>menu_book</mat-icon>
+              <b>{{ compact(totalCourses()) }}+</b>
+              <span>دوره‌ی تخصصی</span>
+            </div>
+            <i class="stats__sep"></i>
+            <div class="stat">
+              <mat-icon>route</mat-icon>
+              <b>{{ faNum(categoryCount()) }}</b>
+              <span>مسیر یادگیری</span>
+            </div>
+            <i class="stats__sep"></i>
+            <div class="stat">
+              <mat-icon>auto_awesome</mat-icon>
+              <b>{{ faNum(featuredCount()) }}</b>
+              <span>دوره‌ی منتخب</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════ Container for remaining sections ═══════════════════ -->
+  <div class="page-container">
+
+    <!-- ═══════════════════ ۲. Features strip ═══════════════════ -->
+    <section class="features">
+      @if (isLoadingFeatures()) {
+        @for (_ of [1, 2, 3, 4]; track $index) {
+          <div class="feature feature--sk">
+            <span class="sh" style="width:48px;height:48px;border-radius:14px"></span>
+            <div style="flex:1">
+              <span class="sh" style="width:80%;height:16px;border-radius:6px;margin-bottom:8px"></span>
+              <span class="sh" style="width:60%;height:12px;border-radius:6px"></span>
+            </div>
+          </div>
+        }
+      } @else {
+        @for (f of features(); track f.title) {
+          <div
+            class="feature"
+            [ngClass]="'accent-' + f.accent"
+            tiltGlare [intensity]="10" [lift]="6" [scale]="1.025"
+          >
+            <span class="feature__icon">
+              <mat-icon>{{ f.icon }}</mat-icon>
+            </span>
+            <div class="feature__body">
+              <h3>{{ f.title }}</h3>
+              <p>{{ f.description }}</p>
+            </div>
+          </div>
+        }
+      }
+    </section>
+
+    <!-- ═══════════════════ ۳. Categories (Icon-Centered Premium Design) ═══════════════════ -->
+    <section class="block">
+      <header class="block__head">
+        <div>
+          <span class="eyebrow"><mat-icon>category</mat-icon> دسته‌بندی‌ها</span>
+          <h2 class="block__title">مسیر تخصصی موردعلاقه‌ات را انتخاب کن</h2>
+        </div>
+        <a routerLink="/courses" class="link-all">
+          <span>مشاهده‌ی همه‌ی موضوعات</span>
+          <mat-icon>arrow_back</mat-icon>
+        </a>
+      </header>
+
+      @if (isLoadingCategories()) {
+        <div class="cats-grid">
+          @for (i of skeletonCategories; track $index) {
+            <div class="cat-card-sk">
+              <span class="sh cat-card-sk__icon"></span>
+              <span class="sh shim cat-card-sk__title"></span>
+              <span class="sh shim sm cat-card-sk__pill"></span>
+            </div>
+          }
+        </div>
+      } @else if (categories().length > 0) {
+        <div class="cats-grid">
+          @for (cat of categories(); track cat._id) {
+            <a
+              class="cat-card"
+              [class.no-color]="!hasCategoryColor(cat)"
+              [routerLink]="['/courses']"
+              [queryParams]="{ category: cat._id }"
+              [style.--cat-color]="categoryColor(cat)"
+              [style.--cat-tint]="categoryTint(cat)"
+              [attr.aria-label]="cat.name + ' — ' + faNum(categoryCourses(cat)) + ' دوره'"
+            >
+              <!-- ─── نوار رنگی بالای کارت (فقط وقتی رنگ انتخاب شده) ─── -->
+              @if (hasCategoryColor(cat)) {
+                <span class="cat-card__bar" [style.background]="categoryGradient(cat)"></span>
+              }
+
+              <!-- ─── آیکون در دایره‌ی رنگی ملایم ─── -->
+              <div class="cat-card__icon-wrap">
+                <div class="cat-card__icon-inner">
+                  <app-category-icon
+                    [icon]="cat.icon"
+                    [iconType]="cat.iconType"
+                    [customIconUrl]="cat.customIconUrl"
+                    [size]="58"
+                    [alt]="cat.name"
+                    fallback="auto_awesome"
+                  />
+                </div>
+              </div>
+
+              <!-- ─── نام دسته ─── -->
+              <h3 class="cat-card__name">{{ cat.name }}</h3>
+
+              <!-- ─── Pill شمارش دوره‌ها ─── -->
+              <span class="cat-card__pill">
+                <mat-icon>play_arrow</mat-icon>
+                <span>{{ faNum(categoryCourses(cat)) }} دوره</span>
+              </span>
+            </a>
+          }
+        </div>
+      } @else {
+        <div class="empty">
+          <div class="empty__icon-wrap">
+            <mat-icon>category</mat-icon>
+          </div>
+          <h3>دسته‌بندی‌ای یافت نشد</h3>
+          <p>در حال حاضر هیچ دسته‌بندی برای نمایش وجود ندارد.</p>
+        </div>
+      }
+    </section>
+
+    <!-- ═══════════════════ ۴. Featured courses ═══════════════════ -->
+    <section class="block">
+      <header class="block__head">
+        <div>
+          <span class="eyebrow eyebrow--amber"><mat-icon>local_fire_department</mat-icon> پیشنهاد ویژه</span>
+          <h2 class="block__title">{{ featuredSectionTitle() }}</h2>
+        </div>
+        <a
+          routerLink="/courses"
+          class="link-all"
+          [queryParams]="activeFeaturedCategory() ? { category: activeFeaturedCategory() } : {}"
+        >
+          <span>مشاهده‌ی آرشیو کامل</span>
+          <mat-icon>arrow_back</mat-icon>
+        </a>
+      </header>
+
+      <app-category-filter-bar
+        [categories]="categories()"
+        [activeId]="activeFeaturedCategory()"
+        [loading]="isLoadingCategories()"
+        ariaLabel="فیلتر دسته‌بندی دوره‌های پیشنهاد ویژه"
+        (categoryChange)="onFeaturedCategoryChange($event)"
+      ></app-category-filter-bar>
+
+      @if (isLoadingCourses()) {
+        <div class="courses">
+          @for (i of skeletonCourses; track $index) {
+            <article class="course-sk">
+              <div class="sh course-sk__thumb"></div>
+              <div class="course-sk__body">
+                <span class="sh shim"></span>
+                <span class="sh shim md"></span>
+                <span class="sh shim sm"></span>
+              </div>
+            </article>
+          }
+        </div>
+      } @else if (featuredError()) {
+        <div class="empty empty--error">
+          <div class="empty__icon-wrap">
+            <mat-icon>cloud_off</mat-icon>
+          </div>
+          <h3>دریافت دوره‌ها ناموفق بود</h3>
+          <p>اتصال اینترنت خود را بررسی کنید و دوباره تلاش کنید.</p>
+          <button type="button" class="retry-btn" (click)="retryFeatured()">
+            <mat-icon>refresh</mat-icon>
+            <span>تلاش مجدد</span>
+          </button>
+        </div>
+      } @else if (featuredCourses().length > 0) {
+        <div class="courses">
+          @for (course of featuredCourses(); track course._id || course.id || course.slug; let i = $index) {
+            <div class="course-in">
+              <app-course-card [course]="course" [index]="i"></app-course-card>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty">
+          <div class="empty__icon-wrap">
+            <mat-icon>library_books</mat-icon>
+          </div>
+          <h3>
+            @if (activeFeaturedCategoryName()) {
+              در دسته‌ی «{{ activeFeaturedCategoryName() }}» دوره‌ای یافت نشد
+            } @else {
+              دوره‌ای برای نمایش وجود ندارد
+            }
+          </h3>
+          <p>دسته‌بندی دیگری را انتخاب کنید یا همه دوره‌ها را ببینید.</p>
+          @if (activeFeaturedCategory()) {
+            <button type="button" class="retry-btn" (click)="onFeaturedCategoryChange(null)">
+              <mat-icon>apps</mat-icon>
+              <span>مشاهده‌ی همه دوره‌ها</span>
+            </button>
+          }
+        </div>
+      }
+    </section>
+
+    <!-- ═══════════════════ Components ═══════════════════ -->
+    <app-top-instructors></app-top-instructors>
+    <app-learning-paths-showcase></app-learning-paths-showcase>
+    <app-new-releases></app-new-releases>
+    <app-free-courses></app-free-courses>
+    <app-testimonials></app-testimonials>
+    <app-live-stats></app-live-stats>
+    <app-certificate-cta></app-certificate-cta>
+
+    <!-- ═══════════════════ ۵. Instructor CTA ═══════════════════ -->
+    <section class="cta">
+      <div class="cta__banner">
+        <div class="cta__mesh"></div>
+        <div class="cta__ring" aria-hidden="true"></div>
+        <div class="cta__content">
+          <span class="eyebrow eyebrow--glass"><mat-icon>co_present</mat-icon> تدریس در همایون</span>
+          <h2>دانش و تجربه‌ات را به درآمد پایدار تبدیل کن</h2>
+          <p>به جمع صدها مدرس برتر بپیوند و به ده‌ها هزار دانشجو در سراسر کشور آموزش بده.</p>
+          <div class="cta__actions">
+            <a
+              [routerLink]="['/auth/register']"
+              [queryParams]="{ role: 'instructor' }"
+              class="cta__btn cta__btn--primary"
+            >
+              <span>شروع تدریس و کسب درآمد</span>
+              <mat-icon>arrow_back</mat-icon>
+            </a>
+            <a routerLink="/support" class="cta__btn cta__btn--ghost">شرایط و قوانین</a>
+          </div>
+        </div>
+        <div class="cta__art" aria-hidden="true">
+          <span class="cta__orb"></span>
+          <mat-icon>co_present</mat-icon>
+        </div>
+      </div>
+    </section>
+
+    <app-faq></app-faq>
+    <app-newsletter></app-newsletter>
+
+  </div> <!-- /page-container -->
+</div>

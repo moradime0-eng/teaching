@@ -1,0 +1,630 @@
+<div class="category-dialog" dir="rtl">
+  <!-- ==========================================
+       HEADER
+       ========================================== -->
+  <div class="dialog-header">
+    <div class="header-decoration"></div>
+
+    <div class="header-content">
+      <div class="header-icon-wrap">
+        <div
+          class="header-icon"
+          [style.background]="hasColor ? 'linear-gradient(135deg, ' + form.color + ', ' + form.color + 'cc)' : 'var(--primary-color, #6366f1)'"
+        >
+          <mat-icon>{{
+            isEditMode ? 'edit' : isChildMode ? 'create_new_folder' : 'add_circle'
+          }}</mat-icon>
+        </div>
+      </div>
+
+      <div class="header-text">
+        <h2>
+          @if (isEditMode) {
+            ویرایش دسته‌بندی
+          } @else if (isChildMode) {
+            زیردستهٔ جدید
+          } @else {
+            دسته‌بندی جدید
+          }
+        </h2>
+        <p>
+          @if (isEditMode) {
+            تغییرات مورد نظر خود را اعمال کنید
+          } @else if (isChildMode) {
+            یک زیردسته برای «{{ selectedParentName }}» بسازید
+          } @else {
+            یک دسته‌بندی جدید برای محتوای پلتفرم بسازید
+          }
+        </p>
+      </div>
+
+      <button class="close-btn" (click)="close()" type="button" title="بستن">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       TABS NAVIGATION
+       ========================================== -->
+  <div class="dialog-tabs">
+    <button class="tab-btn" [class.active]="activeTab() === 'basic'" (click)="setTab('basic')">
+      <mat-icon>info</mat-icon>
+      <span>اطلاعات پایه</span>
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'appearance'"
+      (click)="setTab('appearance')"
+    >
+      <mat-icon>palette</mat-icon>
+      <span>ظاهر</span>
+    </button>
+    <button
+      class="tab-btn"
+      [class.active]="activeTab() === 'advanced'"
+      (click)="setTab('advanced')"
+    >
+      <mat-icon>tune</mat-icon>
+      <span>پیشرفته</span>
+    </button>
+  </div>
+
+  <!-- ==========================================
+       DIALOG CONTENT
+       ========================================== -->
+  <mat-dialog-content class="dialog-content">
+    <!-- 📌 باکس والد — در حالت ساخت زیردسته، مسیر ایجاد را شفاف می‌کند -->
+    @if (isChildMode) {
+      <div class="parent-banner">
+        <div class="parent-banner-icon">
+          <mat-icon>account_tree</mat-icon>
+        </div>
+        <div class="parent-banner-text">
+          <span class="parent-banner-label">زیردستهٔ دستهٔ</span>
+          <strong class="parent-banner-name">{{ selectedParentName }}</strong>
+        </div>
+        <mat-icon class="parent-banner-lock" matTooltip="والد قفل شده است">lock</mat-icon>
+      </div>
+    }
+
+    <!-- Live Preview Card -->
+    <div class="preview-section">
+      <div class="preview-label">
+        <mat-icon>visibility</mat-icon>
+        پیش‌نمایش زنده
+      </div>
+      <div class="preview-card">
+        <div
+          class="pv-icon"
+          [class.no-color]="!hasColor"
+          [style.background]="hasColor ? 'linear-gradient(135deg, ' + form.color + ', ' + form.color + 'cc)' : 'transparent'"
+        >
+          <app-category-icon
+            [icon]="form.icon"
+            [iconType]="form.iconType"
+            [customIconUrl]="form.customIconUrl"
+            [size]="26"
+          />
+          <!-- Support for local images: use customIconUrl like '/assets/images/categories/...' -->
+        </div>
+        <div class="pv-content">
+          <strong>{{ form.name || 'نام دسته‌بندی' }}</strong>
+          <div class="pv-meta">
+            <span class="pv-badge" [class.active]="form.isActive" [class.inactive]="!form.isActive">
+              <mat-icon>{{ form.isActive ? 'check_circle' : 'pause_circle' }}</mat-icon>
+              {{ form.isActive ? 'فعال' : 'غیرفعال' }}
+            </span>
+            <span class="pv-type">
+              <mat-icon>{{ form.parent ? 'subdirectory_arrow_right' : 'folder' }}</mat-icon>
+              {{ form.parent ? 'زیردستهٔ ' + selectedParentName : 'دسته اصلی' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         TAB: BASIC INFO
+         ========================================== -->
+    @if (activeTab() === 'basic') {
+      <div class="tab-panel">
+        <!-- Name -->
+        <div class="form-group">
+          <label>
+            <mat-icon>badge</mat-icon>
+            نام دسته‌بندی
+            <span class="required">*</span>
+          </label>
+          <div class="input-wrap">
+            <input
+              type="text"
+              [(ngModel)]="form.name"
+              (input)="onNameChange()"
+              placeholder="مثال: هوش مصنوعی و یادگیری ماشین"
+              maxlength="60"
+              required
+            />
+            <span class="char-count" [class.warning]="form.name.length > 50">
+              {{ form.name.length }}/60
+            </span>
+          </div>
+          <span class="hint">
+            <mat-icon>lightbulb</mat-icon>
+            نام واضح و توصیفی انتخاب کنید
+          </span>
+        </div>
+
+        <!-- Slug -->
+        <div class="form-group">
+          <label>
+            <mat-icon>link</mat-icon>
+            اسلاگ (Slug)
+          </label>
+          <div class="input-wrap slug-input">
+            <span class="url-prefix">/category/</span>
+            <input
+              type="text"
+              [(ngModel)]="form.slug"
+              placeholder="ai-machine-learning"
+              dir="ltr"
+            />
+            <button
+              type="button"
+              class="slug-regen-btn"
+              (click)="regenerateSlug()"
+              title="بازتولید اسلاگ از نام"
+            >
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </div>
+          <span class="hint">
+            <mat-icon>auto_awesome</mat-icon>
+            @if (isEditMode) {
+              تغییر اسلاگ، لینک قبلی را می‌شکند؛ لینک قدیمی به‌صورت خودکار ریدایرکت می‌شود
+            } @else {
+              به صورت خودکار از نام تولید می‌شود و قابل ویرایش است
+            }
+          </span>
+        </div>
+
+        <!-- Description -->
+        <div class="form-group">
+          <label>
+            <mat-icon>description</mat-icon>
+            توضیحات
+          </label>
+          <textarea
+            [(ngModel)]="form.description"
+            rows="3"
+            maxlength="200"
+            placeholder="توضیح کوتاهی درباره این دسته‌بندی بنویسید..."
+          ></textarea>
+          <span class="char-count">{{ (form.description || '').length }}/200</span>
+        </div>
+
+        <!-- Parent -->
+        <div class="form-group">
+          <label>
+            <mat-icon>account_tree</mat-icon>
+            دسته والد
+            @if (isParentLocked) {
+              <span class="locked-tag">
+                <mat-icon>lock</mat-icon>
+                قفل‌شده
+              </span>
+            }
+          </label>
+          @if (isParentLocked) {
+            <!-- 🆕 در حالت ساخت زیردسته، والد قفل است — فقط نمایش -->
+            <div class="select-wrap is-locked">
+              <mat-icon class="select-icon">subdirectory_arrow_right</mat-icon>
+              <div class="locked-parent-value">└─ {{ selectedParentName }}</div>
+              <mat-icon class="chevron">lock</mat-icon>
+            </div>
+            <span class="hint">
+              <mat-icon>info</mat-icon>
+              این زیردسته همیشه زیر «{{ selectedParentName }}» ساخته می‌شود
+            </span>
+          } @else {
+            <div class="select-wrap">
+              <mat-icon class="select-icon">{{
+                form.parent ? 'subdirectory_arrow_right' : 'folder'
+              }}</mat-icon>
+              <select [(ngModel)]="form.parent">
+                <option [ngValue]="null">🗂️ دسته اصلی (سطح بالا)</option>
+                @for (cat of parentCategories; track cat._id) {
+                  <option [ngValue]="cat._id">└─ {{ cat.name }}</option>
+                }
+              </select>
+              <mat-icon class="chevron">expand_more</mat-icon>
+            </div>
+            <span class="hint">
+              <mat-icon>info</mat-icon>
+              برای ساخت زیردسته، کافی است در کارت دسته روی «افزودن زیردسته جدید» کلیک کنید
+            </span>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ==========================================
+         TAB: APPEARANCE
+         ========================================== -->
+    @if (activeTab() === 'appearance') {
+      <div class="tab-panel">
+        <!-- Icon Picker -->
+        <div class="form-group">
+          <label>
+            <mat-icon>emoji_symbols</mat-icon>
+            آیکون دسته‌بندی
+          </label>
+
+          <button class="icon-selector" (click)="toggleIconPicker()" type="button">
+            <div
+              class="selected-icon"
+              [class.no-color]="!hasColor"
+              [style.background]="
+                hasColor ? 'linear-gradient(135deg, ' + form.color + ', ' + form.color + 'cc)' : 'transparent'
+              "
+            >
+              <app-category-icon
+                [icon]="form.icon"
+                [iconType]="form.iconType"
+                [customIconUrl]="form.customIconUrl"
+                [size]="26"
+              />
+            </div>
+            <div class="selector-info">
+              <strong>
+                @switch (form.iconType) {
+                  @case ('emoji') { شکلک: {{ form.icon }} }
+                  @case ('custom') { آیکون سفارشی }
+                  @default { {{ form.icon || 'انتخاب کنید' }} }
+                }
+              </strong>
+              <span>روی این باکس کلیک کنید تا آیکون انتخاب کنید</span>
+            </div>
+            <mat-icon class="picker-arrow" [class.rotated]="showIconPicker()">expand_more</mat-icon>
+          </button>
+
+          @if (showIconPicker()) {
+            <div class="icon-picker-panel">
+              <!-- تب‌های نوع آیکون -->
+              <div class="icon-type-tabs">
+                <button
+                  type="button"
+                  class="icon-type-tab"
+                  [class.active]="activeIconTab() === 'material'"
+                  (click)="setIconTab('material')"
+                >
+                  <mat-icon>interests</mat-icon>
+                  <span>آیکون‌ها</span>
+                </button>
+                <button
+                  type="button"
+                  class="icon-type-tab"
+                  [class.active]="activeIconTab() === 'emoji'"
+                  (click)="setIconTab('emoji')"
+                >
+                  <mat-icon>mood</mat-icon>
+                  <span>شکلک</span>
+                </button>
+                <button
+                  type="button"
+                  class="icon-type-tab"
+                  [class.active]="activeIconTab() === 'upload'"
+                  (click)="setIconTab('upload')"
+                >
+                  <mat-icon>upload</mat-icon>
+                  <span>آپلود</span>
+                </button>
+              </div>
+
+              <!-- تب: آیکون‌ها (Material / Google — یک مجموعهٔ یکسان) -->
+              @if (activeIconTab() === 'material') {
+                <div class="icon-search">
+                  <mat-icon>search</mat-icon>
+                  <input
+                    type="text"
+                    [ngModel]="iconSearchQuery()"
+                    (ngModelChange)="iconSearchQuery.set($event)"
+                    placeholder="جستجوی آیکون..."
+                  />
+                </div>
+
+                <div class="icon-grid">
+                  @for (icon of filteredIcons(); track icon.value) {
+                    <button
+                      type="button"
+                      class="icon-cell"
+                      [class.selected]="
+                        (form.iconType === 'material' || form.iconType === 'google') &&
+                        form.icon === icon.value
+                      "
+                      (click)="selectIcon(icon.value)"
+                      [title]="icon.label"
+                    >
+                      <mat-icon>{{ icon.value }}</mat-icon>
+                      <span>{{ icon.label }}</span>
+                    </button>
+                  }
+                  @if (filteredIcons().length === 0) {
+                    <div class="no-icons">
+                      <mat-icon>search_off</mat-icon>
+                      <span>آیکونی یافت نشد</span>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- تب: شکلک‌ها -->
+              @if (activeIconTab() === 'emoji') {
+                <div class="icon-search">
+                  <mat-icon>search</mat-icon>
+                  <input
+                    type="text"
+                    [ngModel]="iconSearchQuery()"
+                    (ngModelChange)="iconSearchQuery.set($event)"
+                    placeholder="جستجوی شکلک..."
+                  />
+                </div>
+
+                <div class="emoji-grid">
+                  @for (emoji of filteredEmojis(); track emoji.value) {
+                    <button
+                      type="button"
+                      class="emoji-cell"
+                      [class.selected]="form.iconType === 'emoji' && form.icon === emoji.value"
+                      (click)="selectEmoji(emoji.value)"
+                      [title]="emoji.label"
+                    >
+                      {{ emoji.value }}
+                    </button>
+                  }
+                  @if (filteredEmojis().length === 0) {
+                    <div class="no-icons">
+                      <mat-icon>search_off</mat-icon>
+                      <span>شکلکی یافت نشد</span>
+                    </div>
+                  }
+                </div>
+              }
+
+              <!-- تب: آپلود / URL سفارشی -->
+              @if (activeIconTab() === 'upload') {
+                <div class="upload-panel">
+                  <!-- پیش‌نمایش آیکون سفارشی فعلی -->
+                  @if (form.customIconUrl) {
+                    <div class="custom-preview">
+                      <div class="custom-preview__img">
+                        <img [src]="form.customIconUrl" alt="آیکون سفارشی" />
+                      </div>
+                      <div class="custom-preview__info">
+                        <strong>آیکون سفارشی فعال است</strong>
+                        <span>این تصویر در همه‌جای پروژه نمایش داده می‌شود</span>
+                      </div>
+                      <button
+                        type="button"
+                        class="custom-preview__remove"
+                        (click)="clearCustomIcon()"
+                        title="حذف آیکون سفارشی"
+                      >
+                        <mat-icon>delete_outline</mat-icon>
+                      </button>
+                    </div>
+                  }
+
+                  <!-- آپلود فایل -->
+                  <label class="upload-dropzone" [class.is-loading]="isUploadingIcon()">
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/gif,image/webp"
+                      (change)="onIconFileSelected($event)"
+                      hidden
+                    />
+                    @if (isUploadingIcon()) {
+                      <mat-icon class="spin">progress_activity</mat-icon>
+                      <strong>در حال آپلود...</strong>
+                    } @else {
+                      <mat-icon>cloud_upload</mat-icon>
+                      <strong>آپلود تصویر آیکون</strong>
+                      <span>PNG، JPG، GIF یا WebP — حداکثر ۲ مگابایت</span>
+                    }
+                  </label>
+
+                  <!-- یا وارد کردن URL -->
+                  <div class="url-divider"><span>یا آدرس تصویر را وارد کنید</span></div>
+                  <div class="url-input-row">
+                    <input
+                      type="url"
+                      dir="ltr"
+                      [ngModel]="customIconUrlInput()"
+                      (ngModelChange)="customIconUrlInput.set($event)"
+                      placeholder="https://example.com/icon.png"
+                      (keyup.enter)="applyCustomIconUrl()"
+                    />
+                    <button type="button" class="url-apply-btn" (click)="applyCustomIconUrl()">
+                      <mat-icon>check</mat-icon>
+                      اعمال
+                    </button>
+                  </div>
+                  <span class="hint">
+                    <mat-icon>info</mat-icon>
+                    می‌توانید آدرس تصویر را از گوگل کپی کرده و اینجا بچسبانید
+                  </span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <!-- Color Palette (اختیاری) -->
+        <div class="form-group">
+          <label>
+            <mat-icon>palette</mat-icon>
+            رنگ دسته‌بندی
+            <span class="optional-tag">اختیاری</span>
+          </label>
+
+          <div class="color-palette">
+            <!-- 🚫 گزینهٔ «بدون رنگ» -->
+            <button
+              type="button"
+              class="color-swatch no-color-swatch"
+              [class.selected]="!hasColor"
+              (click)="clearColor()"
+              title="بدون رنگ"
+            >
+              @if (!hasColor) {
+                <mat-icon>check</mat-icon>
+              } @else {
+                <mat-icon>block</mat-icon>
+              }
+            </button>
+
+            @for (c of colorOptions; track c.hex) {
+              <button
+                type="button"
+                class="color-swatch"
+                [class.selected]="form.color === c.hex"
+                [style.background]="'linear-gradient(135deg, ' + c.hex + ', ' + c.hex + 'cc)'"
+                (click)="selectColor(c.hex)"
+                [title]="c.name"
+              >
+                @if (form.color === c.hex) {
+                  <mat-icon>check</mat-icon>
+                }
+              </button>
+            }
+          </div>
+
+          <div class="custom-color-row">
+            <label class="color-input-label">
+              <mat-icon>colorize</mat-icon>
+              <span>یا رنگ سفارشی:</span>
+              <input type="color" [ngModel]="form.color || '#8b5cf6'" (ngModelChange)="selectColor($event)" class="custom-color" />
+              <span class="color-hex">{{ hasColor ? form.color : 'بدون رنگ' }}</span>
+            </label>
+            @if (hasColor) {
+              <button type="button" class="clear-color-btn" (click)="clearColor()">
+                <mat-icon>close</mat-icon>
+                حذف رنگ
+              </button>
+            }
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- ==========================================
+         TAB: ADVANCED
+         ========================================== -->
+    @if (activeTab() === 'advanced') {
+      <div class="tab-panel">
+        <!-- Order -->
+        <div class="form-group">
+          <label>
+            <mat-icon>sort</mat-icon>
+            ترتیب نمایش
+          </label>
+          <div class="number-input">
+            <button
+              type="button"
+              class="num-btn"
+              (click)="form.order = form.order > 0 ? form.order - 1 : 0"
+            >
+              <mat-icon>remove</mat-icon>
+            </button>
+            <input type="number" [(ngModel)]="form.order" min="0" />
+            <button type="button" class="num-btn" (click)="form.order = form.order + 1">
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
+          <span class="hint">
+            <mat-icon>info</mat-icon>
+            عدد کوچک‌تر = نمایش زودتر (اعداد از ۰ شروع می‌شوند)
+          </span>
+        </div>
+
+        <!-- Active Toggle -->
+        <div class="form-group">
+          <label>
+            <mat-icon>toggle_on</mat-icon>
+            وضعیت انتشار
+          </label>
+          <div class="switch-card" [class.active]="form.isActive">
+            <label class="switch-wrap">
+              <input type="checkbox" [(ngModel)]="form.isActive" />
+              <div class="switch">
+                <div class="switch-thumb"></div>
+              </div>
+              <div class="switch-info">
+                <strong>{{
+                  form.isActive ? 'دسته‌بندی فعال است' : 'دسته‌بندی غیرفعال است'
+                }}</strong>
+                <small>
+                  {{
+                    form.isActive
+                      ? 'کاربران می‌توانند این دسته را ببینند'
+                      : 'این دسته برای کاربران قابل مشاهده نیست'
+                  }}
+                </small>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <!-- Danger Zone (Edit Mode Only) -->
+        @if (isEditMode) {
+          <div class="danger-zone">
+            <div class="danger-header">
+              <mat-icon>warning</mat-icon>
+              <span>ناحیه خطرناک</span>
+            </div>
+            <div class="danger-content">
+              <div>
+                <strong>حذف دسته‌بندی</strong>
+                <p>این عملیات غیرقابل بازگشت است</p>
+              </div>
+              <button type="button" class="btn-danger" (click)="close()">
+                <mat-icon>delete_outline</mat-icon>
+                بستن و مدیریت
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </mat-dialog-content>
+
+  <!-- ==========================================
+       DIALOG FOOTER
+       ========================================== -->
+  <div class="dialog-footer">
+    <button type="button" class="btn-cancel" (click)="close()" [disabled]="isSaving()">
+      <mat-icon>close</mat-icon>
+      انصراف
+    </button>
+    <button type="button" class="btn-save" (click)="save()" [disabled]="!isFormValid || isSaving()">
+      @if (!isSaving()) {
+        <span class="btn-icon-wrap">
+          <mat-icon>{{ isEditMode ? 'save' : 'check' }}</mat-icon>
+        </span>
+        <span>
+          @if (isEditMode) {
+            ذخیره تغییرات
+          } @else if (isChildMode) {
+            ایجاد زیردسته
+          } @else {
+            ایجاد دسته‌بندی
+          }
+        </span>
+        <span class="btn-shine"></span>
+      } @else {
+        <div class="spinner"></div>
+        <span>در حال ذخیره...</span>
+      }
+    </button>
+  </div>
+</div>

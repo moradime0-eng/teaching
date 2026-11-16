@@ -1,0 +1,518 @@
+/* ═══════════════════════════════════════════════════════════════
+   🛤️ Learning Paths Showcase — بدون تداخل
+   تکنیک: Defensive padding-left روی بدنه برای تضمین عدم تداخل متن و دکمه
+   ═══════════════════════════════════════════════════════════════ */
+@use '../empty-state' as es;
+
+.lp-showcase {
+  display: block;
+  padding: 3.5rem 0 1rem;
+}
+
+/* ── Section Header ──────────────────────────────────────────── */
+.block__head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.head__text {
+  display: flex;
+  flex-direction: column;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 99px;
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.12), rgba(52, 211, 153, 0.12));
+  border: 1px solid rgba(124, 58, 237, 0.2);
+  color: #7c3aed;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  margin-bottom: 0.85rem;
+  width: fit-content;
+
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+  }
+}
+
+.block__title {
+  margin: 0;
+  font-size: clamp(1.35rem, 2.5vw, 1.75rem);
+  font-weight: 800;
+  line-height: 1.5;
+  color: var(--text, #171233);
+  letter-spacing: -0.01em;
+}
+
+.block__sub {
+  margin: 0.4rem 0 0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.8;
+  color: var(--text-2, #64748b);
+}
+
+.link-all {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1rem;
+  border-radius: 12px;
+  color: var(--brand, #7c3aed);
+  background: color-mix(in srgb, var(--brand, #7c3aed) 8%, transparent);
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.25s ease;
+
+  mat-icon {
+    font-size: 17px;
+    width: 17px;
+    height: 17px;
+    transition: transform 0.25s ease;
+  }
+
+  &:hover {
+    background: color-mix(in srgb, var(--brand, #7c3aed) 15%, transparent);
+    mat-icon {
+      transform: translateX(-4px);
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--brand, #7c3aed);
+    outline-offset: 2px;
+  }
+}
+
+/* ── Scroll Container ────────────────────────────────────────── */
+.lp-grid {
+  display: flex;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  gap: 20px;
+  padding: 10px 4px 20px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ── Card — مدرن ── */
+.lp-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  scroll-snap-align: start;
+  width: 300px;
+  min-width: 300px;
+  background: var(--card, #ffffff);
+  border: 1px solid var(--border, rgba(23, 14, 60, 0.08));
+  border-radius: 20px;
+  overflow: hidden;
+  text-decoration: none;
+  color: var(--text, #171233);
+  transition:
+    box-shadow 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.35s ease;
+  will-change: transform;
+
+  &:hover,
+  &:focus-visible {
+    box-shadow:
+      0 20px 40px -12px rgba(124, 58, 237, 0.18),
+      0 8px 16px -8px rgba(0, 0, 0, 0.08);
+    border-color: rgba(124, 58, 237, 0.3);
+    outline: none;
+
+    .lp-card__img {
+      transform: scale(1.08);
+    }
+
+    .lp-card__emoji {
+      transform: scale(1.1) rotate(-5deg);
+    }
+
+    .lp-card__arrow {
+      opacity: 1;
+      transform: translateY(-50%) translateX(0);
+    }
+
+    .lp-card__cover::after {
+      opacity: 1;
+    }
+  }
+}
+
+/* ── Cover ── */
+.lp-card__cover {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.15), transparent 50%),
+      radial-gradient(circle at 70% 70%, rgba(255, 255, 255, 0.1), transparent 50%);
+    pointer-events: none;
+  }
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      rgba(0, 0, 0, 0.1) 70%,
+      rgba(0, 0, 0, 0.2) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+  }
+}
+
+.lp-card__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.lp-card__emoji-wrap {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 24px;
+  border: 1.5px solid rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  z-index: 2;
+}
+
+.lp-card__emoji {
+  font-size: 3rem;
+  line-height: 1;
+  display: inline-block;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  transition: transform 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+/* ── Glass stats overlay ── */
+.lp-card__glass {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.4rem 0.75rem;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 99px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.lp-card__stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1f2937;
+
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+    color: #7c3aed;
+  }
+}
+
+/* ── Body — عنوان و توضیح ── */
+.lp-card__body {
+  display: flex;
+  flex-direction: column;
+  /* ✅ کلید حل تداخل: padding-left را زیاد کردیم (68px) تا متن‌ها هرگز با دکمه سمت چپ برخورد نکنند */
+  padding: 18px 20px 22px 68px;
+  flex: 1;
+}
+
+.lp-card__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text, #171233);
+  line-height: 1.65;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  letter-spacing: -0.005em;
+  min-height: 2.6em;
+}
+
+.lp-card__desc {
+  margin: 8px 0 0;
+  font-size: 0.85rem;
+  color: var(--text-2, #6b7280);
+  line-height: 1.75;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.6em;
+}
+
+/* ── Arrow دکمه شناور ── */
+.lp-card__arrow {
+  position: absolute;
+  /* ✅ تراز وسط عمودی نسبت به بخش متنی کارت در سمت چپ */
+  top: calc(180px + (100% - 180px) / 2);
+  left: 18px;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  background: var(--brand, #7c3aed);
+  color: white;
+  border-radius: 50%;
+  opacity: 0;
+  /* ✅ شروع انیمیشن با تراز وسط عمودی */
+  transform: translateY(-50%) translateX(10px);
+  transition:
+    opacity 0.28s ease,
+    transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 6px 16px rgba(124, 58, 237, 0.35);
+  z-index: 4;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+/* ── Skeleton ── */
+.lp-card--sk {
+  pointer-events: none;
+
+  .lp-card__cover {
+    background: var(--card-2, #f3f4f6);
+  }
+
+  .lp-card__body {
+    gap: 10px;
+  }
+
+  .sh-title {
+    width: 85%;
+    height: 16px;
+    border-radius: 6px;
+  }
+
+  .sh-desc {
+    width: 100%;
+    height: 12px;
+    border-radius: 6px;
+  }
+
+  .sh-stat {
+    width: 40%;
+    height: 12px;
+    border-radius: 6px;
+    margin-top: 6px;
+  }
+}
+
+.sh {
+  position: relative;
+  overflow: hidden;
+  background: var(--card-2, #f3f4f6);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.7),
+      transparent
+    );
+    animation: lp-shimmer 1.5s linear infinite;
+  }
+}
+
+@keyframes lp-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* ── Empty State ── */
+.empty {
+  @include es.empty-state;
+}
+
+/* ── Dark Theme ── */
+:host-context(.dark-theme),
+:host-context(.dark-mode),
+:host-context(.dark),
+:host-context([data-theme='dark']) {
+  .lp-card {
+    box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.5);
+
+    &:hover,
+    &:focus-visible {
+      box-shadow:
+        0 20px 40px -12px rgba(124, 58, 237, 0.35),
+        0 8px 16px -8px rgba(0, 0, 0, 0.4);
+      border-color: rgba(124, 58, 237, 0.5);
+    }
+  }
+
+  .lp-card__glass {
+    background: rgba(31, 41, 55, 0.95);
+    border-color: rgba(255, 255, 255, 0.1);
+
+    .lp-card__stat {
+      color: #f9fafb;
+    }
+  }
+
+  .sh {
+    background: var(--card-2, #374151);
+
+    &::after {
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.08),
+        transparent
+      );
+    }
+  }
+
+  .empty .empty__icon-wrap {
+    background: linear-gradient(135deg, rgba(167, 139, 250, 0.16), rgba(52, 211, 153, 0.14));
+
+    mat-icon {
+      color: var(--brand, #a78bfa);
+    }
+  }
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .lp-card {
+    width: 270px;
+    min-width: 270px;
+  }
+
+  .lp-card__cover {
+    height: 160px;
+  }
+
+  .lp-card__emoji-wrap {
+    width: 80px;
+    height: 80px;
+  }
+
+  .lp-card__emoji {
+    font-size: 2.6rem;
+  }
+
+  .lp-card__arrow {
+    top: calc(160px + (100% - 160px) / 2);
+  }
+}
+
+@media (max-width: 640px) {
+  .lp-showcase {
+    padding: 2.5rem 0 1rem;
+  }
+
+  .block__head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    margin-bottom: 1.5rem;
+  }
+
+  .block__title {
+    font-size: 1.25rem;
+  }
+
+  .lp-card {
+    width: 78vw;
+    min-width: 78vw;
+    max-width: 320px;
+  }
+
+  .lp-card__cover {
+    height: 170px;
+  }
+
+  .lp-card__arrow {
+    top: calc(170px + (100% - 170px) / 2);
+  }
+}
+
+/* ── Reduced Motion ── */
+@media (prefers-reduced-motion: reduce) {
+  .lp-card,
+  .lp-card:hover,
+  .lp-card__img,
+  .lp-card__emoji,
+  .lp-card__arrow {
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .sh::after {
+    animation: none !important;
+  }
+
+  .link-all,
+  .link-all:hover {
+    transition: none !important;
+
+    mat-icon {
+      transform: none !important;
+    }
+  }
+}

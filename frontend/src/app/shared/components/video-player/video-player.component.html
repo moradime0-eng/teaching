@@ -1,0 +1,191 @@
+<div
+  class="video-container"
+  [class.fullscreen]="isFullscreen"
+  [class.hide-controls]="!showControls && isPlaying"
+  (mousemove)="onMouseMove()"
+  (mouseleave)="isPlaying ? (showControls = false) : null"
+  (contextmenu)="onContextMenu($event)"
+>
+<video
+  *ngIf="videoUrl && !videoError()"
+  #videoElement
+  [src]="videoUrl"
+  [poster]="poster"
+  playsinline
+  preload="metadata"
+  controlsList="nodownload noremoteplayback"
+  (click)="togglePlay()"
+  (error)="onVideoError($event)"
+  (contextmenu)="onContextMenu($event)"
+></video>
+
+  <!-- Placeholder when no video source -->
+  <div *ngIf="!videoUrl && !videoError()" class="no-video-placeholder">
+    <mat-icon>play_circle</mat-icon>
+    <span>ویدیویی بارگذاری نشده است</span>
+  </div>
+
+  <!-- Video Error Overlay -->
+  <div *ngIf="videoError()" class="no-video-placeholder error-state">
+    <mat-icon color="warn">error_outline</mat-icon>
+    <span>{{ errorMessage() || 'خطا در بارگذاری ویدیو' }}</span>
+    <button type="button" class="retry-btn" (click)="retryLoad()">تلاش مجدد</button>
+  </div>
+
+  <!-- Top Scrim / Course Title Bar -->
+  @if (title && !videoError()) {
+    <div class="top-scrim">
+      <h3 class="video-title">{{ title }}</h3>
+    </div>
+  }
+
+  <!-- Animated Center Action Feedback Ripple -->
+  @if (feedbackIcon()) {
+    <div class="center-feedback-overlay">
+      <div class="feedback-badge">
+        <mat-icon>{{ feedbackIcon() }}</mat-icon>
+      </div>
+    </div>
+  }
+
+  <!-- Buffering Spinner -->
+  @if (isBuffering && !videoError()) {
+    <div class="buffering-overlay">
+      <div class="buffering-spinner"></div>
+      <span>در حال دریافت...</span>
+    </div>
+  }
+
+  <!-- Big Play Button Overlay (when paused initially) -->
+  @if (!isPlaying && !isBuffering && currentTime === 0 && videoUrl && !videoError()) {
+    <button type="button" class="big-play-btn" (click)="togglePlay()" aria-label="پخش ویدیو">
+      <mat-icon>play_arrow</mat-icon>
+    </button>
+  }
+
+  <!-- Modern Controls Bar (Always Standard LTR Timeline) -->
+  <div class="controls-overlay" (click)="$event.stopPropagation()" dir="ltr" *ngIf="videoUrl && !videoError()">
+    <!-- 1. Interactive Scrub Bar -->
+    <div
+      #progressBar
+      class="scrub-bar-container"
+      (click)="onProgressClick($event)"
+      (mousemove)="onProgressMouseMove($event)"
+      (mouseleave)="onProgressMouseLeave()"
+    >
+      <!-- Hover Time Tooltip -->
+      @if (isHoveringProgress) {
+        <div class="hover-time-tooltip" [style.left.%]="hoverPositionPercent">
+          {{ hoverTime | duration }}
+        </div>
+      }
+
+      <div class="scrub-track">
+        <!-- Buffer Loaded Progress -->
+        <div class="buffered-fill" [style.width.%]="bufferedPercent"></div>
+        <!-- Current Played Progress -->
+        <div class="played-fill" [style.width.%]="progressPercent"></div>
+        <!-- Scrubber Handle -->
+        <div class="scrubber-handle" [style.left.%]="progressPercent"></div>
+      </div>
+    </div>
+
+    <!-- 2. Bottom Actions Row -->
+    <div class="controls-row">
+      <!-- Left Controls (Playback & Audio) -->
+      <div class="controls-group left">
+        <!-- Play / Pause Button -->
+        <button
+          type="button"
+          class="ctrl-btn"
+          (click)="togglePlay()"
+          [title]="isPlaying ? 'توقف (Space)' : 'پخش (Space)'"
+        >
+          <mat-icon>{{ isPlaying ? 'pause' : 'play_arrow' }}</mat-icon>
+        </button>
+
+        <!-- Skip Backward 10s -->
+        <button type="button" class="ctrl-btn" (click)="skip(-10)" title="۱۰ ثانیه قبل (←)">
+          <mat-icon>replay_10</mat-icon>
+        </button>
+
+        <!-- Skip Forward 10s -->
+        <button type="button" class="ctrl-btn" (click)="skip(10)" title="۱۰ ثانیه بعد (→)">
+          <mat-icon>forward_10</mat-icon>
+        </button>
+
+        <!-- Volume Container with Expandable Slider -->
+        <div class="volume-control-group">
+          <button type="button" class="ctrl-btn" (click)="toggleMute()" title="صدا (M)">
+            <mat-icon>{{ volumeIcon }}</mat-icon>
+          </button>
+          <input
+            type="range"
+            class="volume-slider"
+            min="0"
+            max="1"
+            step="0.05"
+            [value]="isMuted ? 0 : volume"
+            (input)="setVolume(+slider.value)"
+            #slider
+            aria-label="تنظیم صدا"
+          />
+        </div>
+
+        <!-- Timestamp (Elapsed / Total) -->
+        <div class="timestamp">
+          <span class="current">{{ currentTime | duration }}</span>
+          <span class="separator">/</span>
+          <span class="total">{{ duration | duration }}</span>
+        </div>
+      </div>
+
+      <!-- Right Controls (Speed, PiP, Fullscreen) -->
+      <div class="controls-group right">
+        <!-- Playback Speed Menu -->
+        <button
+          type="button"
+          class="ctrl-btn speed-btn"
+          [matMenuTriggerFor]="speedMenu"
+          title="سرعت پخش"
+        >
+          <span>{{ playbackRate === 1 ? '1.0x' : playbackRate + 'x' }}</span>
+        </button>
+
+        <mat-menu #speedMenu="matMenu" class="player-menu-panel" yPosition="above">
+          <div class="menu-title">سرعت پخش ویدیو</div>
+          @for (speed of speeds; track speed) {
+            <button
+              mat-menu-item
+              (click)="setSpeed(speed)"
+              [class.is-active]="playbackRate === speed"
+            >
+              <mat-icon *ngIf="playbackRate === speed" class="check-icon">check</mat-icon>
+              <span>{{ speed === 1 ? 'عادی (1.0x)' : speed + 'x' }}</span>
+            </button>
+          }
+        </mat-menu>
+
+        <!-- Picture-in-Picture -->
+        <button
+          type="button"
+          class="ctrl-btn"
+          (click)="togglePictureInPicture()"
+          title="تصویر در تصویر"
+        >
+          <mat-icon>picture_in_picture_alt</mat-icon>
+        </button>
+
+        <!-- Fullscreen -->
+        <button
+          type="button"
+          class="ctrl-btn"
+          (click)="toggleFullscreen()"
+          [title]="isFullscreen ? 'خروج از تمام‌صفحه (F)' : 'تمام‌صفحه (F)'"
+        >
+          <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

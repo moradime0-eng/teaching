@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450">
+  <defs>
+    <linearGradient id="g4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c0c1d"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+  </defs>
+  <rect width="800" height="450" fill="url(#g4)"/>
+  <line x1="100" y1="100" x2="700" y2="100" stroke="#00f5ff" stroke-width="2" opacity="0.6"/>
+  <line x1="100" y1="200" x2="700" y2="200" stroke="#ff00ff" stroke-width="2" opacity="0.5"/>
+  <line x1="100" y1="300" x2="700" y2="300" stroke="#00ff88" stroke-width="2" opacity="0.4"/>
+  <line x1="100" y1="400" x2="700" y2="400" stroke="#ffcc00" stroke-width="2" opacity="0.3"/>
+  <circle cx="200" cy="150" r="50" fill="none" stroke="#ff00ff" stroke-width="3" opacity="0.5"/>
+  <circle cx="600" cy="300" r="70" fill="none" stroke="#00f5ff" stroke-width="3" opacity="0.4"/>
+  <text x="400" y="225" text-anchor="middle" font-family="Arial, sans-serif" font-size="42" fill="#fff" font-weight="bold" text-shadow="0 0 20px #00f5ff">Neon</text>
+</svg>

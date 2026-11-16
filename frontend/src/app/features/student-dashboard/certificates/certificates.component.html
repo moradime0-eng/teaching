@@ -1,0 +1,24 @@
+<div class="certificates-page container mx-auto px-6 py-8" dir="rtl">
+  <h1 class="text-2xl font-black mb-6">گواهینامه‌های من 🏆</h1>
+
+  <div *ngIf="certificates().length === 0" class="text-center py-16 border border-dashed rounded-xl">
+    <mat-icon class="text-slate-300 text-6xl">workspace_premium</mat-icon>
+    <p class="text-slate-400 font-bold mt-4">شما هنوز هیچ گواهینامه‌ای دریافت نکرده‌اید.</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6" *ngIf="certificates().length > 0">
+    <div *ngFor="let cert of certificates()" class="cert-card p-6 border rounded-xl bg-white flex gap-4 items-center">
+      <div class="cert-icon p-4 bg-yellow-50 rounded-lg text-yellow-600">
+        <mat-icon class="text-4xl">workspace_premium</mat-icon>
+      </div>
+      <div class="flex-1">
+        <h3 class="font-bold text-slate-800 text-lg">{{ cert.courseName }}</h3>
+        <p class="text-sm text-slate-400 mt-1">شماره سریال: <span class="font-mono text-slate-500">{{ cert.certificateNumber }}</span></p>
+        <p class="text-xs text-slate-400 mt-2">تاریخ صدور: {{ cert.issuedAt | jalaliDate }}</p>
+      </div>
+      <a [href]="cert.pdfUrl" target="_blank" class="download-link p-2 border rounded-lg hover:bg-slate-50 text-slate-600 transition">
+        <mat-icon>download</mat-icon>
+      </a>
+    </div>
+  </div>
+</div>

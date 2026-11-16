@@ -1,0 +1,67 @@
+<div
+  class="tag-list"
+  [class.clickable]="clickable()"
+  [class]="'size-' + size() + ' variant-' + variant()"
+>
+  <!-- تگ‌های اصلی و قابل نمایش -->
+  @for (tag of visibleTags(); track tag; let i = $index) {
+    <span
+      class="tag-chip"
+      [style.--tag-index]="i"
+      [style.animation-delay]="i * 60 + 'ms'"
+      (click)="clickable() && navigateToTag(tag)"
+      (mousedown)="clickable() && setPressed(tag, true)"
+      (mouseup)="setPressed(tag, false)"
+      (mouseleave)="setPressed(tag, false)"
+      tabindex="0"
+      (keydown.enter)="clickable() && navigateToTag(tag)"
+      (keydown.space)="$event.preventDefault(); clickable() && navigateToTag(tag)"
+      role="button"
+      [attr.aria-label]="'فیلتر بر اساس ' + tag"
+      [class.pressed]="pressedTag() === tag"
+    >
+      <span class="tag-dot"></span>
+      <span class="tag-text">{{ tag }}</span>
+      @if (clickable()) {
+        <mat-icon class="tag-arrow">arrow_left</mat-icon>
+      }
+    </span>
+  }
+
+  <!-- دکمه نمایش تگ‌های بیشتر (+N) با تولتیپ تعاملی -->
+  @if (hiddenCount() > 0) {
+    <span
+      class="tag-chip tag-more"
+      [class.expanded]="showHidden()"
+      (click)="toggleHidden()"
+      (mouseenter)="showHidden.set(true)"
+      (mouseleave)="showHidden.set(false)"
+      tabindex="0"
+      role="button"
+      [attr.aria-label]="hiddenCount() + ' تگ دیگر'"
+    >
+      <span class="more-count">+{{ hiddenCount() }}</span>
+      <mat-icon class="more-icon">expand_more</mat-icon>
+
+      <!-- پاپ‌اور شیک تولتیپ لیست تگ‌های مخفی -->
+      @if (showHidden()) {
+        <span class="hidden-tooltip">
+          <span class="tooltip-arrow"></span>
+          <span class="tooltip-content">
+            @for (ht of hiddenTags(); track ht) {
+              <span class="tooltip-tag">{{ ht }}</span>
+            }
+          </span>
+        </span>
+      }
+    </span>
+  }
+
+  <!-- وضعیت خالی بودن تگ‌ها -->
+  @if (tags().length === 0) {
+    <span class="tag-empty">
+      <mat-icon>label_off</mat-icon>
+      بدون تگ
+    </span>
+  }
+</div>

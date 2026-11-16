@@ -1,0 +1,43 @@
+<div class="toast-stack-container" dir="rtl" aria-live="polite">
+  @for (toast of toasts(); track toast.id) {
+    <div
+      class="toast-item"
+      [ngClass]="toast.type"
+      [attr.role]="toast.type === 'error' ? 'alert' : 'status'"
+      (mouseenter)="toastService.pause(toast.id)"
+      (mouseleave)="toastService.resume(toast.id)"
+    >
+      <!-- Semantic Icon Badge -->
+      <div class="toast-icon-badge">
+        <mat-icon>{{ getIcon(toast.type) }}</mat-icon>
+      </div>
+
+      <!-- Toast Content -->
+      <div class="toast-body">
+        @if (toast.title) {
+          <h4 class="toast-title">{{ toast.title }}</h4>
+        }
+        <p class="toast-message">{{ toast.message }}</p>
+
+        @if (toast.action) {
+          <button type="button" class="toast-action-btn" (click)="onActionClick(toast)">
+            {{ toast.action.label }}
+          </button>
+        }
+      </div>
+
+      <!-- Dismiss Close Button -->
+      <button
+        type="button"
+        class="toast-close-btn"
+        (click)="toastService.remove(toast.id)"
+        aria-label="بستن اعلان"
+      >
+        <mat-icon>close</mat-icon>
+      </button>
+
+      <!-- Animated Countdown Bar -->
+      <div class="toast-progress-bar" [style.animation-duration.ms]="toast.duration"></div>
+    </div>
+  }
+</div>

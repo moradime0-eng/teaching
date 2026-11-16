@@ -1,0 +1,994 @@
+// ================================================================
+// QUICK TICKET DIALOG - Professional Support Form
+// ================================================================
+
+$primary: #6366f1;
+$primary-light: #818cf8;
+$primary-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+$primary-soft: rgba(99, 102, 241, 0.08);
+
+$success: #22c55e;
+$warning: #f59e0b;
+$danger: #ef4444;
+$info: #3b82f6;
+
+$cat-blue: #3b82f6;
+$cat-green: #22c55e;
+$cat-purple: #8b5cf6;
+$cat-amber: #f59e0b;
+$cat-slate: #64748b;
+
+$pri-slate: #64748b;
+$pri-blue: #3b82f6;
+$pri-amber: #f59e0b;
+$pri-red: #ef4444;
+
+$text-primary: var(--text-primary, #0f172a);
+$text-secondary: var(--text-secondary, #64748b);
+$text-muted: var(--text-muted, #94a3b8);
+$text-inverse: #ffffff;
+
+$bg-card: var(--bg-surface, #ffffff);
+$bg-subtle: var(--bg-secondary, #f8fafc);
+$bg-input: var(--bg-tertiary, #f1f5f9);
+$border-color: var(--border-color, #e2e8f0);
+$border-hover: var(--border-hover, #cbd5e1);
+
+$radius-sm: 8px;
+$radius-md: 12px;
+$radius-lg: 16px;
+$radius-xl: 25px;
+$radius-full: 9999px;
+
+$shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+$shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
+$shadow-lg: 0 15px 35px -8px rgba(0, 0, 0, 0.15);
+
+$transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+$transition-fast: 0.15s ease;
+
+.quick-ticket-dialog {
+  display: flex;
+  flex-direction: column;
+  min-width: 520px;
+  max-width: 100%;
+  max-height: 90vh;
+  background: $bg-card;
+  font-family: inherit;
+  color: $text-primary;
+  border-radius: $radius-xl;
+  overflow: hidden;
+  animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+::ng-deep .quick-ticket-dialog-panel {
+  .mat-mdc-dialog-container,
+  .mdc-dialog__surface {
+    border-radius: $radius-xl !important;
+    overflow: hidden !important;
+  }
+
+  .mat-mdc-dialog-surface {
+    border-radius: $radius-xl !important;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// ================================================================
+// DIALOG HEADER
+// ================================================================
+.dialog-header {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 1.5rem 1.5rem 1rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #ffffff 100%);
+  border-bottom: 1px solid $border-color;
+  gap: 1rem;
+}
+
+.header-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.header-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: $radius-md;
+  background: $primary-gradient;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $text-inverse;
+  box-shadow: 0 8px 20px -5px rgba(139, 92, 246, 0.4);
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.header-text {
+  h2 {
+    font-size: 1.15rem;
+    font-weight: 800;
+    margin: 0 0 3px;
+    color: $text-primary;
+    letter-spacing: -0.01em;
+  }
+
+  p {
+    font-size: 0.8rem;
+    color: $text-secondary;
+    margin: 0;
+    line-height: 1.4;
+  }
+}
+
+.close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: $radius-sm;
+  background: rgba(0, 0, 0, 0.04);
+  color: $text-secondary;
+  cursor: pointer;
+  transition: all $transition-fast;
+  flex-shrink: 0;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover {
+    background: $danger;
+    color: $text-inverse;
+    transform: rotate(90deg);
+  }
+}
+
+// ================================================================
+// CONTEXT BANNER
+// ================================================================
+.context-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 1rem 1.5rem 0;
+  padding: 1rem;
+  border-radius: $radius-md;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.05));
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-right: 3px solid $primary;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.08));
+  }
+
+  .context-icon {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    flex: 0 0 36px;
+    border-radius: 10px;
+    background: rgba(99, 102, 241, 0.14);
+    color: $primary;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  .context-content {
+    flex: 1;
+    min-width: 0;
+
+    .context-label {
+      display: block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: $primary;
+      margin-bottom: 6px;
+    }
+
+    .context-details {
+      max-height: 0;
+      overflow: hidden;
+      transition:
+        max-height 0.3s ease,
+        opacity 0.2s ease;
+      opacity: 0;
+
+      &.visible {
+        max-height: 120px;
+        opacity: 1;
+      }
+    }
+
+    .context-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: $text-secondary;
+      margin-top: 4px;
+
+      mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+        color: $text-muted;
+        flex-shrink: 0;
+      }
+
+      span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  .context-chevron {
+    color: $text-muted;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    transition: transform $transition-fast;
+
+    &.rotated {
+      transform: rotate(180deg);
+    }
+  }
+}
+
+// ================================================================
+// DIALOG BODY
+// ================================================================
+.dialog-body {
+  flex: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  max-height: 65vh;
+  scrollbar-width: thin;
+  scrollbar-color: $border-hover transparent;
+
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: $border-hover;
+    border-radius: 3px;
+  }
+}
+
+.form-section {
+  margin-bottom: 1.5rem;
+
+  &:last-of-type {
+    margin-bottom: 1rem;
+  }
+}
+
+.section-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: $text-primary;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: $primary;
+  }
+
+  .required {
+    color: $danger;
+    font-size: 1rem;
+  }
+}
+
+// ================================================================
+// CATEGORY GRID
+// ================================================================
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.category-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px;
+  border: 2px solid $border-color;
+  border-radius: $radius-md;
+  background: $bg-card;
+  cursor: pointer;
+  transition: all $transition-fast;
+  text-align: right;
+  position: relative;
+  font-family: inherit;
+
+  &:hover:not(.selected) {
+    border-color: $primary-light;
+    background: $primary-soft;
+  }
+
+  &.selected {
+    border-color: currentColor;
+    background: rgba(0, 0, 0, 0.02);
+    box-shadow: 0 4px 12px -4px currentColor;
+
+    .cat-check {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  // ✅ FIX: background inherits category color, icon is white inside
+  .cat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: $radius-sm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: currentColor; // inherits from .cat-blue, .cat-green, etc.
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: $text-inverse; // ✅ white icon on colored background
+    }
+  }
+
+  .cat-text {
+    flex: 1;
+    min-width: 0;
+    text-align: right;
+
+    .cat-label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: $text-primary;
+      margin-bottom: 2px;
+    }
+
+    .cat-desc {
+      font-size: 0.68rem;
+      color: $text-muted;
+      line-height: 1.3;
+    }
+  }
+
+  // ✅ FIX: same pattern — colored bg, white checkmark
+  .cat-check {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: currentColor; // inherits category color
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all $transition-fast;
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+      color: $text-inverse; // ✅ white check on colored circle
+    }
+  }
+}
+
+// Category color variants — set color on the card so currentColor flows down
+.cat-blue {
+  color: $cat-blue;
+}
+.cat-green {
+  color: $cat-green;
+}
+.cat-purple {
+  color: $cat-purple;
+}
+.cat-amber {
+  color: $cat-amber;
+}
+.cat-slate {
+  color: $cat-slate;
+}
+
+// ================================================================
+// INPUT WRAPPER
+// ================================================================
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icon {
+  position: absolute;
+  right: 14px;
+  color: $primary;
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.form-input {
+  width: 100%;
+  padding: 12px 44px 12px 16px;
+  border-radius: $radius-md;
+  border: 1.5px solid $border-color;
+  background: $bg-card;
+  font-family: inherit;
+  font-size: 0.9rem;
+  color: $text-primary;
+  outline: none;
+  box-sizing: border-box;
+  transition: all $transition-fast;
+  direction: rtl;
+
+  &::placeholder {
+    color: $text-muted;
+  }
+
+  &:focus {
+    border-color: $primary;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+  }
+
+  &.error {
+    border-color: $danger;
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.1);
+  }
+}
+
+.char-count {
+  position: absolute;
+  left: 12px;
+  font-size: 0.7rem;
+  color: $text-muted;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 2;
+
+  &.warning {
+    color: $warning;
+  }
+}
+
+// ================================================================
+// PRIORITY GRID
+// ================================================================
+.priority-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.priority-card {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 8px;
+  border: 2px solid $border-color;
+  border-radius: $radius-md;
+  background: $bg-card;
+  color: $text-secondary;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition-fast;
+  font-family: inherit;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover:not(.selected) {
+    border-color: $primary-light;
+    background: $primary-soft;
+    color: $primary;
+  }
+
+  &.selected {
+    border-color: currentColor;
+    background: rgba(0, 0, 0, 0.02);
+    color: currentColor;
+    box-shadow: 0 4px 12px -4px currentColor;
+  }
+}
+
+.pri-slate {
+  color: $pri-slate;
+}
+.pri-blue {
+  color: $pri-blue;
+}
+.pri-amber {
+  color: $pri-amber;
+}
+.pri-red {
+  color: $pri-red;
+}
+
+// ================================================================
+// TEXTAREA WRAPPER
+// ================================================================
+.textarea-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.textarea-wrapper ::ng-deep app-rich-text-editor {
+  display: block;
+  width: 100%;
+}
+
+.textarea-wrapper ::ng-deep .rich-text-wrapper {
+  border-radius: $radius-md !important;
+  border: 1.5px solid $border-color !important;
+  background: $bg-card !important;
+  transition: all $transition-fast !important;
+  box-shadow: none !important;
+
+  &:focus-within {
+    border-color: $primary !important;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12) !important;
+  }
+
+  .custom-quill-toolbar {
+    border-radius: $radius-md $radius-md 0 0 !important;
+    border-color: $border-color !important;
+    background: $bg-subtle !important;
+    border-bottom: 1px solid $border-color !important;
+    padding: 8px 10px !important;
+  }
+
+  .custom-quill-toolbar .ql-formats {
+    margin-right: 6px !important;
+    margin-left: 0 !important;
+  }
+
+  .custom-quill-toolbar button {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    padding: 4px !important;
+    border-radius: 5px !important;
+  }
+
+  .ql-container {
+    font-family: inherit !important;
+    font-size: 0.9rem !important;
+    color: $text-primary !important;
+    min-height: 160px !important;
+  }
+
+  .ql-editor {
+    min-height: 160px !important;
+    font-family: inherit !important;
+    font-size: 0.9rem !important;
+    color: $text-primary !important;
+    direction: rtl !important;
+  }
+}
+
+.char-count-tx {
+  position: absolute;
+  left: 12px;
+  bottom: 10px;
+  font-size: 0.7rem;
+  color: $text-muted;
+  font-weight: 600;
+  pointer-events: none;
+  z-index: 10;
+
+  &.warning {
+    color: $warning;
+  }
+}
+
+// ================================================================
+// FIELD HINTS & ERRORS
+// ================================================================
+.field-hint,
+.field-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  margin-top: 6px;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.field-hint {
+  color: $text-muted;
+}
+
+.field-error {
+  color: $danger;
+}
+
+// ================================================================
+// SUBMIT ERROR
+// ================================================================
+.submit-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  border-radius: $radius-md;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: $danger;
+  font-size: 0.82rem;
+  font-weight: 600;
+  animation: shake 0.4s ease;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-6px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
+}
+
+// ================================================================
+// TIPS BOX
+// ================================================================
+.tips-box {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(245, 158, 11, 0.03));
+  border: 1px solid rgba(245, 158, 11, 0.2);
+  border-radius: $radius-md;
+  border-right: 3px solid $warning;
+
+  .tips-header {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: $warning;
+    margin-bottom: 8px;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+
+  ul {
+    margin: 0;
+    padding-right: 1.25rem;
+    font-size: 0.78rem;
+    color: $text-secondary;
+    line-height: 1.8;
+
+    li {
+      position: relative;
+      padding-right: 4px;
+
+      &::marker {
+        color: $warning;
+      }
+    }
+  }
+}
+
+// ================================================================
+// DIALOG FOOTER
+// ================================================================
+.dialog-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 1rem 1.5rem;
+  background: $bg-subtle;
+  border-top: 1px solid $border-color;
+}
+
+.btn-cancel,
+.btn-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: $radius-md;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all $transition-fast;
+  white-space: nowrap;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  mat-spinner {
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.btn-cancel {
+  border: 1.5px solid $border-color;
+  background: $bg-card;
+  color: $text-secondary;
+
+  &:hover:not(:disabled) {
+    border-color: $border-hover;
+    color: $text-primary;
+    background: $bg-subtle;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.btn-submit {
+  border: none;
+  background: $primary-gradient;
+  background-size: 200% 200%;
+  color: $text-inverse;
+  box-shadow: 0 6px 20px -4px rgba(244, 114, 182, 0.55);
+  animation: gradientFlow 5s ease infinite;
+  position: relative;
+  overflow: hidden;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px -6px rgba(244, 114, 182, 0.65);
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    animation: none;
+  }
+}
+
+@keyframes gradientFlow {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+// ================================================================
+// DARK MODE
+// ================================================================
+:host-context(.dark-theme),
+:host-context(.dark-mode),
+:host-context([data-theme='dark']) {
+  $dark-bg: #0f172a;
+  $dark-card: #1e293b;
+  $dark-surface: #334155;
+  $dark-border: rgba(255, 255, 255, 0.08);
+  $dark-text: #f1f5f9;
+  $dark-text-sub: #94a3b8;
+
+  .quick-ticket-dialog {
+    background: $dark-card;
+    color: $dark-text;
+  }
+
+  .dialog-header {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-color: $dark-border;
+  }
+
+  .header-text h2,
+  .section-label,
+  .cat-label,
+  .form-input,
+  .priority-card,
+  .field-hint,
+  .tips-box ul li {
+    color: $dark-text;
+  }
+
+  .header-text p,
+  .cat-desc,
+  .context-item span,
+  .field-hint {
+    color: $dark-text-sub;
+  }
+
+  .context-banner {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.08));
+    border-color: rgba(99, 102, 241, 0.3);
+  }
+
+  .form-input,
+  .category-card,
+  .priority-card,
+  .btn-cancel {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: $dark-border;
+  }
+
+  .form-input::placeholder {
+    color: $dark-text-sub;
+  }
+
+  .dialog-footer {
+    background: rgba(0, 0, 0, 0.2);
+    border-color: $dark-border;
+  }
+
+  .close-btn {
+    background: rgba(255, 255, 255, 0.05);
+    color: $dark-text-sub;
+  }
+
+  .tips-box {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.05));
+    border-color: rgba(245, 158, 11, 0.3);
+  }
+
+  .submit-error {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+}
+
+// ================================================================
+// RESPONSIVE
+// ================================================================
+@media (max-width: 600px) {
+  .quick-ticket-dialog {
+    min-width: 100%;
+    max-height: 100vh;
+    border-radius: 0;
+    animation: none;
+  }
+
+  .dialog-header {
+    padding: 1rem;
+  }
+
+  .header-text h2 {
+    font-size: 1rem;
+  }
+
+  .header-text p {
+    font-size: 0.75rem;
+  }
+
+  .dialog-body {
+    padding: 1rem;
+  }
+
+  .category-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .priority-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dialog-footer {
+    padding: 0.75rem 1rem;
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}
+
+@media (max-width: 400px) {
+  .priority-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+// ================================================================
+// REDUCED MOTION
+// ================================================================
+@media (prefers-reduced-motion: reduce) {
+  .quick-ticket-dialog,
+  .category-card,
+  .priority-card,
+  .form-input,
+  .btn-cancel,
+  .btn-submit,
+  .context-banner,
+  .context-chevron,
+  .close-btn {
+    animation: none;
+    transition: none;
+  }
+
+  .context-details {
+    transition: none;
+  }
+}

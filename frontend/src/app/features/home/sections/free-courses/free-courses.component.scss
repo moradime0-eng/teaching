@@ -1,0 +1,156 @@
+// ==========================================================================
+// 🎁 Free Courses — دوره‌های رایگان
+// ==========================================================================
+@use '../empty-state' as es;
+
+$ease: cubic-bezier(0.16, 1, 0.3, 1);
+$grad-brand: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+
+:host { display: block; }
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.8rem;
+  border-radius: 99px;
+  background: rgba(52, 211, 153, 0.1);
+  border: 1px solid rgba(52, 211, 153, 0.28);
+  color: #059669;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+  mat-icon { font-size: 15px; width: 15px; height: 15px; }
+}
+
+.link-all {
+  display: inline-flex; align-items: center; gap: 0.4rem;
+  padding: 0.5rem 0.9rem; border-radius: 10px;
+  color: var(--primary-color, #4f46e5);
+  font-size: 0.85rem; font-weight: 800; text-decoration: none;
+  white-space: nowrap; transition: background 0.18s ease;
+  mat-icon { font-size: 17px; width: 17px; height: 17px; transition: transform 0.2s ease; }
+  &:hover {
+    background: color-mix(in srgb, var(--primary-color, #4f46e5) 8%, transparent);
+    mat-icon { transform: translateX(-3px); }
+  }
+}
+
+.block {
+  padding: 3.25rem 0 0;
+  &__head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 1rem; margin-bottom: 1.75rem;
+  }
+  &__title {
+    margin: 0; font-size: clamp(1.3rem, 2.4vw, 1.7rem);
+    font-weight: 800; line-height: 1.5;
+    color: var(--text-primary, #0f172a);
+  }
+  &__sub {
+    margin: 0.3rem 0 0; font-size: 0.88rem; font-weight: 500;
+    color: var(--text-secondary, #64748b);
+  }
+}
+
+.sh {
+  display: block; border-radius: 9px;
+  background: linear-gradient(90deg,
+    var(--sk-a, rgba(100, 116, 139, 0.16)) 25%,
+    var(--sk-b, rgba(100, 116, 139, 0.28)) 50%,
+    var(--sk-a, rgba(100, 116, 139, 0.16)) 75%);
+  background-size: 200% 100%;
+  animation: free-shimmer 1.4s linear infinite;
+}
+@keyframes free-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+// ─── Grid ───
+.free-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 1.25rem;
+}
+
+// ─── Item ───
+.free-item {
+  position: relative;
+  animation: free-rise 0.5s $ease both;
+  @for $i from 1 through 4 {
+    &:nth-child(#{$i}) { animation-delay: #{$i * 60}ms; }
+  }
+}
+
+// ✅ `.free-badge` حذف شد — واژه «رایگان» فقط یک‌بار در ردیف قیمت کارت نمایش داده می‌شود
+
+// ─── Skeleton ───
+.free-sk {
+  border-radius: 18px;
+  border: 1px solid var(--border-color, #e2e8f0);
+  background: var(--bg-surface, #ffffff);
+  overflow: hidden;
+  &__thumb { width: 100%; aspect-ratio: 16 / 9; }
+  &__body {
+    display: flex; flex-direction: column; gap: 0.6rem;
+    padding: 1rem 1.1rem 1.2rem;
+  }
+}
+
+@keyframes free-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+// ═══════════════ Empty State ═══════════════
+.empty {
+  @include es.empty-state;
+
+  &--error {
+    .empty__icon-wrap {
+      background: linear-gradient(135deg, rgba(244, 63, 94, 0.12), rgba(251, 146, 60, 0.12));
+      mat-icon { color: #f43f5e; }
+    }
+  }
+}
+
+.retry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  padding: 0.6rem 1.15rem;
+  border: none;
+  border-radius: 12px;
+  background: $grad-brand;
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 12px 26px -12px rgba(139, 92, 246, 0.75);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; }
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 32px -12px rgba(139, 92, 246, 0.85);
+  }
+}
+
+// ═══════════════ Dark Theme ═══════════════
+:host-context(.dark-theme),
+:host-context(.dark-mode),
+:host-context(.dark),
+:host-context([data-theme='dark']) {
+  .free-sk { box-shadow: 0 10px 20px -10px rgba(0, 0, 0, 0.4); }
+}
+
+// ═══════════════ Responsive ═══════════════
+@media (max-width: 760px) {
+  .free-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,265 @@
+// ==========================================================================
+// Variables & Modern Adaptive Theme Tokens
+// ==========================================================================
+$brand-primary: var(--brand-primary, #4f46e5);
+$brand-accent: var(--brand-accent, #06b6d4);
+$brand-warn: var(--brand-warn, #ef4444);
+
+:host {
+  --spinner-bg-fullscreen: rgba(15, 23, 42, 0.4);
+  --spinner-bg-container: rgba(255, 255, 255, 0.5);
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --card-border: rgba(255, 255, 255, 0.4);
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --card-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.08), 0 8px 16px -8px rgba(0, 0, 0, 0.04);
+}
+
+// Dark theme overrides driven by the site theme toggle (not the OS preference)
+:host-context([data-theme='dark']) {
+  --spinner-bg-fullscreen: rgba(2, 6, 23, 0.7);
+  --spinner-bg-container: rgba(15, 23, 42, 0.5);
+  --card-bg: rgba(30, 41, 59, 0.8);
+  --card-border: rgba(255, 255, 255, 0.08);
+  --text-main: #f8fafc;
+  --text-muted: #94a3b8;
+  --card-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+// Global scroll lock for body
+::ng-deep .spinner-scroll-lock {
+  overflow: hidden !important;
+  touch-action: none;
+}
+
+// ==========================================================================
+// Base Wrapper Layouts
+// ==========================================================================
+.spinner-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
+  font-family:
+    Vazirmatn,
+    IRANSans,
+    system-ui,
+    -apple-system,
+    sans-serif;
+
+  &.overlay-fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: var(--spinner-bg-fullscreen);
+    backdrop-filter: blur(12px) saturate(140%);
+    -webkit-backdrop-filter: blur(12px) saturate(140%);
+    animation: wrapperFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  &.overlay-container {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    background: var(--spinner-bg-container);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: inherit;
+    animation: wrapperFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+}
+
+// ==========================================================================
+// Content & Glassmorphism Card
+// ==========================================================================
+.spinner-content {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  text-align: center;
+  z-index: 1;
+
+  &.frosted-card {
+    background: var(--card-bg);
+    padding: 2.5rem 3.5rem;
+    border-radius: 24px;
+    border: 1px solid var(--card-border);
+    box-shadow: var(--card-shadow);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    animation: cardPopIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+}
+
+// ==========================================================================
+// Ambient Background Radial Glow (Fixed Z-Index to stay in background)
+// ==========================================================================
+.ambient-glow {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translate(-50%, -50%) translateZ(0);
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  filter: blur(35px);
+  pointer-events: none;
+  opacity: 0.18;
+  z-index: 0; // حتما زیر کار قرار گیرد
+  transition: background 0.3s ease;
+
+  &.primary {
+    background: $brand-primary;
+  }
+  &.accent {
+    background: $brand-accent;
+  }
+  &.warn {
+    background: $brand-warn;
+  }
+  &.white {
+    background: #ffffff;
+    opacity: 0.3;
+  }
+}
+
+// ==========================================================================
+// Spinner Customization (Forcing colors to make sure it's 100% visible)
+// ==========================================================================
+.spinner-core {
+  position: relative;
+  z-index: 2; // بالا قرار گرفتن نسبت به glow
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform;
+
+  // تزریق مستقیم رنگ‌ها به دایره متریال اسپینر (نسخه‌های جدید و قدیمی)
+  &.primary {
+    --mdc-circular-progress-active-indicator-color: #{$brand-primary} !important;
+    ::ng-deep circle {
+      stroke: #{$brand-primary} !important;
+    }
+  }
+  &.accent {
+    --mdc-circular-progress-active-indicator-color: #{$brand-accent} !important;
+    ::ng-deep circle {
+      stroke: #{$brand-accent} !important;
+    }
+  }
+  &.warn {
+    --mdc-circular-progress-active-indicator-color: #{$brand-warn} !important;
+    ::ng-deep circle {
+      stroke: #{$brand-warn} !important;
+    }
+  }
+  &.white {
+    --mdc-circular-progress-active-indicator-color: #ffffff !important;
+    ::ng-deep circle {
+      stroke: #ffffff !important;
+    }
+  }
+}
+
+// ==========================================================================
+// Typography & Animated RTL Ellipsis
+// ==========================================================================
+.text-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.spinner-message {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-main);
+  line-height: 1.6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.spinner-submessage {
+  margin: 0;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  line-height: 1.6;
+  max-width: 250px;
+}
+
+// Dots animation
+.loading-dots {
+  display: inline-flex;
+  flex-direction: row-reverse;
+  margin-right: 2px;
+
+  .dot {
+    font-size: 1.2rem;
+    line-height: 0.7;
+    opacity: 0.15;
+    animation: dotPulse 1.4s infinite ease-in-out both;
+
+    &:nth-child(1) {
+      animation-delay: 0s;
+    }
+    &:nth-child(2) {
+      animation-delay: 0.2s;
+    }
+    &:nth-child(3) {
+      animation-delay: 0.4s;
+    }
+  }
+}
+
+// ==========================================================================
+// Animations
+// ==========================================================================
+@keyframes wrapperFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes cardPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(12px) translateZ(0);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0) translateZ(0);
+  }
+}
+
+@keyframes dotPulse {
+  0%,
+  100% {
+    opacity: 0.15;
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-2px) scale(1.1);
+  }
+}
+
+:host-context([data-theme='dark']) {
+  .ambient-glow {
+    opacity: 0.25;
+  }
+}

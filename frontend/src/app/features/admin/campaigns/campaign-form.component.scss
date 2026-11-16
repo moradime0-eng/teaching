@@ -1,0 +1,1399 @@
+/* ============================================================
+   🎯 Campaign Builder - Modern Dark Glass UI
+   Complete Rewrite - All inputs & UX fixed
+   ✨ Font inherit issues FIXED
+   ============================================================ */
+
+// ─── CSS Variables (Theme Tokens) ───
+:host {
+  display: block;
+
+  // Theme glows
+  --fire-glow: #ff6b35;
+  --fire-bg: linear-gradient(135deg, #ff6b35, #f7931e);
+  --cold-glow: #4facfe;
+  --cold-bg: linear-gradient(135deg, #4facfe, #667eea);
+  --gold-glow: #f6d365;
+  --gold-bg: linear-gradient(135deg, #f6d365, #fda085);
+  --green-glow: #43e97b;
+  --green-bg: linear-gradient(135deg, #43e97b, #38f9d7);
+
+  // Spacing tokens
+  --sp-xs: 4px;
+  --sp-sm: 8px;
+  --sp-md: 16px;
+  --sp-lg: 24px;
+  --sp-xl: 32px;
+
+  // Radius tokens
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 20px;
+
+  // Transition
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --t-fast: 0.15s var(--ease);
+  --t-normal: 0.25s var(--ease);
+  --t-slow: 0.35s var(--ease);
+}
+
+/* ============================================================
+   🔥 GLOBAL FONT INHERIT FIX
+   تمام button, input, textarea, select فونت رو ارث ببرن
+   ============================================================ */
+.campaign-builder-page {
+  button,
+  input,
+  textarea,
+  select {
+    font-family: inherit;
+  }
+}
+
+/* ============================================================
+   PAGE WRAPPER
+   ============================================================ */
+.campaign-builder-page {
+  padding: var(--sp-xl);
+  max-width: 1440px;
+  margin: 0 auto;
+  min-height: 100vh;
+  font-family: inherit;
+}
+
+/* ============================================================
+   HEADER
+   ============================================================ */
+.builder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--sp-lg);
+  margin-bottom: var(--sp-lg);
+  border-bottom: 1px solid var(--border);
+  gap: var(--sp-md);
+}
+
+.header-main {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-md);
+}
+
+.btn-back {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--card-solid);
+  color: var(--text-2);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: all var(--t-normal);
+  flex-shrink: 0;
+  font-family: inherit; // ✅ FIX
+
+  &:hover {
+    background: var(--card-2);
+    color: var(--text);
+    border-color: var(--text-3);
+    transform: translateX(3px);
+  }
+}
+
+.page-title {
+  font-size: 22px;
+  font-weight: 800;
+  margin: 0 0 2px;
+  color: var(--text);
+  font-family: inherit; // ✅ FIX
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: var(--text-2);
+  margin: 0;
+  font-family: inherit; // ✅ FIX
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-lg);
+  flex-shrink: 0;
+}
+
+.status-toggle-wrapper {
+  .toggle-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-2);
+    transition: color var(--t-normal);
+    font-family: inherit; // ✅ FIX
+
+    &.is-active {
+      color: #43e97b;
+    }
+
+    .toggle-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+
+.btn-save {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-sm);
+  padding: 0 var(--sp-lg);
+  height: 44px;
+  border: none;
+  border-radius: var(--r-md);
+  background: linear-gradient(135deg, var(--brand) 0%, var(--brand-2, var(--brand)) 100%);
+  color: white;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all var(--t-normal);
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--brand) 30%, transparent);
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  &:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px color-mix(in srgb, var(--brand) 45%, transparent);
+  }
+
+  &:not(:disabled):active {
+    transform: translateY(0);
+  }
+}
+
+/* ============================================================
+   LAYOUT
+   ============================================================ */
+.builder-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: var(--sp-xl);
+  align-items: start;
+}
+
+.form-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-lg);
+}
+
+/* ============================================================
+   FORM SECTIONS (Glass Cards)
+   ============================================================ */
+.form-section {
+  background: var(--card-solid);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  transition: box-shadow var(--t-normal);
+
+  &:hover {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  }
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: var(--r-md);
+  padding: var(--sp-md) var(--sp-lg);
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-2) 40%, transparent);
+
+  .section-title {
+    font-size: 15px;
+    font-family: inherit;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text);
+  }
+
+  .section-desc {
+    font-size: 12px;
+    color: var(--text-3);
+    margin: 2px 0 0;
+    font-family: inherit;
+  }
+}
+
+.section-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.gradient-icon {
+  background: color-mix(in srgb, var(--brand) 15%, transparent);
+  color: var(--brand);
+
+  &.palette-icon {
+    background: color-mix(in srgb, #e040fb 12%, transparent);
+    color: #e040fb;
+  }
+  &.calendar-icon {
+    background: color-mix(in srgb, #4facfe 12%, transparent);
+    color: #4facfe;
+  }
+  &.offer-icon {
+    background: color-mix(in srgb, #ff6b35 12%, transparent);
+    color: #ff6b35;
+  }
+  &.scope-icon {
+    background: color-mix(in srgb, #43e97b 12%, transparent);
+    color: #43e97b;
+  }
+}
+
+.section-body {
+  padding: var(--sp-lg);
+}
+
+/* ============================================================
+   CUSTOM INPUT SYSTEM (No Material form-field)
+   ============================================================ */
+.form-group {
+  margin-bottom: var(--sp-md);
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.form-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: var(--sp-sm);
+  font-family: inherit; // ✅ FIX
+}
+
+.required-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #ef4444;
+  display: inline-block;
+}
+
+.optional-tag {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--text-3);
+  background: var(--card-2);
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-family: inherit; // ✅ FIX
+}
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--card-2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-md);
+  transition: all var(--t-normal);
+  overflow: hidden;
+
+  &.focused {
+    border-color: var(--brand);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 12%, transparent);
+    background: var(--card-solid);
+  }
+
+  &.has-value {
+    border-color: var(--text-3);
+  }
+
+  &.has-error {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    background: color-mix(in srgb, #ef4444 3%, var(--card-2));
+
+    .input-icon {
+      color: #ef4444;
+    }
+  }
+
+  .input-icon {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: var(--text-3);
+    transition: color var(--t-normal);
+    z-index: 1;
+    pointer-events: none;
+
+    &.textarea-icon {
+      top: 16px;
+      transform: none;
+    }
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    padding: 12px 14px 12px 14px;
+    padding-right: 44px;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    line-height: 1.6;
+
+    &::placeholder {
+      color: var(--text-3);
+      font-size: 13px;
+      font-family: inherit; // ✅ FIX
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  .char-count {
+    position: absolute;
+    left: 12px;
+    bottom: 8px;
+    font-size: 11px;
+    color: var(--text-3);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+    font-family: inherit; // ✅ FIX
+  }
+
+  .input-suffix {
+    padding: 0 14px 0 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-2);
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-family: inherit; // ✅ FIX
+  }
+
+  &.focused .input-icon {
+    color: var(--brand);
+  }
+}
+
+.textarea-wrapper {
+  align-items: flex-start;
+
+  .char-count {
+    bottom: 10px;
+  }
+}
+
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #ef4444;
+  font-weight: 500;
+  animation: shakeIn 0.3s var(--ease);
+  font-family: inherit; // ✅ FIX
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+}
+
+.field-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: var(--text-3);
+  font-family: inherit; // ✅ FIX
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+    color: var(--text-3);
+  }
+}
+
+@keyframes shakeIn {
+  0% {
+    transform: translateX(8px);
+    opacity: 0;
+  }
+  50% {
+    transform: translateX(-4px);
+  }
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   DATE INPUTS
+   ============================================================ */
+.date-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: var(--sp-md);
+  align-items: start;
+}
+
+.date-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  margin-top: 28px;
+  color: var(--text-3);
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+}
+
+.date-input-wrapper {
+  display: flex;
+  align-items: center;
+  background: var(--card-2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-md);
+  transition: all var(--t-normal);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--text-3);
+  }
+
+  &.has-value {
+    border-color: var(--brand);
+    background: color-mix(in srgb, var(--brand) 3%, var(--card-2));
+  }
+
+  &.has-error {
+    border-color: #ef4444;
+  }
+
+  .date-icon {
+    margin-right: 14px;
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: var(--text-3);
+    flex-shrink: 0;
+  }
+
+  input {
+    flex: 1;
+    padding: 12px 8px;
+    background: transparent;
+    border: none;
+    outline: none;
+    font-size: 14px;
+    font-family: inherit;
+    color: var(--text);
+    cursor: pointer;
+
+    &::placeholder {
+      color: var(--text-3);
+      font-size: 13px;
+      font-family: inherit; // ✅ FIX
+    }
+  }
+
+  .date-toggle-btn {
+    width: 40px;
+    height: 40px;
+    border: none;
+    background: transparent;
+    color: var(--brand);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    border-radius: var(--r-sm);
+    margin: 2px;
+    transition: all var(--t-fast);
+    font-family: inherit; // ✅ FIX
+
+    &:hover {
+      background: color-mix(in srgb, var(--brand) 10%, transparent);
+    }
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+.date-hint {
+  color: var(--brand) !important;
+
+  mat-icon {
+    color: var(--brand) !important;
+  }
+}
+
+/* ============================================================
+   TOGGLE CARDS (Discount Type + Scope)
+   ============================================================ */
+.toggle-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--r-md);
+  margin-bottom: var(--sp-lg);
+}
+
+.toggle-card {
+  display: flex;
+  align-items: center;
+  gap: var(--r-md);
+  padding: var(--sp-md) var(--sp-md);
+  border: 1.5px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--card-2);
+  cursor: pointer;
+  transition: all var(--t-normal);
+  text-align: right;
+  font-family: inherit; // ✅ FIX
+  color: inherit; // ✅ FIX
+
+  .toggle-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--text-2) 8%, transparent);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    transition: all var(--t-normal);
+
+    mat-icon {
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+      color: var(--text-2);
+      transition: color var(--t-normal);
+    }
+  }
+
+  .toggle-card-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-family: inherit;
+
+    strong {
+      font-size: 14px;
+      color: var(--text);
+      transition: color var(--t-normal);
+      font-family: inherit; // ✅ FIX
+    }
+
+    small {
+      font-size: 12px;
+      color: var(--text-3);
+      font-family: inherit; // ✅ FIX
+    }
+  }
+
+  &:hover {
+    border-color: var(--text-3);
+    background: var(--card-solid);
+  }
+
+  &.active {
+    border-color: var(--brand);
+    background: color-mix(in srgb, var(--brand) 6%, var(--card-solid));
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 10%, transparent);
+
+    .toggle-card-icon {
+      background: color-mix(in srgb, var(--brand) 15%, transparent);
+      mat-icon {
+        color: var(--brand);
+      }
+    }
+
+    .toggle-card-text strong {
+      color: var(--brand);
+    }
+  }
+}
+
+/* ============================================================
+   DISCOUNT INPUTS
+   ============================================================ */
+.discount-inputs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-md);
+}
+
+/* ============================================================
+   THEME SELECTOR
+   ============================================================ */
+.theme-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--r-md);
+}
+
+.theme-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--r-md);
+  padding: var(--sp-md) var(--sp-md);
+  border-radius: var(--r-lg);
+  background: var(--card-2);
+  border: 1.5px solid var(--border);
+  cursor: pointer;
+  overflow: hidden;
+  transition: all var(--t-normal);
+  font-family: inherit; // ✅ FIX
+  color: inherit; // ✅ FIX
+
+  &[data-theme='fire'] {
+    --t-glow: var(--fire-glow);
+    --t-bg: var(--fire-bg);
+  }
+  &[data-theme='cold'] {
+    --t-glow: var(--cold-glow);
+    --t-bg: var(--cold-bg);
+  }
+  &[data-theme='gold'] {
+    --t-glow: var(--gold-glow);
+    --t-bg: var(--gold-bg);
+  }
+  &[data-theme='green'] {
+    --t-glow: var(--green-glow);
+    --t-bg: var(--green-bg);
+  }
+
+  .theme-bg-layer {
+    position: absolute;
+    inset: 0;
+    background: var(--t-bg);
+    opacity: 0;
+    transition: opacity var(--t-normal);
+  }
+
+  .theme-content {
+    display: flex;
+    align-items: center;
+    gap: var(--r-md);
+    position: relative;
+    z-index: 1;
+  }
+
+  .theme-icon-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--t-glow) 15%, transparent);
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    transition: all var(--t-normal);
+
+    mat-icon {
+      font-size: 22px;
+      width: 22px;
+      height: 22px;
+      color: var(--t-glow);
+      transition: transform var(--t-normal);
+    }
+  }
+
+  .theme-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    position: relative;
+    z-index: 1;
+    font-family: inherit; // ✅ FIX
+  }
+
+  .theme-check {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%) scale(0);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: var(--t-glow);
+    color: white;
+    display: grid;
+    place-items: center;
+    z-index: 1;
+    opacity: 0;
+    transition: all var(--t-slow);
+
+    mat-icon {
+      font-size: 15px;
+      width: 15px;
+      height: 15px;
+    }
+  }
+
+  &:hover {
+    border-color: var(--t-glow);
+    .theme-bg-layer {
+      opacity: 0.06;
+    }
+    .theme-icon-circle mat-icon {
+      transform: scale(1.15);
+    }
+  }
+
+  &.selected {
+    border-color: var(--t-glow);
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--t-glow) 15%, transparent),
+      0 8px 25px color-mix(in srgb, var(--t-glow) 15%, transparent);
+
+    .theme-bg-layer {
+      opacity: 0.1;
+    }
+    .theme-check {
+      opacity: 1;
+      transform: translateY(-50%) scale(1);
+    }
+  }
+}
+
+/* ============================================================
+   CATEGORIES SELECTOR
+   ============================================================ */
+.categories-selector {
+  margin-top: var(--sp-md);
+
+  .search-input {
+    margin-top: var(--sp-sm);
+  }
+}
+
+.selected-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-sm);
+  margin-bottom: var(--r-md);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px 6px 4px;
+  background: color-mix(in srgb, var(--brand) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--brand) 25%, transparent);
+  border-radius: var(--r-sm);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--brand);
+  animation: chipIn 0.25s var(--ease);
+  font-family: inherit; // ✅ FIX
+
+  .chip-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  .chip-remove {
+    display: grid;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    border: none;
+    background: color-mix(in srgb, var(--brand) 15%, transparent);
+    border-radius: 50%;
+    cursor: pointer;
+    padding: 0;
+    transition: all var(--t-fast);
+    color: var(--brand);
+    font-family: inherit; // ✅ FIX
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+
+    &:hover {
+      background: #ef4444;
+      color: white;
+    }
+  }
+}
+
+@keyframes chipIn {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* ============================================================
+   PREVIEW COLUMN (STICKY SIDEBAR)
+   ============================================================ */
+.preview-column {
+  .sticky-wrapper {
+    position: sticky;
+    top: var(--sp-xl);
+  }
+}
+
+.preview-card {
+  background: var(--card-solid);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  gap: var(--r-md);
+  padding: var(--sp-md) var(--sp-lg);
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-2) 40%, transparent);
+
+  .preview-header-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--brand) 15%, transparent);
+    color: var(--brand);
+    display: grid;
+    place-items: center;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+}
+
+.preview-title {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text);
+  font-family: inherit; // ✅ FIX
+}
+
+.preview-desc {
+  font-size: 12px;
+  color: var(--text-3);
+  margin: 2px 0 0;
+  font-family: inherit; // ✅ FIX
+}
+
+/* ── Live Banner Preview ── */
+.live-banner {
+  position: relative;
+  margin: var(--sp-lg);
+  border-radius: var(--r-lg); // 👈 گردی بیشتر (16px)
+  overflow: hidden; // 👈 مهم: برای کراپ شدن لایه‌های داخلی
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+  isolation: isolate; // 👈 جلوگیری از نشتی لایه‌ها
+
+  &[data-theme='fire'] {
+    --p-glow: var(--fire-glow);
+    --p-bg: var(--fire-bg);
+  }
+  &[data-theme='cold'] {
+    --p-glow: var(--cold-glow);
+    --p-bg: var(--cold-bg);
+  }
+  &[data-theme='gold'] {
+    --p-glow: var(--gold-glow);
+    --p-bg: var(--gold-bg);
+  }
+  &[data-theme='green'] {
+    --p-glow: var(--green-glow);
+    --p-bg: var(--green-bg);
+  }
+
+  // 🎨 Default text color — overridden by the inline style when custom colors are set
+  --p-text: #ffffff;
+
+  // ⚠️ استایل سراسری "body * { transition: background-color ... !important }"
+  // رنگ پیش‌نمایش را با تأخیر رندر می‌کند → اینجا غیرفعال می‌شود.
+  transition: none !important;
+
+  .banner-bg-gradient {
+    position: absolute;
+    inset: 0;
+    // ⚠️ متغیرهای تم (--fire-bg و ...) خودشان گرادیان هستند، و مقدار سفارشی
+    // هم یک linear-gradient کامل است → باید مستقیم در background-image بنشیند.
+    // استفاده از "background: var(--p-bg)" باعث می‌شد background-image بعدی
+    // آن را با "none" بازنویسی کند و پیش‌نمایش بی‌رنگ دیده شود.
+    background-image: var(--p-bg, none);
+    background-color: var(--p-bg-color, transparent);
+    border-radius: inherit; // ✅ ارث‌بری گردی از پدر
+  }
+
+  .banner-inner {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    padding: 12px var(--sp-md);
+    gap: var(--r-md);
+    background: rgba(0, 0, 0, 0.15);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px); // ✅ Safari support
+    border-radius: inherit; // ✅ ارث‌بری گردی از پدر
+  }
+
+  .banner-icon-wrapper {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--r-sm);
+    background: rgba(255, 255, 255, 0.2);
+    display: grid;
+    place-items: center;
+    color: white;
+    flex-shrink: 0;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  .banner-text {
+    flex: 1;
+    margin: 0;
+    color: var(--p-text, white);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.5;
+    font-family: inherit;
+  }
+
+  .banner-timer {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-family: inherit;
+
+    mat-icon {
+      font-size: 14px;
+      width: 14px;
+      height: 14px;
+    }
+  }
+
+  .banner-close-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    cursor: default;
+    padding: 0;
+    flex-shrink: 0;
+    font-family: inherit;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+    }
+  }
+}
+/* ── Summary ── */
+.preview-summary {
+  padding: var(--sp-lg);
+
+  .summary-heading {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-2);
+    margin: 0 0 var(--sp-md);
+    padding-bottom: var(--r-md);
+    border-bottom: 1px dashed var(--border);
+    font-family: inherit; // ✅ FIX
+  }
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  font-size: 13px;
+  font-family: inherit; // ✅ FIX
+
+  & + .summary-row {
+    border-top: 1px solid color-mix(in srgb, var(--border) 50%, transparent);
+  }
+}
+
+.summary-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-2);
+  font-family: inherit; // ✅ FIX
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+    color: var(--text-3);
+  }
+}
+
+.summary-value {
+  font-weight: 700;
+  color: var(--text);
+  font-family: inherit; // ✅ FIX
+
+  &.accent {
+    color: var(--brand);
+    font-size: 15px;
+  }
+  &.status-active {
+    color: #43e97b;
+  }
+  &.status-inactive {
+    color: var(--text-3);
+  }
+}
+
+/* ============================================================
+   LOADING STATE
+   ============================================================ */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 0;
+  gap: var(--sp-md);
+  color: var(--text-2);
+  font-size: 14px;
+  font-family: inherit; // ✅ FIX
+
+  .loading-spinner-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: var(--card-solid);
+    display: grid;
+    place-items: center;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  }
+
+  p {
+    font-family: inherit; // ✅ FIX
+    margin: 0;
+  }
+}
+
+/* ============================================================
+   MATERIAL OVERRIDES (SCOPED)
+   ============================================================ */
+
+// Datepicker overlay
+::ng-deep .cdk-overlay-container {
+  z-index: 99999 !important;
+}
+
+::ng-deep .mat-datepicker-content {
+  background-color: var(--card-solid) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r-lg) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35) !important;
+  font-family: inherit !important; // ✅ FIX
+}
+
+::ng-deep .mat-calendar {
+  background-color: transparent !important;
+  font-family: inherit !important;
+}
+
+::ng-deep .mat-calendar-body-cell-content {
+  color: var(--text) !important;
+  border-radius: var(--r-sm) !important;
+  font-family: inherit !important; // ✅ FIX
+}
+
+::ng-deep .mat-calendar-body-selected {
+  background-color: var(--brand) !important;
+  color: white !important;
+}
+
+::ng-deep .mat-calendar-body-today:not(.mat-calendar-body-selected) {
+  border-color: var(--brand) !important;
+}
+
+::ng-deep .mat-calendar-table-header th {
+  color: var(--text-2) !important;
+  font-family: inherit !important; // ✅ FIX
+}
+
+::ng-deep .mat-calendar-controls .mat-mdc-button {
+  color: var(--text) !important;
+  font-family: inherit !important; // ✅ FIX
+}
+
+::ng-deep .mat-calendar-period-button {
+  font-family: inherit !important; // ✅ FIX
+}
+
+::ng-deep .mat-calendar-arrow {
+  fill: var(--text) !important;
+}
+
+// Autocomplete dropdown
+::ng-deep .mat-mdc-autocomplete-panel {
+  background-color: var(--card-solid) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--r-md) !important;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35) !important;
+  padding: var(--sp-xs) 0 !important;
+  margin-top: 4px !important;
+  font-family: inherit !important; // ✅ FIX
+}
+
+::ng-deep .mat-mdc-autocomplete-panel .mat-mdc-option {
+  color: var(--text) !important;
+  font-family: inherit !important;
+  font-size: 14px !important;
+  min-height: 44px !important;
+  padding: 0 var(--sp-md) !important;
+  transition: all var(--t-fast);
+
+  mat-icon {
+    color: var(--text-3);
+    margin-left: var(--sp-sm);
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover,
+  &.mat-mdc-option-active {
+    background-color: color-mix(in srgb, var(--brand) 8%, transparent) !important;
+    color: var(--brand) !important;
+
+    mat-icon {
+      color: var(--brand);
+    }
+  }
+}
+
+::ng-deep .mdc-list-item__primary-text {
+  color: inherit !important;
+  font-family: inherit !important; // ✅ FIX
+}
+
+// Categories autocomplete specific
+::ng-deep .categories-autocomplete {
+  min-width: 280px;
+}
+
+// Slide toggle
+::ng-deep .mat-mdc-slide-toggle {
+  font-family: inherit !important; // ✅ FIX
+
+  .mdc-switch__track {
+    border-radius: 20px !important;
+  }
+
+  .mdc-form-field,
+  .mdc-label {
+    font-family: inherit !important; // ✅ FIX
+  }
+}
+
+// Tooltip
+::ng-deep .mat-mdc-tooltip {
+  font-family: inherit !important; // ✅ FIX
+}
+
+// Date input wrapper
+.date-input-wrapper {
+  ::ng-deep .mat-datepicker-toggle {
+    display: none !important;
+  }
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 1100px) {
+  .builder-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .preview-column {
+    order: -1;
+    .sticky-wrapper {
+      position: relative;
+      top: 0;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .campaign-builder-page {
+    padding: var(--sp-md);
+  }
+
+  .builder-header {
+    flex-direction: column;
+    align-items: stretch;
+
+    .header-actions {
+      flex-direction: row;
+      justify-content: space-between;
+
+      .btn-save {
+        flex: 1;
+        justify-content: center;
+      }
+    }
+  }
+
+  .date-row {
+    grid-template-columns: 1fr;
+    gap: var(--sp-sm);
+
+    .date-separator {
+      display: none;
+    }
+  }
+
+  .discount-inputs {
+    grid-template-columns: 1fr;
+  }
+
+  .toggle-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .theme-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .live-banner .banner-inner {
+    flex-wrap: wrap;
+    justify-content: center;
+    text-align: center;
+    gap: var(--sp-sm);
+
+    .banner-text {
+      flex-basis: 100%;
+      order: 1;
+    }
+    .banner-timer {
+      order: 2;
+    }
+    .banner-close-btn {
+      position: absolute;
+      left: 8px;
+      top: 8px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 18px;
+  }
+  .page-subtitle {
+    font-size: 12px;
+  }
+
+  .section-body {
+    padding: var(--sp-md);
+  }
+
+  .form-label {
+    font-size: 12px;
+  }
+
+  .input-wrapper input,
+  .input-wrapper textarea {
+    font-size: 13px;
+    padding: 10px 12px 10px 12px;
+    padding-right: 38px;
+  }
+}

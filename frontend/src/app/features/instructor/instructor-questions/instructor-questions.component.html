@@ -1,0 +1,239 @@
+<div class="iq-page">
+
+  <!-- ── Header ── -->
+  <header class="iq-header">
+    <div class="iq-header-top">
+      <a [routerLink]="backLinkRoute()" class="iq-back" [class.admin]="isAdminView()">
+        <span class="dot"></span>
+        {{ backLinkLabel() }}
+      </a>
+      <div class="iq-headings">
+        <h1>
+          <mat-icon>question_answer</mat-icon>
+          {{ pageTitle() }}
+        </h1>
+        <p>{{ pageSubtitle() }}</p>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="iq-stats">
+      <button class="iq-stat" type="button" (click)="setStatusFilter('unanswered')"
+              [class.active]="statusFilter() === 'unanswered'">
+        <div class="iq-stat-icon warn"><mat-icon>hourglass_top</mat-icon></div>
+        <div class="iq-stat-body">
+          <strong>{{ stats().unanswered }}</strong>
+          <span>بی‌پاسخ</span>
+        </div>
+      </button>
+
+      <button class="iq-stat" type="button" (click)="setStatusFilter('answered')"
+              [class.active]="statusFilter() === 'answered'">
+        <div class="iq-stat-icon ok"><mat-icon>check_circle</mat-icon></div>
+        <div class="iq-stat-body">
+          <strong>{{ stats().answered }}</strong>
+          <span>پاسخ‌داده</span>
+        </div>
+      </button>
+
+      <button class="iq-stat" type="button" (click)="setStatusFilter('all')"
+              [class.active]="statusFilter() === 'all'">
+        <div class="iq-stat-icon all"><mat-icon>forum</mat-icon></div>
+        <div class="iq-stat-body">
+          <strong>{{ stats().total }}</strong>
+          <span>کل پرسش‌ها</span>
+        </div>
+      </button>
+    </div>
+  </header>
+
+  <!-- ── Filters ── -->
+  <section class="iq-filters">
+    <div class="iq-search">
+      <mat-icon>search</mat-icon>
+      <input type="text"
+             placeholder="جستجو در عنوان و متن پرسش…"
+             [value]="searchTerm()"
+             (input)="onSearch($any($event.target).value)"/>
+      <button class="iq-search-clear" type="button" *ngIf="searchTerm()"
+              (click)="onSearch('')" aria-label="پاک کردن">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="iq-course-filter">
+      <label>دوره</label>
+      <select [value]="courseFilter()" (change)="setCourseFilter($any($event.target).value)">
+        <option value="all">همه دوره‌ها</option>
+        <option *ngFor="let c of courses()" [value]="c._id">{{ c.title }}</option>
+      </select>
+    </div>
+
+    <button class="iq-reset" type="button" *ngIf="hasActiveFilters()" (click)="clearFilters()">
+      <mat-icon>filter_alt_off</mat-icon>
+      حذف فیلترها
+    </button>
+  </section>
+
+  <!-- ── Loading ── -->
+  <div class="iq-loading" *ngIf="isLoading()">
+    <span class="iq-spinner"></span>
+    <p>در حال بارگذاری پرسش‌ها…</p>
+  </div>
+
+  <!-- ── Empty ── -->
+  <div class="iq-empty" *ngIf="!isLoading() && questions().length === 0">
+    <div class="iq-empty-icon"><mat-icon>forum</mat-icon></div>
+    <h3>
+      {{ statusFilter() === 'unanswered' ? 'پرسش بی‌پاسخی ندارید' : 'پرسشی یافت نشد' }}
+    </h3>
+    <p>
+      {{
+        hasActiveFilters()
+          ? 'با فیلترهای فعلی نتیجه‌ای پیدا نشد. فیلترها را تغییر دهید.'
+          : 'وقتی شرکت‌کنندگان دوره‌ها سوالی بپرسند، اینجا نمایش داده می‌شود.'
+      }}
+    </p>
+    <button class="iq-btn iq-btn-soft" type="button" *ngIf="hasActiveFilters()"
+            (click)="clearFilters()">
+      <mat-icon>filter_alt_off</mat-icon>
+      نمایش همه پرسش‌ها
+    </button>
+  </div>
+
+  <!-- ── List ── -->
+  <div class="iq-list" *ngIf="!isLoading() && questions().length">
+
+    <article class="iq-card" *ngFor="let q of questions()" [class.resolved]="q.isResolved">
+
+      <!-- Card head -->
+      <header class="iq-card-head">
+        <div class="iq-avatar">{{ getInitials(q.user?.fullName) }}</div>
+        <div class="iq-card-meta">
+          <div class="iq-meta-line">
+            <strong>{{ q.user?.fullName || 'کاربر حذف‌شده' }}</strong>
+            <span class="iq-role-tag" *ngIf="q.user?.role === 'instructor'">مدرس</span>
+            <span class="iq-time">{{ q.createdAt | jalaliDate: 'YYYY/MM/DD' }}</span>
+          </div>
+          <div class="iq-course-line">
+            <mat-icon>school</mat-icon>
+            <span>{{ q.courseTitle || courseName(q.courseId) }}</span>
+            <span class="iq-dot" *ngIf="q.lectureTitle">•</span>
+            <span *ngIf="q.lectureTitle">درس: {{ q.lectureTitle }}</span>
+          </div>
+        </div>
+
+        <div class="iq-card-badges">
+          <span class="iq-badge pinned" *ngIf="q.isPinned">
+            <mat-icon>push_pin</mat-icon> سنجاق‌شده
+          </span>
+          <span class="iq-badge resolved" *ngIf="q.isResolved">
+            <mat-icon>verified</mat-icon> حل‌شده
+          </span>
+          <span class="iq-badge pending" *ngIf="!q.replies?.length">
+            <mat-icon>hourglass_top</mat-icon> بی‌پاسخ
+          </span>
+        </div>
+      </header>
+
+      <!-- Body -->
+      <h3 class="iq-title" *ngIf="q.title">{{ q.title }}</h3>
+      <p class="iq-content">{{ q.content }}</p>
+
+      <!-- Replies -->
+      <div class="iq-replies" *ngIf="q.replies?.length">
+        <div class="iq-reply" *ngFor="let r of q.replies" [class.ins]="r.isInstructorReply">
+          <div class="iq-avatar sm">{{ getInitials(r.user?.fullName) }}</div>
+          <div class="iq-reply-body">
+            <div class="iq-reply-head">
+              <strong>{{ r.user?.fullName || 'کاربر حذف‌شده' }}</strong>
+              <span class="iq-ins-badge" *ngIf="r.isInstructorReply">
+                <mat-icon>verified</mat-icon> مدرس
+              </span>
+              <span class="iq-time">{{ r.createdAt | jalaliDate: 'YYYY/MM/DD' }}</span>
+            </div>
+            <p>{{ r.content }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reply editor -->
+      <div class="iq-editor" *ngIf="openReplyFor() === q._id">
+        <div class="iq-editor-head">
+          <mat-icon>edit</mat-icon>
+          <span>پاسخ شما به‌عنوان مدرس ثبت می‌شود</span>
+        </div>
+        <textarea [value]="replyDrafts()[q._id] || ''"
+                  (input)="setReplyDraft(q._id, $any($event.target).value)"
+                  placeholder="پاسخ خود را بنویسید…"
+                  rows="4" maxlength="3000"></textarea>
+        <div class="iq-editor-foot">
+          <span>{{ (replyDrafts()[q._id] || '').length }} / 3000</span>
+          <div>
+            <button class="iq-btn iq-btn-ghost" type="button" (click)="toggleReply(q._id)">انصراف</button>
+            <button class="iq-btn iq-btn-primary" type="button"
+                    [disabled]="!(replyDrafts()[q._id] || '').trim() || sendingFor() === q._id"
+                    (click)="submitReply(q._id)">
+              <span class="iq-spinner sm" *ngIf="sendingFor() === q._id"></span>
+              <mat-icon *ngIf="sendingFor() !== q._id">send</mat-icon>
+              {{ sendingFor() === q._id ? 'در حال ارسال…' : 'ارسال پاسخ' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer actions -->
+      <footer class="iq-card-foot">
+        <button class="iq-action primary" type="button"
+                [class.answering]="openReplyFor() === q._id"
+                (click)="toggleReply(q._id)">
+          <mat-icon>{{ openReplyFor() === q._id ? 'close' : 'reply' }}</mat-icon>
+          {{ openReplyFor() === q._id ? 'بستن' : (q.replies.length ? 'پاسخ دوباره' : 'پاسخ دادن') }}
+        </button>
+
+        <button class="iq-action" type="button" (click)="toggleResolved(q)">
+          <mat-icon>{{ q.isResolved ? 'radio_button_unchecked' : 'task_alt' }}</mat-icon>
+          {{ q.isResolved ? 'بازگشت به بی‌پاسخ' : 'علامت حل‌شده' }}
+        </button>
+
+        <button class="iq-action" type="button" (click)="togglePin(q)">
+          <mat-icon>{{ q.isPinned ? 'keep_off' : 'push_pin' }}</mat-icon>
+          {{ q.isPinned ? 'حذف سنجاق' : 'سنجاق' }}
+        </button>
+
+        <span class="iq-spacer"></span>
+
+        <span class="iq-counts" *ngIf="q.replies?.length">
+          <mat-icon>mode_comment</mat-icon>
+          {{ q.replies.length }} پاسخ
+        </span>
+
+        <button class="iq-icon-btn" type="button" (click)="goToClassroom(q)"
+                data-tip="مشاهده در کلاس‌روم" data-tip-pos="left" aria-label="مشاهده در کلاس‌روم">
+          <mat-icon>open_in_new</mat-icon>
+        </button>
+
+        <button class="iq-icon-btn danger" type="button" (click)="deleteQuestion(q)"
+                data-tip="حذف پرسش" data-tip-pos="left" aria-label="حذف پرسش">
+          <mat-icon>delete_outline</mat-icon>
+        </button>
+      </footer>
+    </article>
+  </div>
+
+  <!-- ── Pagination ── -->
+  <nav class="iq-pagination" *ngIf="totalPages() > 1">
+    <button class="iq-page-btn" type="button" (click)="goToPage(page() - 1)"
+            [disabled]="page() === 1" aria-label="صفحه قبل">
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+
+    <button class="iq-page-btn num" type="button" *ngFor="let p of pages"
+            [class.active]="p === page()" (click)="goToPage(p)">{{ p }}</button>
+
+    <button class="iq-page-btn" type="button" (click)="goToPage(page() + 1)"
+            [disabled]="page() === totalPages()" aria-label="صفحه بعد">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+  </nav>
+</div>

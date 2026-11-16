@@ -1,0 +1,464 @@
+<div class="campaign-builder-page" dir="rtl">
+
+  <!-- HEADER -->
+  <header class="builder-header">
+    <div class="header-main">
+      <button class="btn-back" (click)="onCancel()" matTooltip="بازگشت به لیست" type="button">
+        <mat-icon>arrow_forward</mat-icon>
+      </button>
+      <div class="header-text">
+        <h1 class="page-title">{{ isEditMode() ? 'ویرایش کمپین' : 'طراحی کمپین جدید' }}</h1>
+        <p class="page-subtitle">{{ isEditMode() ? 'تغییر تنظیمات کمپین فعلی' : 'تنظیمات و ظاهر کمپین فروش ویژه خود را بسازید' }}</p>
+      </div>
+    </div>
+    <div class="header-actions">
+      <div class="status-toggle-wrapper">
+        <mat-slide-toggle [formControl]="isActiveControl" color="primary">
+          <span class="toggle-label" [class.is-active]="isActiveControl.value">
+            <mat-icon class="toggle-icon">{{ isActiveControl.value ? 'check_circle' : 'pause_circle' }}</mat-icon>
+            {{ isActiveControl.value ? 'فعال' : 'غیرفعال' }}
+          </span>
+        </mat-slide-toggle>
+      </div>
+
+      <button class="btn-save" (click)="onSubmit()" [disabled]="isSubmitting() || !isFormValid()" type="button">
+        @if (isSubmitting()) {
+          <mat-spinner diameter="18" color="accent"></mat-spinner>
+          <span>ذخیره...</span>
+        } @else {
+          <mat-icon>{{ isEditMode() ? 'save' : 'rocket_launch' }}</mat-icon>
+          <span>{{ isEditMode() ? 'ذخیره تغییرات' : 'ایجاد و انتشار' }}</span>
+        }
+      </button>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <div class="loading-state">
+      <div class="loading-spinner-wrapper">
+        <mat-spinner diameter="44"></mat-spinner>
+      </div>
+      <p>در حال بارگذاری اطلاعات کمپین...</p>
+    </div>
+  } @else {
+    <div class="builder-layout">
+
+      <!-- ═══════════════ FORM COLUMN (RIGHT) ═══════════════ -->
+      <main class="form-column">
+        <form [formGroup]="form" class="form-sections">
+
+          <!-- ─── 1. Content & Text ─── -->
+          <section class="form-section">
+            <div class="section-header">
+              <div class="section-icon gradient-icon">
+                <mat-icon>edit_note</mat-icon>
+              </div>
+              <div>
+                <h2 class="section-title">محتوا و متن بنر</h2>
+                <p class="section-desc">عنوان مدیریتی و متنی که کاربران در بنر می‌بینند</p>
+              </div>
+            </div>
+
+            <div class="section-body">
+              <!-- Title Input -->
+              <div class="form-group">
+                <label class="form-label" for="inp-title">
+                  عنوان داخلی کمپین
+                  <span class="required-dot"></span>
+                </label>
+                <div class="input-wrapper" [class.focused]="titleFocused" [class.has-error]="hasError('title','required') || hasError('title','minlength') || hasError('title','maxlength')" [class.has-value]="form.get('title')?.value">
+                  <mat-icon class="input-icon">title</mat-icon>
+                  <input id="inp-title" type="text" formControlName="title"
+                         placeholder="مثال: بلک فرایدی ۱۴۰۳"
+                         (focus)="titleFocused=true" (blur)="titleFocused=false"
+                         autocomplete="off">
+                  <span class="char-count">{{ form.get('title')?.value?.length || 0 }}/100</span>
+                </div>
+                @if (hasError('title', 'required')) {
+                  <p class="field-error"><mat-icon>error</mat-icon> عنوان کمپین الزامی است</p>
+                }
+                @if (hasError('title', 'minlength')) {
+                  <p class="field-error"><mat-icon>error</mat-icon> حداقل ۳ کاراکتر وارد کنید</p>
+                }
+              </div>
+
+              <!-- Banner Text Input -->
+              <div class="form-group">
+                <label class="form-label" for="inp-banner">
+                  متن نمایشی بنر
+                  <span class="required-dot"></span>
+                </label>
+                <div class="input-wrapper textarea-wrapper" [class.focused]="bannerFocused" [class.has-error]="hasError('bannerText','required') || hasError('bannerText','maxlength')" [class.has-value]="form.get('bannerText')?.value">
+                  <mat-icon class="input-icon textarea-icon">campaign</mat-icon>
+                  <textarea id="inp-banner" formControlName="bannerText" rows="3"
+                            placeholder="🔥 جشنواره تخفیف‌های ویژه مکتب‌خونه شروع شد! تا ۵۰٪ تخفیف..."
+                            (focus)="bannerFocused=true" (blur)="bannerFocused=false"></textarea>
+                  <span class="char-count">{{ form.get('bannerText')?.value?.length || 0 }}/300</span>
+                </div>
+                @if (hasError('bannerText', 'required')) {
+                  <p class="field-error"><mat-icon>error</mat-icon> متن بنر الزامی است</p>
+                }
+                <p class="field-hint"><mat-icon>info</mat-icon> این متن بالای سایت به کاربران نمایش داده می‌شود</p>
+              </div>
+            </div>
+          </section>
+
+          <!-- ─── 2. Visual Theme & Custom Colors ─── -->
+          <section class="form-section">
+            <div class="section-header">
+              <div class="section-icon gradient-icon palette-icon">
+                <mat-icon>palette</mat-icon>
+              </div>
+              <div>
+                <h2 class="section-title">ظاهر و رنگ‌بندی بنر</h2>
+                <p class="section-desc">تم آماده انتخاب کنید یا رنگ دلخواه و گرادیان سفارشی بسازید</p>
+              </div>
+            </div>
+
+            <div class="section-body">
+              <app-campaign-color-picker
+                [theme]="form.get('theme')?.value || 'fire'"
+                [colors]="form.get('colors')?.value || null"
+                (themeChange)="onThemePicked($event)"
+                (colorsChange)="onColorsPicked($event)"
+              ></app-campaign-color-picker>
+            </div>
+          </section>
+
+          <!-- ─── 3. Timing ─── -->
+          <section class="form-section">
+            <div class="section-header">
+              <div class="section-icon gradient-icon calendar-icon">
+                <mat-icon>calendar_month</mat-icon>
+              </div>
+              <div>
+                <h2 class="section-title">زمان‌بندی اجرا</h2>
+                <p class="section-desc">تاریخ شروع و پایان کمپین را مشخص کنید</p>
+              </div>
+            </div>
+
+            <div class="section-body">
+              <div class="date-row">
+                <!-- Start Date -->
+                <div class="form-group">
+                  <label class="form-label">
+                    تاریخ شروع
+                    <span class="required-dot"></span>
+                  </label>
+                  <div class="date-input-wrapper" [class.has-value]="form.get('startAt')?.value" [class.has-error]="hasError('startAt','required')">
+                    <mat-icon class="date-icon">event</mat-icon>
+                    <input [matDatepicker]="startPicker" formControlName="startAt"
+                           readonly (click)="startPicker.open()" placeholder="انتخاب تاریخ شروع">
+                    <button type="button" class="date-toggle-btn" (click)="startPicker.open()">
+                      <mat-icon>calendar_today</mat-icon>
+                    </button>
+                    <mat-datepicker #startPicker></mat-datepicker>
+                  </div>
+                  @if (form.get('startAt')?.value) {
+                    <p class="field-hint date-hint">
+                      <mat-icon>schedule</mat-icon>
+                      {{ form.get('startAt')?.value | jalaliDate:'jYYYY/jMM/jDD' }}
+                    </p>
+                  }
+                  @if (hasError('startAt', 'required')) {
+                    <p class="field-error"><mat-icon>error</mat-icon> تاریخ شروع الزامی است</p>
+                  }
+                </div>
+
+                <!-- Separator Arrow -->
+                <div class="date-separator">
+                  <mat-icon>arrow_back</mat-icon>
+                </div>
+
+                <!-- End Date -->
+                <div class="form-group">
+                  <label class="form-label">
+                    تاریخ پایان
+                    <span class="required-dot"></span>
+                  </label>
+                  <div class="date-input-wrapper" [class.has-value]="form.get('endAt')?.value" [class.has-error]="hasError('endAt','required') || hasError('endAt','dateRange')">
+                    <mat-icon class="date-icon">event_available</mat-icon>
+                    <input [matDatepicker]="endPicker" formControlName="endAt"
+                           [min]="form.get('startAt')?.value" readonly (click)="endPicker.open()" placeholder="انتخاب تاریخ پایان">
+                    <button type="button" class="date-toggle-btn" (click)="endPicker.open()">
+                      <mat-icon>calendar_today</mat-icon>
+                    </button>
+                    <mat-datepicker #endPicker></mat-datepicker>
+                  </div>
+                  @if (form.get('endAt')?.value) {
+                    <p class="field-hint date-hint">
+                      <mat-icon>schedule</mat-icon>
+                      {{ form.get('endAt')?.value | jalaliDate:'jYYYY/jMM/jDD' }}
+                    </p>
+                  }
+                  @if (hasError('endAt', 'required')) {
+                    <p class="field-error"><mat-icon>error</mat-icon> تاریخ پایان الزامی است</p>
+                  }
+                  @if (hasError('endAt', 'dateRange')) {
+                    <p class="field-error"><mat-icon>error</mat-icon> تاریخ پایان باید بعد از شروع باشد</p>
+                  }
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ─── 4. Rules & Discounts ─── -->
+          <section class="form-section">
+            <div class="section-header">
+              <div class="section-icon gradient-icon offer-icon">
+                <mat-icon>local_offer</mat-icon>
+              </div>
+              <div>
+                <h2 class="section-title">قوانین تخفیف</h2>
+                <p class="section-desc">نوع و مقدار تخفیف کمپین را تنظیم کنید</p>
+              </div>
+            </div>
+
+            <div class="section-body">
+              <!-- Discount Type Selector -->
+              <div class="toggle-cards">
+                <button type="button" class="toggle-card"
+                        [class.active]="form.get('discountType')?.value === 'percentage'"
+                        (click)="form.get('discountType')?.setValue('percentage')">
+                  <div class="toggle-card-icon"><mat-icon>percent</mat-icon></div>
+                  <div class="toggle-card-text">
+                    <strong>درصدی</strong>
+                    <small>تخفیف بر اساس درصد</small>
+                  </div>
+                </button>
+                <button type="button" class="toggle-card"
+                        [class.active]="form.get('discountType')?.value === 'fixed'"
+                        (click)="form.get('discountType')?.setValue('fixed')">
+                  <div class="toggle-card-icon"><mat-icon>payments</mat-icon></div>
+                  <div class="toggle-card-text">
+                    <strong>مبلغ ثابت</strong>
+                    <small>تخفیف مبلغ تومانی</small>
+                  </div>
+                </button>
+              </div>
+
+              <!-- Discount Values -->
+              <div class="discount-inputs">
+                <div class="form-group">
+                  <label class="form-label">
+                    مقدار تخفیف
+                    <span class="required-dot"></span>
+                  </label>
+                  <div class="input-wrapper" [class.focused]="discountFocused" [class.has-error]="hasError('discountValue','required') || hasError('discountValue','min') || hasError('discountValue','max')" [class.has-value]="form.get('discountValue')?.value">
+                    <mat-icon class="input-icon">monetization_on</mat-icon>
+                    <input type="number" formControlName="discountValue"
+                           [placeholder]="form.get('discountType')?.value === 'percentage' ? 'مثال: 25' : 'مثال: 500000'"
+                           (focus)="discountFocused=true" (blur)="discountFocused=false">
+                    <span class="input-suffix">
+                      {{ form.get('discountType')?.value === 'percentage' ? '٪' : 'تومان' }}
+                    </span>
+                  </div>
+                  @if (hasError('discountValue', 'required')) {
+                    <p class="field-error"><mat-icon>error</mat-icon> مقدار تخفیف الزامی است</p>
+                  }
+                  @if (hasError('discountValue', 'max')) {
+                    <p class="field-error"><mat-icon>error</mat-icon> حداکثر ۱۰۰ درصد مجاز است</p>
+                  }
+                </div>
+
+                @if (form.get('discountType')?.value === 'percentage') {
+                  <div class="form-group">
+                    <label class="form-label">سقف تخفیف <span class="optional-tag">اختیاری</span></label>
+                    <div class="input-wrapper" [class.focused]="maxDiscountFocused" [class.has-value]="form.get('maxDiscount')?.value" [class.has-error]="hasError('maxDiscount','min')">
+                      <mat-icon class="input-icon">vertical_align_top</mat-icon>
+                      <input type="number" formControlName="maxDiscount"
+                             placeholder="مثال: ۲۰۰,۰۰۰"
+                             (focus)="maxDiscountFocused=true" (blur)="maxDiscountFocused=false">
+                      <span class="input-suffix">تومان</span>
+                    </div>
+                    @if (hasError('maxDiscount', 'min')) {
+                      <p class="field-error"><mat-icon>error</mat-icon> حداقل ۰ تومان</p>
+                    }
+                    <p class="field-hint"><mat-icon>info</mat-icon> حداکثر مبلغ تخفیف برای هر خرید</p>
+                  </div>
+                }
+              </div>
+            </div>
+          </section>
+
+          <!-- ─── 5. Scope ─── -->
+          <section class="form-section">
+            <div class="section-header">
+              <div class="section-icon gradient-icon scope-icon">
+                <mat-icon>tune</mat-icon>
+              </div>
+              <div>
+                <h2 class="section-title">محدوده اعمال</h2>
+                <p class="section-desc">مشخص کنید کمپین روی چه دوره‌هایی اعمال شود</p>
+              </div>
+            </div>
+
+            <div class="section-body">
+              <div class="toggle-cards">
+                <button type="button" class="toggle-card"
+                        [class.active]="form.get('scope')?.value === 'all'"
+                        (click)="form.get('scope')?.setValue('all')">
+                  <div class="toggle-card-icon"><mat-icon>public</mat-icon></div>
+                  <div class="toggle-card-text">
+                    <strong>تمام دوره‌ها</strong>
+                    <small>اعمال روی همه دوره‌ها</small>
+                  </div>
+                </button>
+                <button type="button" class="toggle-card"
+                        [class.active]="form.get('scope')?.value === 'categories'"
+                        (click)="form.get('scope')?.setValue('categories')">
+                  <div class="toggle-card-icon"><mat-icon>category</mat-icon></div>
+                  <div class="toggle-card-text">
+                    <strong>دسته‌بندی خاص</strong>
+                    <small>فقط دسته‌های انتخابی</small>
+                  </div>
+                </button>
+              </div>
+
+              @if (form.get('scope')?.value === 'categories') {
+                <div class="categories-selector">
+                  <label class="form-label">انتخاب دسته‌بندی‌ها</label>
+
+                  <!-- Selected Chips -->
+                  @if (form.get('categories')?.value?.length) {
+                    <div class="selected-chips">
+                      @for (cat of form.get('categories')?.value; track cat._id) {
+                        <span class="chip">
+                          <mat-icon class="chip-icon">folder</mat-icon>
+                          {{ cat.name }}
+                          <button type="button" class="chip-remove" (click)="removeCategory(cat)">
+                            <mat-icon>close</mat-icon>
+                          </button>
+                        </span>
+                      }
+                    </div>
+                  }
+
+                  <!-- Search Input -->
+                  <div class="input-wrapper search-input" [class.focused]="catSearchFocused" [class.has-error]="hasError('categories','categoriesRequired')">
+                    <mat-icon class="input-icon">search</mat-icon>
+                    <input type="text" placeholder="جستجوی دسته‌بندی..."
+                           #catInput
+                           [matAutocomplete]="auto"
+                           (focus)="catSearchFocused=true"
+                           (blur)="catSearchFocused=false">
+                  </div>
+
+                  <mat-autocomplete #auto="matAutocomplete" [displayWith]="displayCategory"
+                                    (optionSelected)="addCategory($event, catInput)"
+                                    class="categories-autocomplete">
+                    @for (cat of filteredCategories | async; track cat._id) {
+                      <mat-option [value]="cat">
+                        <mat-icon>folder_open</mat-icon>
+                        {{ cat.name }}
+                      </mat-option>
+                    }
+                  </mat-autocomplete>
+                  @if (hasError('categories', 'categoriesRequired')) {
+                    <p class="field-error"><mat-icon>error</mat-icon> حداقل یک دسته‌بندی انتخاب کنید</p>
+                  }
+                </div>
+              }
+            </div>
+          </section>
+
+        </form>
+      </main>
+
+      <!-- ═══════════════ PREVIEW COLUMN (LEFT STICKY) ═══════════════ -->
+      <aside class="preview-column">
+        <div class="sticky-wrapper">
+          <div class="preview-card">
+            <div class="preview-header">
+              <div class="preview-header-icon">
+                <mat-icon>visibility</mat-icon>
+              </div>
+              <div>
+                <h3 class="preview-title">پیش‌نمایش زنده</h3>
+                <p class="preview-desc">نمای واقعی بنر برای کاربران</p>
+              </div>
+            </div>
+
+            <!-- The Live Banner -->
+            <div
+              class="live-banner"
+              [attr.data-theme]="livePreview().theme || 'fire'"
+              [ngStyle]="livePreviewStyle()"
+            >
+              <div class="banner-bg-gradient"></div>
+              <div class="banner-inner">
+                <div class="banner-icon-wrapper">
+                  <mat-icon>{{ getThemeIconPreview() }}</mat-icon>
+                </div>
+                <p class="banner-text">
+                  {{ livePreview().bannerText || 'متن بنر شما اینجا نمایش داده می‌شود...' }}
+                </p>
+                <div class="banner-timer">
+                  <mat-icon>timer</mat-icon>
+                  <span dir="ltr">03 : 14 : 59 : 59</span>
+                </div>
+                <button type="button" class="banner-close-btn"><mat-icon>close</mat-icon></button>
+              </div>
+            </div>
+
+            <!-- Summary -->
+            <div class="preview-summary">
+              <h4 class="summary-heading">خلاصه تنظیمات</h4>
+
+              <div class="summary-row">
+                <span class="summary-label"><mat-icon>local_offer</mat-icon> مقدار تخفیف</span>
+                <span class="summary-value accent">
+                  {{ livePreview().discountValue || '—' }}
+                  {{ livePreview().discountType === 'percentage' ? '٪' : 'تومان' }}
+                </span>
+              </div>
+
+              <div class="summary-row">
+                <span class="summary-label"><mat-icon>tune</mat-icon> محدوده</span>
+                <span class="summary-value">
+                  {{ livePreview().scope === 'all' ? 'همه دوره‌ها' : (livePreview().categories?.length || 0) + ' دسته‌بندی' }}
+                </span>
+              </div>
+
+              <div class="summary-row">
+                <span class="summary-label"><mat-icon>event</mat-icon> شروع</span>
+                <span class="summary-value">
+                  {{ livePreview().startAt ? (livePreview().startAt | jalaliDate:'jYYYY/jMM/jDD') : '—' }}
+                </span>
+              </div>
+
+              <div class="summary-row">
+                <span class="summary-label"><mat-icon>event_available</mat-icon> پایان</span>
+                <span class="summary-value">
+                  {{ livePreview().endAt ? (livePreview().endAt | jalaliDate:'jYYYY/jMM/jDD') : '—' }}
+                </span>
+              </div>
+
+              <div class="summary-row">
+                <span class="summary-label"><mat-icon>power_settings_new</mat-icon> وضعیت</span>
+                <span class="summary-value" [class.status-active]="livePreview().isActive" [class.status-inactive]="!livePreview().isActive">
+                  {{ livePreview().isActive ? '✅ آماده انتشار' : '⏸ پیش‌نویس' }}
+                </span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </aside>
+
+    </div>
+  }
+
+  <!-- Confirm Leave Modal -->
+  <app-confirm-modal
+    [isOpen]="showConfirmLeave()"
+    title="خروج بدون ذخیره؟"
+    message="تغییرات شما ذخیره نشده است. آیا مطمئنید؟"
+    confirmText="بله، خارج شو"
+    cancelText="بازگشت"
+    confirmColor="warn"
+    (confirmed)="confirmLeave()"
+    (cancelled)="cancelLeave()">
+  </app-confirm-modal>
+
+</div>

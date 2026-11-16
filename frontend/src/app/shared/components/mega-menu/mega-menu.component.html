@@ -1,0 +1,599 @@
+<div
+  class="mm"
+  dir="rtl"
+  appClickOutside
+  (appClickOutside)="close()"
+  (mouseenter)="onWrapperEnter()"
+  (mouseleave)="onWrapperLeave()"
+>
+  <!-- ═══════════ Trigger ═══════════ -->
+  <button
+    class="mm-trigger"
+    type="button"
+    [class.is-open]="isOpen()"
+    (click)="toggle()"
+    [attr.aria-expanded]="isOpen()"
+    aria-haspopup="true"
+    aria-label="دسته‌بندی دوره‌ها"
+  >
+    <span class="mm-trigger__tile"><mat-icon>apps</mat-icon></span>
+    <span class="mm-trigger__label">دسته‌بندی‌ها</span>
+    <mat-icon class="mm-trigger__chev" [@rotate]="isOpen() ? 'open' : 'closed'">
+      expand_more
+    </mat-icon>
+  </button>
+
+  <!-- ═══════════ Page Overlay ═══════════ -->
+  <!-- نکته: پوشش تیره از طریق PageBackdropService مستقیماً روی <body>
+       رندر می‌شود. رندر آن اینجا باعث می‌شد به‌خاطر backdrop-filter
+       والدِ نوار بالا، فقط هم‌اندازه‌ی هدر (۷۲px) شود و محتوای زیر
+       پنل اصلاً پنهان نشود. -->
+
+  <!-- ═══════════ Panel ═══════════ -->
+  @if (isOpen()) {
+    <div #mmPanel class="mm-panel" @panelEnter role="menu" aria-label="مگامنوی دسته‌بندی">
+      <div class="mm-panel__frame">
+        <div class="mm-panel__inner">
+          <i class="mm-caret" aria-hidden="true"></i>
+
+          <!-- ══════ Head: Search + Quick + Recents ══════ -->
+          <header class="mm-head">
+            <div class="mm-head__row">
+              <label class="mm-search" [class.has-q]="!!searchQuery()">
+                <mat-icon class="mm-search__icon">search</mat-icon>
+                <input
+                  #searchBox
+                  type="text"
+                  class="mm-search__input"
+                  [ngModel]="searchQuery()"
+                  (ngModelChange)="onSearchInput($event)"
+                  placeholder="جست‌وجو در دسته‌ها و موضوعات…"
+                  autocomplete="off"
+                  aria-label="جست‌وجوی دسته‌بندی"
+                />
+                @if (searchQuery()) {
+                  <button
+                    class="mm-search__clear"
+                    (click)="clearSearchInput()"
+                    aria-label="پاک کردن جست‌وجو"
+                    @fadeIn
+                  >
+                    <mat-icon>close</mat-icon>
+                  </button>
+                }
+                <span class="kbd">Esc</span>
+              </label>
+
+              <div class="mm-quick">
+                <button class="mm-quick__btn" (click)="onQuick('popular')">
+                  <mat-icon class="c-amber">local_fire_department</mat-icon>
+                  <span>پرطرفدارها</span>
+                </button>
+                <button class="mm-quick__btn" (click)="onQuick('newest')">
+                  <mat-icon class="c-violet">auto_awesome</mat-icon>
+                  <span>جدیدترین</span>
+                </button>
+                <button class="mm-quick__btn" (click)="onQuick('free')">
+                  <mat-icon class="c-emerald">volunteer_activism</mat-icon>
+                  <span>دوره‌های رایگان</span>
+                </button>
+              </div>
+            </div>
+
+            @if (recentCategories().length > 0 && !searchQuery()) {
+              <div class="mm-recents" @fadeIn>
+                <span class="mm-recents__label">
+                  <mat-icon>history</mat-icon>
+                  بازدیدهای اخیر
+                </span>
+                @for (r of recentCategories(); track r.slug) {
+                  <button class="mm-recent" (click)="navigateRecent(r)">
+                    <span
+                      class="mm-recent__dot"
+                      [style.background]="r.gradient || 'linear-gradient(135deg,#8b5cf6,#6366f1)'"
+                    ></span>
+                    {{ r.name }}
+                  </button>
+                }
+                <button
+                  class="mm-recents__clear"
+                  (click)="clearRecents($event)"
+                  aria-label="پاک کردن تاریخچه"
+                  title="پاک کردن تاریخچه"
+                >
+                  <mat-icon>delete_sweep</mat-icon>
+                </button>
+              </div>
+            }
+          </header>
+
+          <!-- ══════ Desktop Body ══════ -->
+          <div class="mm-body">
+            @if (isLoading()) {
+              <!-- Skeleton -->
+              <div class="mm-skeleton" @fadeIn>
+                <div class="mm-skeleton__col">
+                  @for (_ of [1, 2, 3, 4, 5, 6, 7]; track _) {
+                    <div class="mm-skeleton__row">
+                      <span class="mm-skeleton__tile"></span>
+                      <span class="mm-skeleton__lines">
+                        <span class="mm-skeleton__line"></span>
+                        <span class="mm-skeleton__line short"></span>
+                      </span>
+                    </div>
+                  }
+                </div>
+                <div class="mm-skeleton__col cards">
+                  @for (_ of [1, 2, 3, 4]; track _) {
+                    <span class="mm-skeleton__cardblock"></span>
+                  }
+                </div>
+                <div class="mm-skeleton__col">
+                  <span class="mm-skeleton__cover"></span>
+                  <span class="mm-skeleton__line"></span>
+                  <span class="mm-skeleton__line short"></span>
+                </div>
+              </div>
+            } @else {
+              <!-- ── Rail ── -->
+              <aside class="mm-rail">
+                <div class="mm-rail__head">
+                  <span class="mm-label">دسته‌بندی‌ها</span>
+                  <span class="mm-count-chip">{{ faNum(categories().length) }}</span>
+                </div>
+                <div class="mm-rail__list" role="menu">
+                  @for (cat of categories(); track cat._id) {
+                    <button
+                      role="menuitem"
+                      class="mm-cat"
+                      [class.is-active]="selectedCategory()?._id === cat._id"
+                                        (click)="selectCategory(cat)"
+                    >
+                      <span class="mm-cat__ind" [style.background]="cat.gradient"></span>
+                      <span
+                        class="mm-tile"
+                        [class.is-active]="selectedCategory()?._id === cat._id"
+                        [style.background]="cat.gradient"
+                        [style.--glow]="categoryGlow(cat)"
+                      >
+                        <app-category-icon
+                          [icon]="cat.icon"
+                          [iconType]="cat.iconType"
+                          [customIconUrl]="cat.customIconUrl"
+                          [size]="22"
+                        />
+                        <!-- Support for local images: use customIconUrl like '/assets/images/categories/...' -->
+                      </span>
+                      <span class="mm-cat__body">
+                        <span class="mm-cat__namerow">
+                          <span class="mm-cat__name">{{ cat.name }}</span>
+                          @if (cat.isTrending) {
+                            <span class="mm-pulse" title="ترند"></span>
+                          }
+                          @if (cat.isNew) {
+                            <span class="mm-tag mm-tag--new">جدید</span>
+                          }
+                        </span>
+                        <span class="mm-cat__meta">
+                          {{ compactCount(cat.courseCount) }} دوره
+                          <span class="mm-dot"></span>
+                          {{ compactCount(cat.studentsCount ?? 0) }} دانشجو
+                        </span>
+                      </span>
+                      <mat-icon class="mm-cat__arrow">chevron_left</mat-icon>
+                    </button>
+                  }
+                </div>
+              </aside>
+
+              <!-- ── Content / Search ── -->
+              @if (!searchQuery()) {
+                @if (selectedCategory(); as cat) {
+                  <!-- Subcategory cards -->
+                  <section class="mm-content">
+                    <div class="mm-content__head">
+                      <span
+                        class="mm-tile mm-tile--sm is-active"
+                        [style.background]="cat.gradient"
+                        [style.--glow]="categoryGlow(cat)"
+                      >
+                        <app-category-icon
+                          [icon]="cat.icon"
+                          [iconType]="cat.iconType"
+                          [customIconUrl]="cat.customIconUrl"
+                          [size]="18"
+                        />
+                      </span>
+                      <div class="mm-content__titlebox">
+                        <h3>{{ cat.name }}</h3>
+                        @if (cat.description) {
+                          <p>{{ cat.description }}</p>
+                        }
+                      </div>
+                      <button class="mm-content__all" (click)="navigateToCategory(cat)">
+                        همه ({{ compactCount(cat.courseCount) }})
+                        <mat-icon>chevron_left</mat-icon>
+                      </button>
+                    </div>
+                    <div class="mm-subgrid">
+                      @for (sub of cat.subcategories; track sub._id) {
+                        <div
+                          class="mm-sub"
+                          role="button"
+                          tabindex="0"
+                          (click)="navigateToSubcategory(cat, sub)"
+                          (keydown.enter)="navigateToSubcategory(cat, sub)"
+                        >
+                          <div class="mm-sub__head">
+                            <app-category-icon
+                              [icon]="sub.icon"
+                              [iconType]="sub.iconType"
+                              [customIconUrl]="sub.customIconUrl"
+                              [size]="20"
+                              class="mm-sub__icon"
+                              fallback="folder_open"
+                            />
+                            <h4>{{ sub.name }}</h4>
+                            @if (sub.isPopular) {
+                              <span class="mm-tag mm-tag--hot">
+                                <mat-icon>local_fire_department</mat-icon>
+                                محبوب
+                              </span>
+                            }
+                            <span class="mm-sub__count">{{ faNum(sub.courseCount) }} دوره</span>
+                          </div>
+                          @if (sub.topics.length) {
+                            <div class="mm-topics">
+                              @for (tp of topTopics(sub); track tp._id) {
+                                <span
+                                  class="mm-topic"
+                                  (click)="$event.stopPropagation(); navigateToTopic(cat, sub, tp)"
+                                >
+                                  @if (tp.isHot) {
+                                    <mat-icon>local_fire_department</mat-icon>
+                                  }
+                                  {{ tp.name }}
+                                </span>
+                              }
+                              @if (sub.topics.length > 4) {
+                                <span class="mm-topics__more">
+                                  +{{ faNum(sub.topics.length - 4) }}
+                                </span>
+                              }
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </section>
+
+                  <!-- Side rail — بدون داده فیک -->
+                  <aside class="mm-spot">
+                    <!-- موضوعات داغ واقعی -->
+                    @if (hotTopicsOf(cat).length > 0) {
+                      <div class="mm-hot">
+                        <span class="mm-label">
+                          <mat-icon class="c-amber">local_fire_department</mat-icon>
+                          موضوعات داغ
+                        </span>
+                        <div class="mm-hot__list">
+                          @for (h of hotTopicsOf(cat); track h.topic._id) {
+                            <button
+                              class="mm-hot__chip"
+                              (click)="navigateToTopic(cat, h.sub, h.topic)"
+                            >
+                              <span class="mm-hot__dot" [style.background]="cat.gradient"></span>
+                              {{ h.topic.name }}
+                            </button>
+                          }
+                        </div>
+                      </div>
+                    }
+
+                    <!-- محبوب‌ترین دوره‌های این دسته -->
+                    <button class="mm-sp-cta" (click)="onQuickPopularInCategory(cat)">
+                      <span
+                        class="mm-tile mm-tile--sm is-active"
+                        [style.background]="cat.gradient"
+                        [style.--glow]="categoryGlow(cat)"
+                      >
+                        <app-category-icon
+                          [icon]="cat.icon"
+                          [iconType]="cat.iconType"
+                          [customIconUrl]="cat.customIconUrl"
+                          [size]="18"
+                        />
+                      </span>
+                      <span class="mm-sp-cta__text">
+                        <b>محبوب‌ترین‌های {{ cat.name }}</b>
+                        <small>{{ compactCount(cat.courseCount) }} دوره در این دسته</small>
+                      </span>
+                      <mat-icon class="mm-sp-cta__arrow">chevron_left</mat-icon>
+                    </button>
+
+                    <!-- گواهینامه -->
+                    <button class="mm-cert" (click)="goToCertificates()">
+                      <span class="mm-cert__icon">
+                        <mat-icon>workspace_premium</mat-icon>
+                      </span>
+                      <span class="mm-cert__text">
+                        <b>گواهینامه‌ی پایان دوره</b>
+                        <small>قابل استعلام و اشتراک در لینکدین</small>
+                      </span>
+                      <mat-icon class="mm-cert__arrow">chevron_left</mat-icon>
+                    </button>
+                  </aside>
+                }
+              } @else {
+                <!-- ── Grouped search results ── -->
+                <section class="mm-results" @fadeIn>
+                  @if (searchHits().length === 0) {
+                    <div class="mm-empty">
+                      <span class="mm-empty__icon">
+                        <mat-icon>search_off</mat-icon>
+                      </span>
+                      <h3>نتیجه‌ای پیدا نشد</h3>
+                      <p>
+                        برای «<b>{{ searchQuery() }}</b
+                        >» چیزی نداریم؛ عبارت کوتاه‌تری را امتحان کنید.
+                      </p>
+                      <button class="mm-empty__reset" (click)="clearSearchInput()">
+                        <mat-icon>refresh</mat-icon>
+                        پاک کردن جست‌وجو
+                      </button>
+                    </div>
+                  } @else {
+                    @if (groupedHits().category.length > 0) {
+                      <div class="mm-rgroup">
+                        <span class="mm-label">
+                          <mat-icon>grid_view</mat-icon>
+                          دسته‌بندی‌ها
+                          <span class="mm-count-chip">{{
+                            faNum(groupedHits().category.length)
+                          }}</span>
+                        </span>
+                        @for (hit of groupedHits().category; track hit.id) {
+                          <button class="mm-hit" (click)="pickHit(hit)">
+                            <span class="mm-tile mm-tile--sm" [style.background]="hit.cat.gradient">
+                              <app-category-icon
+                                [icon]="hit.cat.icon"
+                                [iconType]="hit.cat.iconType"
+                                [customIconUrl]="hit.cat.customIconUrl"
+                                [size]="18"
+                              />
+                            </span>
+                            <span class="mm-hit__body">
+                              <span class="mm-hit__name">{{ hit.name }}</span>
+                              <span class="mm-hit__path">مشاهده‌ی همه‌ی دوره‌های این دسته</span>
+                            </span>
+                            <span class="mm-hit__count">{{ faNum(hit.count) }} دوره</span>
+                            <mat-icon class="mm-hit__arrow">chevron_left</mat-icon>
+                          </button>
+                        }
+                      </div>
+                    }
+
+                    @if (groupedHits().sub.length > 0) {
+                      <div class="mm-rgroup">
+                        <span class="mm-label">
+                          <mat-icon>folder_open</mat-icon>
+                          زیردسته‌ها
+                          <span class="mm-count-chip">{{ faNum(groupedHits().sub.length) }}</span>
+                        </span>
+                        @for (hit of groupedHits().sub; track hit.id) {
+                          <button class="mm-hit" (click)="pickHit(hit)">
+                            <span
+                              class="mm-tile mm-tile--sm is-dim"
+                              [style.background]="hit.cat.gradient"
+                            >
+                              <app-category-icon
+                                [icon]="hit.cat.icon"
+                                [iconType]="hit.cat.iconType"
+                                [customIconUrl]="hit.cat.customIconUrl"
+                                [size]="18"
+                              />
+                            </span>
+                            <span class="mm-hit__body">
+                              <span class="mm-hit__name">{{ hit.name }}</span>
+                              <span class="mm-hit__path">{{ hit.cat.name }} — زیردسته</span>
+                            </span>
+                            <span class="mm-hit__count">{{ faNum(hit.count) }} دوره</span>
+                            <mat-icon class="mm-hit__arrow">chevron_left</mat-icon>
+                          </button>
+                        }
+                      </div>
+                    }
+
+                    @if (groupedHits().topic.length > 0) {
+                      <div class="mm-rgroup">
+                        <span class="mm-label">
+                          <mat-icon>label</mat-icon>
+                          موضوعات
+                          <span class="mm-count-chip">{{ faNum(groupedHits().topic.length) }}</span>
+                        </span>
+                        @for (hit of groupedHits().topic; track hit.id) {
+                          <button class="mm-hit" (click)="pickHit(hit)">
+                            <span
+                              class="mm-tile mm-tile--sm is-dim"
+                              [style.background]="hit.cat.gradient"
+                            >
+                              <app-category-icon
+                                [icon]="hit.cat.icon"
+                                [iconType]="hit.cat.iconType"
+                                [customIconUrl]="hit.cat.customIconUrl"
+                                [size]="18"
+                              />
+                            </span>
+                            <span class="mm-hit__body">
+                              <span class="mm-hit__name">{{ hit.name }}</span>
+                              <span class="mm-hit__path">
+                                {{ hit.cat.name }}
+                                @if (hit.sub) {
+                                  <span> / {{ hit.sub.name }}</span>
+                                }
+                              </span>
+                            </span>
+                            <span class="mm-hit__count">{{ faNum(hit.count) }} دوره</span>
+                            <mat-icon class="mm-hit__arrow">chevron_left</mat-icon>
+                          </button>
+                        }
+                      </div>
+                    }
+                  }
+                </section>
+              }
+            }
+          </div>
+
+          <!-- ══════ Mobile Body (Accordion) ══════ -->
+          <div class="mm-mbody">
+            @if (isLoading() && categories().length === 0) {
+              <!-- اسکلت موبایل: نباید بیک‌پوینت دسکتاپ را بشکند -->
+              <div class="mm-skel-mobile">
+                @for (_ of [1, 2, 3, 4, 5]; track _) {
+                  <div class="mm-skel-mobile__row">
+                    <span class="mm-skel-mobile__tile"></span>
+                    <span class="mm-skel-mobile__lines">
+                      <span></span><span class="short"></span>
+                    </span>
+                  </div>
+                }
+              </div>
+            } @else if (searchQuery()) {
+              @if (searchHits().length === 0) {
+                <div class="mm-empty">
+                  <span class="mm-empty__icon"><mat-icon>search_off</mat-icon></span>
+                  <h3>نتیجه‌ای پیدا نشد</h3>
+                  <button class="mm-empty__reset" (click)="clearSearchInput()">
+                    <mat-icon>refresh</mat-icon>
+                    پاک کردن جست‌وجو
+                  </button>
+                </div>
+              } @else {
+                @for (hit of searchHits(); track hit.kind + '-' + hit.id) {
+                  <button class="mm-hit" (click)="pickHit(hit)">
+                    <span class="mm-tile mm-tile--sm" [style.background]="hit.cat.gradient">
+                      <app-category-icon
+                        [icon]="hit.cat.icon"
+                        [iconType]="hit.cat.iconType"
+                        [customIconUrl]="hit.cat.customIconUrl"
+                        [size]="18"
+                      />
+                    </span>
+                    <span class="mm-hit__body">
+                      <span class="mm-hit__name">{{ hit.name }}</span>
+                      <span class="mm-hit__path">{{ hit.cat.name }}</span>
+                    </span>
+                    <mat-icon class="mm-hit__arrow">chevron_left</mat-icon>
+                  </button>
+                }
+              }
+            } @else {
+              @for (cat of categories(); track cat._id) {
+                <div class="mm-acc">
+                  <button class="mm-acc__head" (click)="toggleAccordion(cat._id)">
+                    <span
+                      class="mm-tile mm-tile--sm"
+                      [class.is-active]="expandedId() === cat._id"
+                      [style.background]="cat.gradient"
+                      [style.--glow]="categoryGlow(cat)"
+                    >
+                      <app-category-icon
+                        [icon]="cat.icon"
+                        [iconType]="cat.iconType"
+                        [customIconUrl]="cat.customIconUrl"
+                        [size]="18"
+                      />
+                      <!-- Support for local images: use customIconUrl like '/assets/images/categories/...' -->
+                    </span>
+                    <span class="mm-acc__titlebox">
+                      <span class="mm-acc__name">{{ cat.name }}</span>
+                      <span class="mm-acc__count">{{ faNum(cat.courseCount) }} دوره</span>
+                    </span>
+                    <mat-icon
+                      class="mm-acc__chev"
+                      [@rotate]="expandedId() === cat._id ? 'open' : 'closed'"
+                    >
+                      expand_more
+                    </mat-icon>
+                  </button>
+                  @if (expandedId() === cat._id) {
+                    <div class="mm-acc__panel" @accordion>
+                      <button class="mm-acc__all" (click)="navigateToCategory(cat)">
+                        همه‌ی دوره‌های {{ cat.name }}
+                        <mat-icon>chevron_left</mat-icon>
+                      </button>
+                      @for (sub of cat.subcategories; track sub._id) {
+                        <div class="mm-acc__sub">
+                          <button class="mm-acc__subhead" (click)="navigateToSubcategory(cat, sub)">
+                            <app-category-icon
+                              [icon]="sub.icon"
+                              [iconType]="sub.iconType"
+                              [customIconUrl]="sub.customIconUrl"
+                              [size]="16"
+                              class="mm-acc__subicon"
+                              fallback="folder_open"
+                            />
+                            <span class="mm-acc__subname">{{ sub.name }}</span>
+                            <span class="mm-acc__subcount"
+                              >{{ compactCount(sub.courseCount) }} دوره</span
+                            >
+                          </button>
+                          @if (sub.topics.length) {
+                            <div class="mm-acc__topics">
+                              @for (tp of topTopics(sub); track tp._id) {
+                                <button
+                                  class="mm-acc__topic"
+                                  (click)="navigateToTopic(cat, sub, tp)"
+                                >
+                                  {{ tp.name }}
+                                </button>
+                              }
+                            </div>
+                          }
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+              }
+            }
+          </div>
+
+          <!-- ══════ Footer ══════ -->
+          <footer class="mm-foot">
+            <div class="mm-foot__stats">
+              <span class="mm-foot__stat">
+                <mat-icon class="c-violet">menu_book</mat-icon>
+                {{ compactCount(totalCourses()) }} دوره‌ی فعال
+              </span>
+              <span class="mm-foot__stat">
+                <mat-icon class="c-emerald">verified</mat-icon>
+                ضمانت ۷ روزه‌ی بازگشت وجه
+              </span>
+            </div>
+            <div class="mm-foot__hints">
+              <span>
+                <span class="kbd"><mat-icon>keyboard_arrow_up</mat-icon></span>
+                <span class="kbd"><mat-icon>keyboard_arrow_down</mat-icon></span>
+                حرکت
+              </span>
+              <span>
+                <span class="kbd"><mat-icon>keyboard_return</mat-icon></span>
+                انتخاب
+              </span>
+              <span>
+                <span class="kbd">/</span>
+                جست‌وجو
+              </span>
+            </div>
+            <button class="mm-foot__cta" (click)="navigateToAllCourses()">
+              <span>مشاهده‌ی همه‌ی دوره‌ها</span>
+              <mat-icon>arrow_back</mat-icon>
+            </button>
+          </footer>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,1297 @@
+
+<!-- ===================== LOADING STATE ===================== -->
+<ng-container *ngIf="isLoading(); else mainContent">
+  <div class="cl-loader-page" dir="rtl">
+    <div class="cl-loader-inner">
+      <div class="cl-loader-mark">
+        <mat-icon>school</mat-icon>
+      </div>
+      <div class="cl-loader-ring">
+        <span></span>
+        <span></span>
+      </div>
+      <p class="cl-loader-title">در حال آماده‌سازی کلاس</p>
+      <div class="cl-loader-bar">
+        <span></span>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<ng-template #mainContent>
+  <div class="cl-root" dir="rtl">
+
+    <!-- ==================== ERROR STATE ==================== -->
+    <div class="cl-error-page" *ngIf="loadError()" dir="rtl">
+      <div class="cl-error-card">
+        <div class="cl-error-icon">
+          <mat-icon>error_outline</mat-icon>
+        </div>
+        <h2>دوره در دسترس نیست</h2>
+        <p>{{ loadError() }}</p>
+        <div class="cl-error-actions">
+          <button class="cl-btn cl-btn-primary" (click)="retryLoad()">
+            <mat-icon>refresh</mat-icon>
+            تلاش دوباره
+          </button>
+          <button class="cl-btn cl-btn-ghost" (click)="goToCoursePage()">
+            <mat-icon>arrow_forward</mat-icon>
+            بازگشت به صفحه دوره
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== MAIN ==================== -->
+    <ng-container *ngIf="!loadError() && course() as data">
+
+      <!-- ==================== TOPBAR ==================== -->
+      <header class="cl-top">
+        <div class="cl-top-g">
+          <div class="cl-top-start">
+            <button class="cl-iconbtn" (click)="goBack()" data-tip="بازگشت" data-tip-pos="bottom" aria-label="بازگشت">
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+            <div class="cl-brand">
+              <span class="cl-brand-mark">
+                <mat-icon>school</mat-icon>
+              </span>
+              <div class="cl-brand-text">
+                <span class="cl-brand-kicker">دوره‌ی آموزشی</span>
+                <h1 class="cl-brand-title">{{ data.title }}</h1>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress widget (desktop) -->
+          <div class="cl-top-center">
+            <div class="cl-top-ring" style="width:42px;height:42px">
+              <svg class="cl-top-ring-svg" viewBox="0 0 42 42" width="42" height="42" aria-hidden="true">
+                <defs>
+                  <linearGradient id="topRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#8b6cff"/>
+                    <stop offset="100%" stop-color="#2dd4ee"/>
+                  </linearGradient>
+                </defs>
+                <circle cx="21" cy="21" r="17.5" fill="none" stroke="rgba(23,14,60,.12)" stroke-width="3.6"/>
+                <circle cx="21" cy="21" r="17.5" fill="none" stroke="url(#topRingGrad)" stroke-width="3.6"
+                        stroke-linecap="round"
+                        [attr.stroke-dasharray]="(progressPercent() / 100 * 109.96) + ' 109.96'"
+                        style="transition: stroke-dasharray .6s cubic-bezier(.22,1,.36,1)"/>
+              </svg>
+              <span class="cl-top-ring-num">{{ progressPercent() }}٪</span>
+            </div>
+            <div class="cl-top-progress-text">
+              <span class="cl-tp-label">پیشرفت دوره</span>
+              <span class="cl-tp-count">{{ completedLectures().length }} از {{ totalLectures() }} درس</span>
+            </div>
+          </div>
+
+          <div class="cl-top-end">
+            <button class="cl-iconbtn" data-tip="جستجو در دروس" data-tip-pos="bottom"
+                    aria-label="جستجو در دروس" (click)="focusSearch()">
+              <mat-icon>search</mat-icon>
+            </button>
+
+            <button class="cl-iconbtn" data-tip="اشتراک‌گذاری دوره" data-tip-pos="bottom"
+                    aria-label="اشتراک‌گذاری دوره" (click)="openShare()">
+              <mat-icon>share</mat-icon>
+            </button>
+
+            <button class="cl-iconbtn" data-tip="ذخیره در علاقه‌مندی‌ها" data-tip-pos="bottom"
+                    [class.lit]="isCourseBookmarked()" [class.busy]="isBookmarkBusy()"
+                    [attr.aria-pressed]="isCourseBookmarked()"
+                    [disabled]="isBookmarkBusy()"
+                    aria-label="ذخیره در علاقه‌مندی‌ها" (click)="toggleBookmark()">
+              <mat-icon>{{ isCourseBookmarked() ? 'bookmark' : 'bookmark_border' }}</mat-icon>
+            </button>
+
+            <button class="cl-iconbtn cl-autoplay-toggle"
+                    [class.lit]="autoPlayEnabled()"
+                    [attr.aria-pressed]="autoPlayEnabled()"
+                    [attr.data-tip]="autoPlayEnabled() ? 'پخش خودکار: روشن' : 'پخش خودکار: خاموش'"
+                    data-tip-pos="bottom"
+                    aria-label="پخش خودکار" (click)="toggleAutoPlay()">
+              <mat-icon>autorenew</mat-icon>
+            </button>
+
+            <button class="cl-iconbtn cl-side-toggle" (click)="toggleSidebar()"
+                    [attr.data-tip]="isSidebarOpen() ? 'بستن فهرست' : 'باز کردن فهرست'"
+                    data-tip-pos="bottom"
+                    aria-label="تغییر وضعیت فهرست">
+              <mat-icon>{{ isSidebarOpen() ? 'menu_open' : 'menu' }}</mat-icon>
+            </button>
+
+            <button class="cl-iconbtn cl-mobile-toggle" (click)="toggleMobileSidebar()"
+                    data-tip="فهرست دروس" data-tip-pos="bottom" aria-label="فهرست دروس">
+              <mat-icon>list</mat-icon>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- ==================== BODY ==================== -->
+      <div class="cl-body">
+        <main class="cl-stage">
+
+          <!-- -------- player zone -------- -->
+          <div class="cl-player-zone">
+            <div class="cl-ambient" aria-hidden="true">
+              <i class="a1"></i>
+              <i class="a2"></i>
+            </div>
+
+            <div class="cl-frame">
+              <ng-container *ngIf="currentLecture() as current">
+
+                <!-- Video lecture -->
+                <app-video-player
+                  *ngIf="isVideoLecture() && videoUrl() && !isLectureLocked()"
+                  [videoUrl]="videoUrl()"
+                  [poster]="resolveMediaUrl(current.videoThumbnail)"
+                  [title]="current.title || ''"
+                  [autoplay]="true"
+                  [initialPosition]="resumePosition()"
+                  (completed)="onVideoCompleted()"
+                  (progressUpdate)="onVideoProgressUpdate($event)"
+                  (urlExpired)="onVideoUrlExpired()"
+                ></app-video-player>
+
+                <!-- Locked lecture overlay -->
+                <div class="cl-nonvideo cl-locked" *ngIf="isLectureLocked()">
+                  <div class="cl-nv-blobs" aria-hidden="true">
+                    <i></i><i></i><i></i>
+                  </div>
+                  <div class="cl-nv-content">
+                    <div class="cl-nv-icon">
+                      <mat-icon>{{ lectureLockReason() === 'processing' ? 'hourglass_top' : 'lock' }}</mat-icon>
+                    </div>
+                    <h3 class="cl-nv-title">{{ lockTitle() }}</h3>
+                    <p class="cl-nv-hint">{{ lockHint() }}</p>
+
+                    <div class="cl-lock-actions">
+                      <button class="cl-btn cl-btn-primary"
+                              *ngIf="lectureLockReason() === 'login'" (click)="goToLogin()">
+                        <mat-icon>login</mat-icon>
+                        ورود / ثبت‌نام
+                      </button>
+                      <button class="cl-btn cl-btn-primary"
+                              *ngIf="lectureLockReason() === 'enroll'" (click)="goToCoursePage()">
+                        <mat-icon>shopping_cart</mat-icon>
+                        مشاهده و ثبت‌نام در دوره
+                      </button>
+                      <button class="cl-btn cl-btn-soft" *ngIf="lectureLockReason() === 'enroll'"
+                              (click)="hasPrevious() ? previousLecture() : goBack()">
+                        <mat-icon>arrow_forward</mat-icon>
+                        مشاهده درس‌های پیش‌نمایش رایگان
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Non-video card -->
+                <div class="cl-nonvideo" [ngClass]="'nv-' + current.type"
+                     *ngIf="!isVideoLecture() && !isLectureLocked()">
+                  <div class="cl-nv-blobs" aria-hidden="true">
+                    <i></i><i></i><i></i>
+                  </div>
+                  <div class="cl-nv-content">
+                    <div class="cl-nv-icon">
+                      <mat-icon>{{ getLectureIcon(current.type) }}</mat-icon>
+                    </div>
+                    <span class="cl-nv-badge">
+                      <mat-icon>{{ getLectureIcon(current.type) }}</mat-icon>
+                      {{ getLectureTypeLabel(current.type) }}
+                    </span>
+                    <h3 class="cl-nv-title">{{ current.title }}</h3>
+                    <p class="cl-nv-hint" [ngSwitch]="current.type">
+                      <ng-container *ngSwitchCase="'article'">محتوای کامل مقاله در بخش «توضیحات» همین درس آمده است</ng-container>
+                      <ng-container *ngSwitchCase="'quiz'">آزمون این درس در تب «آزمون» فعال است؛ آماده‌اید؟</ng-container>
+                      <ng-container *ngSwitchCase="'download'">فایل این درس از بخش «منابع» قابل دریافت است</ng-container>
+                      <ng-container *ngSwitchCase="'live'">کلاس زنده طبق زمان‌بندی برگزار می‌شود</ng-container>
+                      <ng-container *ngSwitchCase="'assignment'">تمرین این درس را در تب «تمرین» ارسال کنید</ng-container>
+                      <ng-container *ngSwitchDefault>محتوای درس در بخش توضیحات نمایش داده می‌شود</ng-container>
+                    </p>
+                    <button class="cl-btn cl-btn-soft"
+                            (click)="setActiveTab(current.type === 'quiz' ? 'quiz' : current.type === 'assignment' ? 'assignment' : 'overview')">
+                      {{ current.type === 'quiz' ? 'شروع آزمون' : current.type === 'assignment' ? 'رفتن به تمرین' : 'رفتن به توضیحات درس' }}
+                      <mat-icon>chevron_left</mat-icon>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Video loading spinner -->
+                <div class="cl-video-loading" *ngIf="isVideoLecture() && !videoUrl() && !isLectureLocked()">
+                  <div class="cl-spinner-wrap">
+                    <div class="cl-spinner">
+                      <span></span>
+                      <span></span>
+                    </div>
+                    <p>در حال آماده‌سازی ویدیو</p>
+                    <p class="sub">لطفاً چند لحظه صبر کنید…</p>
+                  </div>
+                </div>
+              </ng-container>
+
+              <!-- Auto-play countdown -->
+              <div class="cl-autoplay" *ngIf="autoPlayCountdown() > 0" role="alertdialog" aria-label="پخش خودکار درس بعدی">
+                <div class="cl-autoplay-card">
+                  <div class="cl-autoplay-ring">
+                    <svg viewBox="0 0 96 96" aria-hidden="true">
+                      <defs>
+                        <linearGradient id="cdg" x1="0" y1="0" x2="1" y2="1">
+                          <stop offset="0%" stop-color="#8b6cff"/>
+                          <stop offset="100%" stop-color="#2dd4ee"/>
+                        </linearGradient>
+                      </defs>
+                      <circle cx="48" cy="48" r="42" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="5"/>
+                      <circle cx="48" cy="48" r="42" fill="none" stroke="url(#cdg)" stroke-width="5"
+                              stroke-linecap="round"
+                              [attr.stroke-dasharray]="((8 - autoPlayCountdown()) / 8 * 263.9) + ' 263.9'"
+                              transform="rotate(-90 48 48)"
+                              style="transition: stroke-dasharray 1s linear"/>
+                    </svg>
+                    <span class="cl-autoplay-num">{{ autoPlayCountdown() }}</span>
+                  </div>
+                  <div class="cl-autoplay-text">
+                    <span class="cl-autoplay-kicker">درس بعدی به‌زودی پخش می‌شود</span>
+                    <strong>درس بعدی</strong>
+                    <div class="cl-autoplay-actions">
+                      <button class="cl-btn cl-btn-primary" (click)="cancelAutoPlay(); nextLecture()">
+                        <mat-icon>play_arrow</mat-icon>
+                        پخش اکنون
+                      </button>
+                      <button class="cl-btn cl-btn-ghost" (click)="cancelAutoPlay()">
+                        <mat-icon>close</mat-icon>
+                        لغو
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- No lecture selected -->
+              <div class="cl-nonvideo" *ngIf="!currentLecture()">
+                <div class="cl-nv-content">
+                  <div class="cl-nv-icon">
+                    <mat-icon>play_circle</mat-icon>
+                  </div>
+                  <h3 class="cl-nv-title">درسی برای پخش انتخاب نشده</h3>
+                  <p class="cl-nv-hint">از فهرست کناری یک درس را انتخاب کنید</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- -------- Under-player controls -------- -->
+            <div class="cl-underbar" *ngIf="currentLecture() as current">
+              <div class="cl-nav-btns">
+                <button class="cl-btn cl-btn-ghost" [disabled]="!hasPrevious()" (click)="previousLecture()"
+                        data-tip="درس قبلی (→)" data-tip-pos="top">
+                  <mat-icon>skip_previous</mat-icon>
+                  <span>قبلی</span>
+                </button>
+                <button class="cl-btn cl-btn-ghost" [disabled]="!hasNext()" (click)="nextLecture()"
+                        data-tip="درس بعدی (←)" data-tip-pos="top">
+                  <span>بعدی</span>
+                  <mat-icon>skip_next</mat-icon>
+                </button>
+              </div>
+              <span class="cl-position">
+                <em>فصل {{ currentLectureIndex().section + 1 }}</em>
+                درس {{ currentLectureIndex().global + 1 }} از {{ totalLectures() }}
+              </span>
+              <button class="cl-btn cl-complete" [class.done]="isLectureCompleted(current._id)"
+                      [disabled]="isLectureLocked()"
+                      (click)="toggleLectureComplete(current, $event)">
+                <span class="cl-complete-ic">
+                  <mat-icon *ngIf="isLectureCompleted(current._id)">check</mat-icon>
+                  <span class="cl-complete-dot" *ngIf="!isLectureCompleted(current._id)"></span>
+                </span>
+                {{ isLectureCompleted(current._id) ? 'تکمیل شده' : 'علامت‌گذاری به‌عنوان تکمیل' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- -------- Info & Tabs -------- -->
+          <section class="cl-info" *ngIf="currentLecture() as current">
+
+            <!-- Lecture header -->
+            <header class="cl-lec-head">
+              <div class="cl-lec-badges">
+                <span class="cl-chip" [ngClass]="'t-' + current.type">
+                  <mat-icon>{{ getLectureIcon(current.type) }}</mat-icon>
+                  {{ getLectureTypeLabel(current.type) }}
+                </span>
+                <span class="cl-chip" *ngIf="current.duration">
+                  <mat-icon>schedule</mat-icon>
+                  {{ current.duration | duration }}
+                </span>
+                <span class="cl-chip">
+                  درس {{ currentLectureIndex().global + 1 }} از {{ totalLectures() }}
+                </span>
+                <span class="cl-chip done" *ngIf="isLectureCompleted(current._id)">
+                  <mat-icon>check_circle</mat-icon>
+                  تکمیل شده
+                </span>
+                <span class="cl-chip quiz-score" *ngIf="previousQuizScore !== null">
+                  <mat-icon>workspace_premium</mat-icon>
+                  نمره آزمون: {{ previousQuizScore }}
+                </span>
+              </div>
+              <h2 class="cl-lec-title">{{ current.title }}</h2>
+              <span class="cl-free-tag" *ngIf="current.isFreePreview">دسترسی رایگان به این درس</span>
+            </header>
+
+            <!-- Instructor card -->
+            <div class="cl-ins-card" *ngIf="data.instructor">
+              <div class="cl-avatar ins lg">{{ getInitials(data.instructor.fullName) }}</div>
+              <div class="cl-ins-info">
+                <span class="cl-ins-label">مدرس دوره</span>
+                <strong>{{ data.instructor.fullName }}</strong>
+                <p *ngIf="data.instructor.bio" [innerHTML]="getInstructorBio()"></p>
+              </div>
+              <button class="cl-btn cl-btn-soft" (click)="contactInstructor()">
+                <mat-icon>chat</mat-icon>
+                گفت‌وگو با مدرس
+              </button>
+            </div>
+
+            <!-- Tabs navigation -->
+            <div class="cl-tabs" role="tablist" aria-label="بخش‌های درس">
+              <button *ngFor="let tab of tabs" class="cl-tab" [class.active]="activeTab() === tab.id"
+                      (click)="setActiveTab(tab.id)" role="tab"
+                      [attr.aria-selected]="activeTab() === tab.id">
+                <mat-icon>{{ tab.icon }}</mat-icon>
+                <span>{{ tab.label }}</span>
+                <em class="cl-tab-count" *ngIf="tab.id === 'resources' && current.resources?.length">
+                  {{ current.resources.length }}
+                </em>
+              </button>
+
+              <button class="cl-tab cl-tab-quiz" [class.active]="activeTab() === 'quiz'"
+                      *ngIf="hasQuiz()" (click)="setActiveTab('quiz')" role="tab"
+                      [attr.aria-selected]="activeTab() === 'quiz'">
+                <mat-icon>quiz</mat-icon>
+                <span>آزمون</span>
+                <em class="cl-tab-count" *ngIf="currentQuiz()?.questions?.length">
+                  {{ currentQuiz()!.questions.length }}
+                </em>
+              </button>
+
+              <button class="cl-tab cl-tab-assignment" [class.active]="activeTab() === 'assignment'"
+                      *ngIf="current.type === 'assignment'" (click)="setActiveTab('assignment')" role="tab"
+                      [attr.aria-selected]="activeTab() === 'assignment'">
+                <mat-icon>assignment</mat-icon>
+                <span>تمرین</span>
+              </button>
+            </div>
+
+            <!-- Tab Panels -->
+            <div class="cl-panels">
+
+              <!-- ==================== Overview Tab ==================== -->
+              <ng-container *ngIf="activeTab() === 'overview'">
+                <div class="cl-card">
+                  <div class="cl-card-head">
+                    <h3 class="cl-card-title">
+                      <mat-icon>info</mat-icon>
+                      توضیحات درس
+                    </h3>
+                  </div>
+                  <p class="cl-desc" *ngIf="current.description">{{ current.description }}</p>
+                  <div class="cl-empty small" *ngIf="!current.description">
+                    <mat-icon>description</mat-icon>
+                    <p>توضیحاتی برای این درس ثبت نشده است.</p>
+                  </div>
+                </div>
+
+                <!-- Learning outcomes -->
+                <div class="cl-card" *ngIf="data.learningOutcomes?.length">
+                  <div class="cl-card-head">
+                    <h3 class="cl-card-title">
+                      <mat-icon>school</mat-icon>
+                      در این درس یاد می‌گیرید
+                    </h3>
+                  </div>
+                  <ul class="cl-outcomes">
+                    <li *ngFor="let outcome of data.learningOutcomes">
+                      <mat-icon>check_circle</mat-icon>
+                      <span>{{ outcome }}</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <!-- Article content -->
+                <div class="cl-card" *ngIf="current.articleContent || current.content">
+                  <div class="cl-card-head">
+                    <h3 class="cl-card-title">
+                      <mat-icon>article</mat-icon>
+                      محتوای مقاله
+                    </h3>
+                  </div>
+                  <div class="cl-prose" [innerHTML]="getArticleContent()"></div>
+                </div>
+
+                <!-- Rich Text Content Items -->
+                <div class="cl-card" *ngFor="let item of getRichTextContentItems()">
+                  <div class="cl-card-head">
+                    <h3 class="cl-card-title">
+                      <mat-icon>article</mat-icon>
+                      {{ item.title || 'متن غنی' }}
+                    </h3>
+                  </div>
+                  <div class="cl-prose" [innerHTML]="item.richTextContent | sanitizeHtml"></div>
+                </div>
+
+                <!-- Download file card -->
+                <div class="cl-card" *ngIf="current.type === 'download' && getDownloadFile() as dlFile">
+                  <div class="cl-card-head">
+                    <h3 class="cl-card-title">
+                      <mat-icon>download</mat-icon>
+                      فایل قابل دانلود
+                    </h3>
+                  </div>
+                  <div class="cl-file-row">
+                    <div class="cl-file-ic">
+                      <mat-icon>attach_file</mat-icon>
+                    </div>
+                    <div class="cl-file-info">
+                      <strong>{{ dlFile.name }}</strong>
+                      <span *ngIf="dlFile.size">{{ formatFileSize(dlFile.size) }}</span>
+                    </div>
+                    <a class="cl-btn cl-btn-primary" [href]="dlFile.url" target="_blank" rel="noopener noreferrer" download>
+                      <mat-icon>download</mat-icon>
+                      دانلود
+                    </a>
+                  </div>
+                </div>
+
+                <!-- Live session info -->
+                <div class="cl-card" *ngIf="current.type === 'live'">
+                  <div class="cl-card-head">
+                    <h3 class="cl-card-title">
+                      <mat-icon>sensors</mat-icon>
+                      کلاس زنده
+                    </h3>
+                  </div>
+                  <p class="cl-desc">
+                    این درس به‌صورت کلاس زنده برگزار می‌شود. زمان و لینک ورود در همین صفحه اعلام می‌شود.
+                  </p>
+                </div>
+              </ng-container>
+
+              <!-- ==================== Notes Tab ==================== -->
+              <ng-container *ngIf="activeTab() === 'notes'">
+                <div class="cl-card">
+                  <div class="cl-card-head">
+                    <h3 class="cl-card-title">
+                      <mat-icon>sticky_note_2</mat-icon>
+                      یادداشت‌های شخصی
+                    </h3>
+                    <span class="cl-save-hint" [class.syncing]="isNotesSyncing()">
+                      <mat-icon>{{ isNotesSyncing() ? 'sync' : 'cloud_done' }}</mat-icon>
+                      {{ isNotesSyncing() ? 'در حال ذخیره…' : 'ذخیره‌سازی خودکار' }}
+                    </span>
+                  </div>
+
+                  <div class="cl-note-gate" *ngIf="!canInteract()">
+                    <mat-icon>lock</mat-icon>
+                    <p>برای ذخیره یادداشت‌ها ابتدا وارد حساب کاربری خود شوید.</p>
+                    <button class="cl-btn cl-btn-soft" (click)="goToLogin()">ورود به حساب</button>
+                  </div>
+
+                  <textarea class="cl-notes" *ngIf="canInteract()"
+                            [value]="noteContent()"
+                            (input)="onNoteChange($any($event.target).value)"
+                            placeholder="یادداشت‌های خود را اینجا بنویسید… نکات مهم درس، ایده‌ها و لینک‌ها — همه به‌صورت خودکار ذخیره می‌شوند."
+                            rows="9"></textarea>
+
+                  <div class="cl-notes-foot" *ngIf="canInteract()">
+                    <span>{{ noteContent().length }} کاراکتر</span>
+                    <span class="cl-notes-saved" *ngIf="notesSyncedAt()">
+                      <mat-icon>cloud_done</mat-icon>
+                      آخرین ذخیره: {{ notesSyncedAt() }}
+                    </span>
+                    <span *ngIf="!notesSyncedAt()">یادداشت فقط روی همین دستگاه ذخیره می‌شود</span>
+                    <button class="cl-textbtn" *ngIf="noteContent().length" (click)="clearNote()">
+                      پاک کردن یادداشت
+                    </button>
+                  </div>
+                </div>
+              </ng-container>
+
+              <!-- ==================== Resources Tab ==================== -->
+              <ng-container *ngIf="activeTab() === 'resources'">
+                <!-- Content Items (New multi-content system) -->
+                <div class="cl-card" *ngIf="current.contentItems?.length">
+                  <div class="cl-card-head">
+                    <h3 class="cl-card-title">
+                      <mat-icon>playlist_add</mat-icon>
+                      محتوای این جلسه
+                    </h3>
+                    <span class="cl-tab-count">{{ current.contentItems.length }} مورد</span>
+                  </div>
+                  <div class="cl-content-items-list">
+                    <div class="cl-content-item" *ngFor="let item of current.contentItems; let i = index">
+                      <div class="cl-ci-icon" [ngClass]="'ci-' + item.type">
+                        <mat-icon>{{ getContentItemIcon(item.type) }}</mat-icon>
+                      </div>
+                      <div class="cl-ci-info">
+                        <strong>{{ item.title }}</strong>
+                        <span class="cl-ci-meta">
+                          <span class="cl-ci-type">{{ getContentItemTypeLabel(item.type) }}</span>
+                          <span *ngIf="item.videoDuration"> · {{ item.videoDuration | duration }}</span>
+                          <span *ngIf="item.audioDuration"> · {{ item.audioDuration | duration }}</span>
+                          <span *ngIf="item.fileSize"> · {{ formatFileSize(item.fileSize) }}</span>
+                        </span>
+                      </div>
+                      <div class="cl-ci-actions">
+                        <ng-container [ngSwitch]="item.type">
+                          <!-- Video -->
+                          <button *ngSwitchCase="'video'" class="cl-btn cl-btn-primary cl-btn-sm" 
+                                  (click)="playContentItemVideo(item)" [disabled]="isLectureLocked()">
+                            <mat-icon>play_arrow</mat-icon> پخش
+                          </button>
+                          <!-- Rich Text -->
+                          <div *ngSwitchCase="'rich-text'" class="cl-ci-rich-text" [innerHTML]="item.richTextContent | sanitizeHtml"></div>
+                          <!-- Attachment -->
+                          <a *ngSwitchCase="'attachment'" class="cl-btn cl-btn-soft cl-btn-sm" 
+                             [href]="getContentItemFileUrl(item)" target="_blank" download>
+                            <mat-icon>download</mat-icon> دانلود
+                          </a>
+                          <!-- External Link -->
+                          <a *ngSwitchCase="'external-link'" class="cl-btn cl-btn-soft cl-btn-sm" 
+                             [href]="item.externalUrl" target="_blank" rel="noopener noreferrer">
+                            <mat-icon>open_in_new</mat-icon> باز کردن
+                          </a>
+                          <!-- Image -->
+                          <div *ngSwitchCase="'image'" class="cl-ci-image">
+                            <img 
+                              [src]="getContentItemImageUrl(item)" 
+                              [alt]="item.title" 
+                              (click)="openImageViewer(item, i)"
+                              class="clickable-image"
+                              loading="lazy" />
+                            <div class="cl-ci-image-overlay">
+                              <mat-icon>zoom_in</mat-icon>
+                              <span>بزرگ‌نمایی</span>
+                            </div>
+                          </div>
+                          <!-- Audio -->
+                          <div *ngSwitchCase="'audio'" class="cl-ci-audio">
+                            <audio [src]="getContentItemAudioUrl(item)" controls preload="metadata"></audio>
+                          </div>
+                        </ng-container>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Legacy Resources -->
+                <div class="cl-card" *ngIf="current.resources?.length">
+                  <div class="cl-card-head">
+                    <h3 class="cl-card-title">
+                      <mat-icon>folder</mat-icon>
+                      منابع و فایل‌های ضمیمه
+                    </h3>
+                    <span class="cl-tab-count">
+                      {{ current.resources.length }} فایل
+                    </span>
+                  </div>
+                  <div class="cl-res-list">
+                    <div class="cl-res" *ngFor="let resource of current.resources">
+                      <div class="cl-res-ic" [ngClass]="getResourceTone(resource)">
+                        <mat-icon>{{ getResourceIcon(resource) }}</mat-icon>
+                      </div>
+                      <div class="cl-res-info">
+                        <strong>{{ resource.title }}</strong>
+                        <span>
+                          <ng-container *ngIf="resource.type">{{ resource.type }}</ng-container>
+                          <ng-container *ngIf="resource.type && resource.size"> · </ng-container>
+                          <ng-container *ngIf="resource.size">{{ formatFileSize(resource.size) }}</ng-container>
+                        </span>
+                      </div>
+                      <button class="cl-res-dl" (click)="downloadResource(resource)" data-tip="دانلود فایل" data-tip-pos="left">
+                        <mat-icon>download</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Empty state -->
+                <div class="cl-empty small" *ngIf="!current.contentItems?.length && !current.resources?.length">
+                  <mat-icon>folder_open</mat-icon>
+                  <p>منبع یا محتوایی برای این درس موجود نیست.</p>
+                </div>
+              </ng-container>
+
+              <!-- ==================== Q&A Tab ==================== -->
+              <ng-container *ngIf="activeTab() === 'qa'">
+                <div class="cl-card">
+                  <div class="cl-card-head">
+                    <h3 class="cl-card-title">
+                      <mat-icon>forum</mat-icon>
+                      پرسش و پاسخ
+                    </h3>
+                    <div class="cl-qa-scope">
+                      <button class="cl-scope-btn" [class.active]="qaScope() === 'lecture'"
+                              (click)="setQaScope('lecture')">این درس</button>
+                      <button class="cl-scope-btn" [class.active]="qaScope() === 'course'"
+                              (click)="setQaScope('course')">کل دوره</button>
+                    </div>
+                  </div>
+
+                  <!-- Login gate -->
+                  <div class="cl-note-gate" *ngIf="!canInteract()">
+                    <mat-icon>lock</mat-icon>
+                    <p>برای دیدن و طرح پرسش ابتدا وارد حساب کاربری شوید.</p>
+                    <button class="cl-btn cl-btn-soft" (click)="goToLogin()">ورود به حساب</button>
+                  </div>
+
+                  <ng-container *ngIf="canInteract()">
+
+                    <!-- Composer trigger -->
+                    <button class="cl-btn cl-btn-primary cl-qa-trigger"
+                            *ngIf="isLoadingDiscussions() || discussions().length > 0"
+                            (click)="openQaComposer()">
+                      <mat-icon>add</mat-icon>
+                      ثبت پرسش جدید
+                    </button>
+
+                    <!-- Composer -->
+                    <div class="cl-qa-composer" *ngIf="qaComposerOpen()">
+                      <div class="cl-avatar ins">{{ getInitials(currentUserName()) }}</div>
+                      <div class="cl-qa-box">
+                        <input class="cl-qa-title" type="text" [value]="qaTitle()"
+                               (input)="qaTitle.set($any($event.target).value)"
+                               placeholder="عنوان پرسش (اختیاری)" maxlength="200"/>
+                        <textarea [value]="qaContent()"
+                                  (input)="qaContent.set($any($event.target).value)"
+                                  placeholder="سوال خود را بنویسید… هر چه دقیق‌تر باشد، پاسخ بهتری دریافت می‌کنید."
+                                  rows="4" maxlength="5000"></textarea>
+                        <div class="cl-qa-composer-foot">
+                          <span>{{ qaContent().length }} / 5000</span>
+                          <div>
+                            <button class="cl-btn cl-btn-ghost" (click)="closeQaComposer()">انصراف</button>
+                            <button class="cl-btn cl-btn-primary" [disabled]="isSubmittingQuestion() || !qaContent().trim()"
+                                    (click)="submitQuestion()">
+                              <mat-icon *ngIf="!isSubmittingQuestion()">send</mat-icon>
+                              <span class="cl-btn-spinner" *ngIf="isSubmittingQuestion()"></span>
+                              {{ isSubmittingQuestion() ? 'در حال ارسال…' : 'ارسال پرسش' }}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Loading -->
+                    <div class="cl-qa-loading" *ngIf="isLoadingDiscussions()">
+                      <span class="cl-btn-spinner"></span>
+                      <p>در حال بارگذاری پرسش‌ها…</p>
+                    </div>
+
+                    <!-- Empty -->
+                    <div class="cl-empty cl-qa-empty" *ngIf="!isLoadingDiscussions() && discussions().length === 0">
+                      <div class="cl-empty-icon">
+                        <mat-icon>question_answer</mat-icon>
+                      </div>
+                      <h4>هنوز پرسشی مطرح نشده</h4>
+                      <p>اولین نفری باشید که درباره‌ی این درس سوال می‌پرسد؛ مدرس در یک روز کاری پاسخ می‌دهد.</p>
+                      <button class="cl-btn cl-btn-primary" (click)="openQaComposer()">
+                        <mat-icon>add</mat-icon>
+                        ثبت پرسش جدید
+                      </button>
+                    </div>
+
+                    <!-- List -->
+                    <div class="cl-qa-list" *ngIf="discussions().length">
+                      <article class="cl-qa-item" *ngFor="let d of discussions()"
+                               [id]="'q-' + d._id">
+                        <header class="cl-qa-item-head">
+                          <div class="cl-avatar ins">{{ getInitials(d.user?.fullName) }}</div>
+                          <div class="cl-qa-item-meta">
+                            <strong>{{ d.user?.fullName || 'کاربر حذف‌شده' }}</strong>
+                            <span>
+                              <span class="cl-role-tag" *ngIf="d.user?.role === 'instructor'">مدرس</span>
+                              {{ timeAgo(d.createdAt) }}
+                              <ng-container *ngIf="d.lecture && qaScope() === 'course'"> · مربوط به یک درس</ng-container>
+                            </span>
+                          </div>
+                          <span class="cl-pinned" *ngIf="d.isPinned">
+                            <mat-icon>push_pin</mat-icon>
+                          </span>
+                        </header>
+
+                        <h4 class="cl-qa-item-title" *ngIf="d.title">{{ d.title }}</h4>
+                        <p class="cl-qa-item-body">{{ d.content }}</p>
+
+                        <footer class="cl-qa-item-foot">
+                          <button class="cl-vote" [class.active]="d.hasUpvoted"
+                                  [disabled]="isVoting(d._id, null)" (click)="vote(d, null, 1)">
+                            <mat-icon>thumb_up</mat-icon>
+                            <span>{{ d.upvotesCount || 0 }}</span>
+                          </button>
+                          <button class="cl-vote" [class.active]="d.hasDownvoted"
+                                  [disabled]="isVoting(d._id, null)" (click)="vote(d, null, -1)">
+                            <mat-icon>thumb_down</mat-icon>
+                            <span>{{ d.downvotesCount || 0 }}</span>
+                          </button>
+                          <button class="cl-qa-action" (click)="toggleReplyBox(d._id)">
+                            <mat-icon>reply</mat-icon>
+                            پاسخ
+                            <span *ngIf="d.replies?.length">({{ d.replies.length }})</span>
+                          </button>
+                          <span class="cl-qa-spacer"></span>
+                          <button class="cl-qa-icon" *ngIf="isCourseOwnerView()"
+                                  (click)="togglePinQuestion(d)"
+                                  [class.active]="d.isPinned"
+                                  [attr.data-tip]="d.isPinned ? 'حذف سنجاق' : 'سنجاق کردن'"
+                                  data-tip-pos="left" aria-label="سنجاق پرسش">
+                            <mat-icon>{{ d.isPinned ? 'keep_off' : 'push_pin' }}</mat-icon>
+                          </button>
+                          <button class="cl-qa-icon" *ngIf="isCourseOwnerView()"
+                                  (click)="toggleResolveQuestion(d)"
+                                  [class.active]="d.isResolved"
+                                  data-tip="علامت حل‌شده"
+                                  data-tip-pos="left" aria-label="علامت حل‌شده">
+                            <mat-icon>{{ d.isResolved ? 'radio_button_unchecked' : 'task_alt' }}</mat-icon>
+                          </button>
+                          <button class="cl-qa-icon" (click)="copyQuestionLink(d._id)"
+                                  data-tip="کپی لینک" data-tip-pos="left" aria-label="کپی لینک پرسش">
+                            <mat-icon>link</mat-icon>
+                          </button>
+                          <button class="cl-qa-icon danger" *ngIf="canDeleteDiscussion(d)"
+                                  (click)="deleteQuestion(d._id)"
+                                  data-tip="حذف" data-tip-pos="left" aria-label="حذف پرسش">
+                            <mat-icon>delete_outline</mat-icon>
+                          </button>
+                        </footer>
+
+                        <!-- Replies -->
+                        <div class="cl-replies" *ngIf="d.replies?.length">
+                          <div class="cl-reply" *ngFor="let r of d.replies" [class.instructor]="r.isInstructorReply">
+                            <div class="cl-avatar ins sm">{{ getInitials(r.user?.fullName) }}</div>
+                            <div class="cl-reply-body">
+                              <div class="cl-reply-head">
+                                <strong>{{ r.user?.fullName || 'کاربر حذف‌شده' }}</strong>
+                                <span class="cl-instructor-badge" *ngIf="r.isInstructorReply">
+                                  <mat-icon>verified</mat-icon> مدرس
+                                </span>
+                                <span class="cl-reply-time">{{ timeAgo(r.createdAt) }}</span>
+                              </div>
+                              <p>{{ r.content }}</p>
+                              <button class="cl-vote sm" [class.active]="r.hasUpvoted"
+                                      *ngIf="r._id" (click)="vote(d, r._id!, 1)">
+                                <mat-icon>thumb_up</mat-icon>
+                                <span>{{ r.upvotesCount || 0 }}</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <!-- Reply editor -->
+                        <div class="cl-reply-editor" *ngIf="openReplyFor() === d._id">
+                          <textarea [value]="replyDrafts()[d._id] || ''"
+                                    (input)="setReplyDraft(d._id, $any($event.target).value)"
+                                    placeholder="پاسخ خود را بنویسید…" rows="3" maxlength="3000"></textarea>
+                          <div class="cl-reply-editor-foot">
+                            <button class="cl-btn cl-btn-ghost" (click)="toggleReplyBox(d._id)">انصراف</button>
+                            <button class="cl-btn cl-btn-primary" [disabled]="!replyDrafts()[d._id]?.trim()"
+                                    (click)="submitReply(d._id)">
+                              <mat-icon>send</mat-icon>
+                              ارسال پاسخ
+                            </button>
+                          </div>
+                        </div>
+                      </article>
+                    </div>
+                  </ng-container>
+                </div>
+              </ng-container>
+
+              <!-- ==================== Quiz Tab ==================== -->
+              <ng-container *ngIf="activeTab() === 'quiz' && currentQuiz() as quiz">
+                <div class="cl-card">
+                  <div class="cl-card-head">
+                    <h3 class="cl-card-title">
+                      <mat-icon>quiz</mat-icon>
+                      آزمون درس
+                    </h3>
+                    <div class="cl-quiz-meta">
+                      <span class="cl-quiz-timer" *ngIf="quizSecondsLeft() > 0" [class.danger]="quizSecondsLeft() < 60">
+                        <mat-icon>timer</mat-icon>
+                        {{ formatTimer(quizSecondsLeft()) }}
+                      </span>
+                      <span class="cl-quiz-count">{{ answeredQuizCount() }} / {{ quiz.questions.length }}</span>
+                    </div>
+                  </div>
+
+                  <div class="cl-quiz-info">
+                    <span><mat-icon>flag</mat-icon> حداقل نمره قبولی: {{ quiz.passingScore }}٪</span>
+                    <span *ngIf="quiz.timeLimit"><mat-icon>schedule</mat-icon> زمان: {{ quiz.timeLimit }} دقیقه</span>
+                    <span *ngIf="previousQuizScore !== null">
+                      <mat-icon>history</mat-icon> آخرین نمره: {{ previousQuizScore }}
+                    </span>
+                  </div>
+
+                  <!-- Result banner -->
+                  <div class="cl-quiz-result" *ngIf="quizResult() as result"
+                       [class.passed]="result.passed" [class.failed]="!result.passed">
+                    <div class="cl-quiz-result-ring">
+                      <svg viewBox="0 0 84 84" aria-hidden="true">
+                        <circle cx="42" cy="42" r="36" class="ring-bg"/>
+                        <circle cx="42" cy="42" r="36" class="ring-fill"
+                                [attr.stroke-dasharray]="(result.score / 100 * 226.2) + ' 226.2'"/>
+                      </svg>
+                      <span>{{ result.score }}٪</span>
+                    </div>
+                    <div class="cl-quiz-result-text">
+                      <h4>{{ result.passed ? 'آفرین! آزمون را با موفقیت گذراندید 🎉' : 'متأسفانه قبول نشدید' }}</h4>
+                      <p>
+                        از مجموع {{ result.totalQuestions }} سؤال، به {{ result.correctCount }} سؤال درست پاسخ دادید.
+                        حداقل نمره قبولی {{ result.passingScore }} است.
+                      </p>
+                    </div>
+                    <button class="cl-btn cl-btn-soft" *ngIf="!result.passed" (click)="retryQuiz()">
+                      <mat-icon>refresh</mat-icon>
+                      تلاش دوباره
+                    </button>
+                  </div>
+
+                  <!-- Questions -->
+                  <div class="cl-quiz-list">
+                    <div class="cl-quiz-question" *ngFor="let q of quiz.questions; let qi = index">
+                      <div class="cl-quiz-q-head">
+                        <span class="cl-quiz-num">{{ qi + 1 }}</span>
+                        <p>{{ q.question }}</p>
+                      </div>
+                      <div class="cl-quiz-options">
+                        <button class="cl-quiz-option"
+                                *ngFor="let opt of q.options; let oi = index"
+                                [ngClass]="quizOptionState(qi, oi)"
+                                [disabled]="quizSubmitted()"
+                                (click)="selectQuizOption(qi, oi)">
+                          <span class="cl-quiz-marker">
+                            <mat-icon *ngIf="quizSubmitted() && quizOptionState(qi, oi) === 'correct'">check</mat-icon>
+                            <mat-icon *ngIf="quizSubmitted() && quizOptionState(qi, oi) === 'wrong'">close</mat-icon>
+                            <ng-container *ngIf="!quizOptionState(qi, oi)">{{ oi + 1 }}</ng-container>
+                          </span>
+                          <span class="cl-quiz-opt-text">{{ opt }}</span>
+                        </button>
+                      </div>
+                      <p class="cl-quiz-explain" *ngIf="quizSubmitted() && q.explanation">
+                        <mat-icon>lightbulb</mat-icon>
+                        {{ q.explanation }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div class="cl-quiz-actions" *ngIf="!quizSubmitted()">
+                    <button class="cl-btn cl-btn-primary" [disabled]="isQuizSubmitting() || !allQuizAnswered()"
+                            (click)="submitQuiz()">
+                      <span class="cl-btn-spinner" *ngIf="isQuizSubmitting()"></span>
+                      <mat-icon *ngIf="!isQuizSubmitting()">send</mat-icon>
+                      {{ isQuizSubmitting() ? 'در حال ثبت…' : 'ثبت آزمون' }}
+                    </button>
+                    <span class="cl-quiz-hint" *ngIf="!allQuizAnswered()">
+                      {{ quiz.questions.length - answeredQuizCount() }} سؤال بی‌پاسخ مانده است
+                    </span>
+                  </div>
+                </div>
+              </ng-container>
+
+              <!-- ==================== Assignment Tab ==================== -->
+              <ng-container *ngIf="activeTab() === 'assignment' && current.type === 'assignment'">
+                <div class="cl-card">
+                  <div class="cl-card-head">
+                    <h3 class="cl-card-title">
+                      <mat-icon>assignment</mat-icon>
+                      تمرین این درس
+                    </h3>
+                    <span class="cl-due" *ngIf="assignmentDueDate">
+                      <mat-icon>event</mat-icon>
+                      مهلت: {{ assignmentDueDate }}
+                    </span>
+                  </div>
+
+                  <div class="cl-assignment-instructions" *ngIf="current.assignment?.instructions">
+                    <p>{{ current.assignment?.instructions }}</p>
+                  </div>
+
+                  <div class="cl-note-gate" *ngIf="isLectureLocked()">
+                    <mat-icon>lock</mat-icon>
+                    <p>برای ارسال تمرین باید در دوره ثبت‌نام کنید.</p>
+                    <button class="cl-btn cl-btn-soft" (click)="goToCoursePage()">مشاهده دوره</button>
+                  </div>
+
+                  <ng-container *ngIf="!isLectureLocked()">
+                    <div class="cl-success-banner" *ngIf="assignmentSubmitted()">
+                      <mat-icon>check_circle</mat-icon>
+                      <div>
+                        <strong>تمرین شما ارسال شده است</strong>
+                        <p>پس از بررسی، نمره و بازخورد مدرس در همین بخش نمایش داده می‌شود.</p>
+                      </div>
+                    </div>
+
+                    <div class="cl-assignment-form" *ngIf="!assignmentSubmitted()">
+                      <label class="cl-field" *ngIf="assignmentSubmissionType !== 'file'">
+                        <span class="cl-field-label">پاسخ شما</span>
+                        <textarea [value]="assignmentText()"
+                                  (input)="assignmentText.set($any($event.target).value)"
+                                  placeholder="پاسخ خود را اینجا بنویسید…" rows="6" maxlength="5000"></textarea>
+                      </label>
+
+                      <label class="cl-field" *ngIf="assignmentSubmissionType !== 'text'">
+                        <span class="cl-field-label">فایل پیوست (حداکثر ۱۰ مگابایت)</span>
+                        <div class="cl-file-input" *ngIf="!assignmentFile()">
+                          <mat-icon>cloud_upload</mat-icon>
+                          <span>فایلی انتخاب نشده است</span>
+                          <input type="file" (change)="onAssignmentFileSelected($event)"/>
+                        </div>
+                        <div class="cl-file-chosen" *ngIf="assignmentFile() as file">
+                          <mat-icon>attach_file</mat-icon>
+                          <div>
+                            <strong>{{ file.name }}</strong>
+                            <span>{{ formatFileSize(file.size) }}</span>
+                          </div>
+                          <button class="cl-iconbtn" (click)="removeAssignmentFile()" aria-label="حذف فایل">
+                            <mat-icon>close</mat-icon>
+                          </button>
+                        </div>
+                      </label>
+
+                      <div class="cl-assignment-actions">
+                        <button class="cl-btn cl-btn-primary" [disabled]="isSubmittingAssignment()"
+                                (click)="submitAssignment()">
+                          <span class="cl-btn-spinner" *ngIf="isSubmittingAssignment()"></span>
+                          <mat-icon *ngIf="!isSubmittingAssignment()">send</mat-icon>
+                          {{ isSubmittingAssignment() ? 'در حال ارسال…' : 'ارسال تمرین' }}
+                        </button>
+                      </div>
+                    </div>
+                  </ng-container>
+                </div>
+              </ng-container>
+            </div>
+          </section>
+        </main>
+
+        <!-- ==================== SIDEBAR ==================== -->
+        <aside class="cl-side" [class.open]="isSidebarOpen()" [class.mobile-open]="isMobileSidebarOpen()"
+               aria-label="محتوای دوره">
+          <div class="cl-side-inner">
+
+            <!-- SVG gradient definitions -->
+            <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+              <defs>
+                <linearGradient id="sectionGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#8b6cff"/>
+                  <stop offset="100%" stop-color="#2dd4ee"/>
+                </linearGradient>
+                <linearGradient id="sectionGradDone" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#34e0a1"/>
+                  <stop offset="100%" stop-color="#8b6cff"/>
+                </linearGradient>
+              </defs>
+            </svg>
+
+            <!-- Sidebar header -->
+            <div class="cl-side-head">
+              <div class="cl-side-title-row">
+                <div>
+                  <h2 class="cl-side-title">محتوای دوره</h2>
+                  <p class="cl-side-sub">
+                    {{ data.sections?.length || 0 }} فصل <i>·</i>
+                    {{ totalLectures() }} درس
+                  </p>
+                </div>
+                <button class="cl-iconbtn cl-side-close" (click)="toggleMobileSidebar()" aria-label="بستن فهرست">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+
+              <!-- Search -->
+              <div class="cl-search">
+                <mat-icon>search</mat-icon>
+                <input type="text" [value]="searchQuery()"
+                       (input)="searchQuery.set($any($event.target).value)"
+                       placeholder="جستجو در دروس…" aria-label="جستجو در دروس"/>
+                <button class="cl-search-clear" *ngIf="searchQuery()" (click)="searchQuery.set('')" aria-label="پاک کردن">
+                  <mat-icon>close</mat-icon>
+                </button>
+              </div>
+
+              <!-- Overall progress -->
+              <div>
+                <div class="cl-overall-top">
+                  <span>پیشرفت شما</span>
+                  <strong>
+                    {{ completedLectures().length }} / {{ totalLectures() }}
+                    <em>{{ progressPercent() }}٪</em>
+                  </strong>
+                </div>
+                <div class="cl-bar">
+                  <div class="cl-bar-fill" [style.width.%]="progressPercent()">
+                    <span class="cl-bar-sheen"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sections list -->
+            <div class="cl-sections-list">
+
+              <!-- Empty search -->
+              <div class="cl-empty-search" *ngIf="filteredSections().length === 0 && searchQuery()">
+                <div class="cl-empty-search-icon">
+                  <mat-icon>search_off</mat-icon>
+                </div>
+                <p>هیچ درسی با «{{ searchQuery() }}» یافت نشد</p>
+                <button class="cl-textbtn" (click)="searchQuery.set('')">پاک کردن جستجو</button>
+              </div>
+
+              <!-- Sections -->
+              <section class="cl-sec"
+                       *ngFor="let section of filteredSections(); let i = index; trackBy: trackBySectionId"
+                       [class.open]="isSectionExpanded(i)"
+                       [class.done]="getSectionProgress(section) === 100">
+
+                <!-- Section header -->
+                <button class="cl-sec-header" (click)="toggleSectionExpanded(i)" [attr.aria-expanded]="isSectionExpanded(i)">
+                  <div class="cl-sec-h-right">
+                    <mat-icon class="cl-sec-chevron" [class.rotated]="isSectionExpanded(i)">expand_more</mat-icon>
+                    <div class="cl-sec-h-info">
+                      <div class="cl-sec-h-top">
+                        <span class="cl-sec-num">{{ i + 1 }}</span>
+                        <span class="cl-sec-badge" *ngIf="getSectionProgress(section) === 100">
+                          <mat-icon>check_circle</mat-icon>
+                          تکمیل
+                        </span>
+                      </div>
+                      <h3 class="cl-sec-title">{{ section.title }}</h3>
+                      <span class="cl-sec-sub">
+                        {{ getSectionCompletedCount(section) }} / {{ section.lectures?.length || 0 }} درس
+                        · {{ formatDuration(getSectionDuration(section)) }}
+                      </span>
+                    </div>
+                  </div>
+                  <div class="cl-sec-h-left">
+                    <div class="cl-sec-progress-ring">
+                      <svg viewBox="0 0 28 28" aria-hidden="true">
+                        <circle class="ring-bg" cx="14" cy="14" r="12" />
+                        <circle class="ring-fill" cx="14" cy="14" r="12"
+                                [attr.stroke-dasharray]="(getSectionProgress(section) / 100 * 75.4) + ' 75.4'" />
+                      </svg>
+                      <span class="ring-text">{{ getSectionProgress(section) }}%</span>
+                    </div>
+                  </div>
+                </button>
+
+                <!-- Section lectures list -->
+                <div class="cl-sec-lessons" role="list">
+                  <div *ngFor="let lecture of section.lectures; let li = index; trackBy: trackByLectureId"
+                       class="cl-lesson"
+                       [class.active]="currentLecture()?._id === lecture._id"
+                       [class.completed]="isLectureCompleted(lecture._id)"
+                       [attr.data-lec]="lecture._id"
+                       role="listitem"
+                       (click)="selectLecture(lecture)">
+
+                    <span class="cl-lesson-icon">
+                      <mat-icon [class]="'t-' + lecture.type">{{ getLectureIcon(lecture.type) }}</mat-icon>
+                    </span>
+                    <div class="cl-lesson-info">
+                      <span class="cl-lesson-title">{{ lecture.title }}</span>
+                      <span class="cl-lesson-meta">
+                        <ng-container *ngIf="lecture.duration">
+                          <mat-icon>schedule</mat-icon>
+                          {{ lecture.duration | duration }}
+                        </ng-container>
+                        <span class="cl-preview-badge" *ngIf="lecture.isFreePreview">
+                          <mat-icon>visibility</mat-icon>
+                          پیش‌نمایش
+                        </span>
+                      </span>
+                    </div>
+                    <span class="cl-lesson-status" (click)="toggleLectureComplete(lecture, $event); $event.stopPropagation()"
+                          role="checkbox" [attr.aria-checked]="isLectureCompleted(lecture._id)"
+                          [attr.data-tip]="isLectureCompleted(lecture._id) ? 'لغو تکمیل' : 'علامت‌گذاری تکمیل'">
+                      <mat-icon *ngIf="isLectureCompleted(lecture._id)">check</mat-icon>
+                      <ng-container *ngIf="!isLectureCompleted(lecture._id)">
+                        <span class="cl-eq" *ngIf="currentLecture()?._id === lecture._id; else lectureNum">
+                          <span></span><span></span><span></span>
+                        </span>
+                        <ng-template #lectureNum>
+                          <em>{{ li + 1 }}</em>
+                        </ng-template>
+                      </ng-container>
+                    </span>
+                  </div>
+                </div>
+              </section>
+            </div>
+          </div>
+        </aside>
+
+        <!-- Mobile overlay -->
+        <div class="cl-scrim" *ngIf="isMobileSidebarOpen()" (click)="toggleMobileSidebar()" aria-hidden="true"></div>
+      </div>
+
+      <!-- ==================== SHARE MODAL ==================== -->
+      <div class="cl-modal-backdrop" *ngIf="isShareOpen()" (click)="closeShare()">
+        <div class="cl-modal" role="dialog" aria-modal="true" aria-label="اشتراک‌گذاری دوره" (click)="$event.stopPropagation()">
+          <header class="cl-modal-head">
+            <h3><mat-icon>share</mat-icon> اشتراک‌گذاری دوره</h3>
+            <button class="cl-iconbtn" (click)="closeShare()" aria-label="بستن">
+              <mat-icon>close</mat-icon>
+            </button>
+          </header>
+
+          <div class="cl-modal-body">
+            <p class="cl-modal-desc">این دوره را با دوستان و همکلاسی‌های خود به اشتراک بگذارید.</p>
+
+            <button class="cl-share-row" (click)="shareCourse()">
+              <span class="cl-share-ic"><mat-icon>send</mat-icon></span>
+              <span class="cl-share-text">
+                <strong>اشتراک‌گذاری بومی</strong>
+                <small>ارسال از طریق واتساپ، تلگرام و…</small>
+              </span>
+              <mat-icon class="cl-share-go">chevron_left</mat-icon>
+            </button>
+
+            <button class="cl-share-row" (click)="copyToClipboard(data.slug ? '/course/' + data.slug : '/course/' + data._id)">
+              <span class="cl-share-ic"><mat-icon>link</mat-icon></span>
+              <span class="cl-share-text">
+                <strong>کپی لینک</strong>
+                <small>لینک دوره را در کلیپ‌بورد کپی کنید</small>
+              </span>
+              <mat-icon class="cl-share-go">chevron_left</mat-icon>
+            </button>
+
+            <button class="cl-share-row" (click)="goToCoursePage()">
+              <span class="cl-share-ic"><mat-icon>open_in_new</mat-icon></span>
+              <span class="cl-share-text">
+                <strong>مشاهده صفحه دوره</strong>
+                <small>باز کردن صفحه عمومی دوره</small>
+              </span>
+              <mat-icon class="cl-share-go">chevron_left</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+    <!-- ==================== LESSON PREVIEW MODAL ==================== -->
+    <ng-container *ngIf="showLessonModal() && selectedLesson() as lesson">
+      <div class="cl-modal-backdrop" (click)="closeLessonModal()">
+        <div class="cl-modal lesson-modal" role="dialog" aria-modal="true" aria-label="پیش‌نمایش درس" (click)="$event.stopPropagation()">
+          <header class="cl-modal-head">
+            <h3><mat-icon>visibility</mat-icon> {{ lesson.title }}</h3>
+            <button class="cl-iconbtn" (click)="closeLessonModal()" aria-label="بستن">
+              <mat-icon>close</mat-icon>
+            </button>
+          </header>
+          <div class="cl-modal-body">
+            <!-- Loading State -->
+            <div *ngIf="isLoadingLessonPreview()" class="preview-loading">
+              <div class="preview-loading-inner">
+                <div class="preview-spinner"></div>
+                <p class="preview-loading-text">در حال آماده‌سازی محتوا...</p>
+                <p class="preview-loading-hint">لطفاً چند لحظه صبر کنید</p>
+              </div>
+            </div>
+
+            <!-- Error State -->
+            <div *ngIf="!isLoadingLessonPreview() && lessonPreviewError()" class="preview-error">
+              <mat-icon class="preview-error-icon">error_outline</mat-icon>
+              <h4>{{ lessonPreviewError() }}</h4>
+              <p>در صورت ادامه مشکل، بعداً دوباره تلاش کنید.</p>
+              <button class="cl-btn cl-btn-primary" (click)="closeLessonModal()">
+                <mat-icon>close</mat-icon> بستن
+              </button>
+            </div>
+
+            <!-- Content -->
+            <ng-container *ngIf="!isLoadingLessonPreview() && !lessonPreviewError()">
+              <ng-container [ngSwitch]="getLessonFileType(lesson)">
+                <!-- Embed (YouTube/Aparat) -->
+                <ng-container *ngSwitchCase="'embed'">
+                  <div class="video-wrapper" *ngIf="getSafeLessonEmbedUrl(lesson) as embedUrl">
+                    <iframe [src]="embedUrl" allowfullscreen allow="autoplay"></iframe>
+                  </div>
+                </ng-container>
+
+                <!-- Video (MP4/WebM/HLS) with Signed URL and Auto-Refresh -->
+                <ng-container *ngSwitchCase="'video'">
+                  <div class="video-wrapper" *ngIf="lessonPreviewVideoUrl() as v">
+                    <app-video-player
+                      [videoUrl]="v"
+                      [title]="lesson.title || ''"
+                      [autoplay]="true"
+                      (urlExpired)="onLessonPreviewUrlExpired()"
+                    ></app-video-player>
+                  </div>
+                </ng-container>
+
+                <!-- Image -->
+                <ng-container *ngSwitchCase="'image'">
+                  <div class="image-wrapper" *ngIf="lessonPreviewVideoUrl() as img">
+                    <img [src]="img" [alt]="lesson.title" />
+                  </div>
+                </ng-container>
+
+                <!-- PDF -->
+                <ng-container *ngSwitchCase="'pdf'">
+                  <div class="pdf-wrapper" *ngIf="lessonPreviewVideoUrl() as p">
+                    <iframe [src]="getSafeLessonEmbedUrl(lesson)"></iframe>
+                    <a [href]="p" target="_blank" download class="download-btn">
+                      <mat-icon>download</mat-icon> دانلود PDF
+                    </a>
+                  </div>
+                </ng-container>
+
+                <!-- Audio -->
+                <ng-container *ngSwitchCase="'audio'">
+                  <div class="audio-wrapper" *ngIf="lessonPreviewVideoUrl() as au">
+                    <mat-icon>graphic_eq</mat-icon>
+                    <audio [src]="au" controls autoplay preload="metadata">
+                      مرورگر شما از پخش صوت پشتیبانی نمی‌کند.
+                    </audio>
+                  </div>
+                </ng-container>
+
+                <!-- File (default) -->
+                <ng-container *ngSwitchDefault>
+                  <div class="file-wrapper">
+                    <mat-icon>folder_zip</mat-icon>
+                    <h4>فایل ضمیمه</h4>
+                    <a
+                      *ngIf="lessonPreviewVideoUrl() as f"
+                      [href]="f"
+                      target="_blank"
+                      download
+                      class="download-btn"
+                    >
+                      <mat-icon>cloud_download</mat-icon> دانلود فایل
+                    </a>
+                  </div>
+                </ng-container>
+              </ng-container>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+    </ng-container>
+
+
+    <!-- ==================== IMAGE VIEWER ==================== -->
+    <app-image-viewer
+      *ngIf="showImageViewer()"
+      [images]="imageViewerImages()"
+      [initialIndex]="imageViewerInitialIndex()"
+      [isOpen]="showImageViewer()"
+      (closed)="closeImageViewer()"
+      (indexChanged)="imageViewerInitialIndex.set($event)"
+    ></app-image-viewer>
+  </div>
+</ng-template>

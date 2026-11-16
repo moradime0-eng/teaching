@@ -1,0 +1,441 @@
+// ──────────────────────────────────────────────
+//  Design Tokens
+// ──────────────────────────────────────────────
+:host {
+  --danger: #ef4444;
+  --danger-dark: #dc2626;
+  --danger-light: #fef2f2;
+  --danger-glow: rgba(239, 68, 68, 0.2);
+  --warning-bg: #fffbeb;
+  --warning-border: #fde68a;
+  --warning-text: #92400e;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --card-bg: #ffffff;
+  --page-bg: #f8fafc;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --surface: #f1f5f9;
+  --radius: 20px;
+  --radius-sm: 12px;
+
+  display: block;
+  font-family: 'Vazirmatn', 'IRANSans', system-ui, sans-serif;
+}
+
+// ──────────────────────────────────────────────
+//  Page Wrapper
+// ──────────────────────────────────────────────
+.payment-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  padding: 2rem 1rem;
+  direction: rtl;
+  background: var(--page-bg);
+}
+
+// ──────────────────────────────────────────────
+//  Card
+// ──────────────────────────────────────────────
+.result-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3rem 2.5rem;
+  text-align: center;
+  max-width: 540px;
+  width: 100%;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 8px 32px rgba(0, 0, 0, 0.06);
+}
+
+// ──────────────────────────────────────────────
+//  Entrance Animation
+// ──────────────────────────────────────────────
+.animate-in {
+  animation: cardEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes cardEnter {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// ──────────────────────────────────────────────
+//  Animated X Icon (SVG)
+// ──────────────────────────────────────────────
+.icon-wrapper {
+  margin-bottom: 1.5rem;
+}
+
+.error-svg {
+  width: 80px;
+  height: 80px;
+}
+
+.error-circle {
+  fill: none;
+  stroke: var(--danger);
+  stroke-width: 3;
+  stroke-dasharray: 226;
+  stroke-dashoffset: 226;
+  animation: drawCircle 0.6s 0.2s ease-out forwards;
+}
+
+.error-x1,
+.error-x2 {
+  stroke: var(--danger);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 34;
+  stroke-dashoffset: 34;
+  animation: drawLine 0.3s 0.7s ease-out forwards;
+}
+
+.error-x2 {
+  animation-delay: 0.85s;
+}
+
+@keyframes drawCircle {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes drawLine {
+  to { stroke-dashoffset: 0; }
+}
+
+// ──────────────────────────────────────────────
+//  Typography
+// ──────────────────────────────────────────────
+.title {
+  color: var(--danger);
+  font-size: 1.65rem;
+  font-weight: 800;
+  margin: 0 0 0.5rem;
+}
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.9;
+  margin: 0 0 1.5rem;
+}
+
+// ──────────────────────────────────────────────
+//  Suggestion Box
+// ──────────────────────────────────────────────
+.suggestion-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  background: var(--warning-bg);
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+  text-align: right;
+  color: var(--warning-text);
+  font-size: 0.9rem;
+  line-height: 1.8;
+
+  .icon-bulb {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    fill: #f59e0b;
+    margin-top: 0.2rem;
+  }
+}
+
+// ──────────────────────────────────────────────
+//  Error Code Panel (Collapsible)
+// ──────────────────────────────────────────────
+.error-code-panel {
+  background: var(--danger-light);
+  border: 1px solid rgba(239, 68, 68, 0.15);
+  border-radius: var(--radius-sm);
+  margin-bottom: 1.5rem;
+  overflow: hidden;
+  text-align: right;
+}
+
+.error-code-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.25rem;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.06);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--danger);
+    outline-offset: -2px;
+  }
+}
+
+.error-code-label {
+  color: var(--danger-dark);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.error-code-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-right: auto;
+
+  code {
+    background: rgba(239, 68, 68, 0.12);
+    color: var(--danger-dark);
+    padding: 0.15rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    direction: ltr;
+  }
+}
+
+.chevron-icon {
+  width: 20px;
+  height: 20px;
+  fill: var(--danger);
+  transition: transform 0.25s ease;
+  flex-shrink: 0;
+
+  &.open {
+    transform: rotate(180deg);
+  }
+}
+
+.error-code-details {
+  padding: 0 1.25rem 1rem;
+  border-top: 1px solid rgba(239, 68, 68, 0.1);
+
+  p {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    line-height: 1.8;
+    margin: 0.75rem 0;
+  }
+}
+
+.animate-expand {
+  animation: expandIn 0.25s ease-out both;
+}
+
+@keyframes expandIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.support-hint {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--card-bg);
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  font-size: 0.85rem;
+  color: var(--text);
+
+  .icon-headset {
+    width: 18px;
+    height: 18px;
+    fill: var(--accent);
+    flex-shrink: 0;
+  }
+
+  strong {
+    font-weight: 700;
+  }
+}
+
+// ──────────────────────────────────────────────
+//  Copy Button
+// ──────────────────────────────────────────────
+.copy-btn {
+  all: unset;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem;
+  border-radius: 6px;
+  color: var(--danger);
+  transition: color 0.2s, background 0.2s;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.1);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--danger);
+    outline-offset: 2px;
+  }
+}
+
+// ──────────────────────────────────────────────
+//  Common Issues
+// ──────────────────────────────────────────────
+.common-issues {
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 2rem;
+  text-align: right;
+}
+
+.issues-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin: 0 0 0.65rem;
+}
+
+.issues-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    color: var(--text);
+  }
+}
+
+// ──────────────────────────────────────────────
+//  Icons (shared)
+// ──────────────────────────────────────────────
+.icon {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  flex-shrink: 0;
+
+  &.icon-copied {
+    fill: var(--danger-dark);
+  }
+
+  &.icon-check-circle {
+    fill: var(--accent);
+    width: 18px;
+    height: 18px;
+  }
+}
+
+// ──────────────────────────────────────────────
+//  Action Buttons
+// ──────────────────────────────────────────────
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.925rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+}
+
+.btn-primary {
+  background: var(--danger);
+  color: #fff;
+  box-shadow: 0 2px 8px var(--danger-glow);
+
+  &:hover {
+    background: var(--danger-dark);
+    box-shadow: 0 4px 16px var(--danger-glow);
+  }
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+
+  &:hover {
+    background: var(--border);
+  }
+}
+
+// ──────────────────────────────────────────────
+//  Responsive
+// ──────────────────────────────────────────────
+@media (max-width: 480px) {
+  .result-card {
+    padding: 2rem 1.25rem;
+  }
+
+  .title {
+    font-size: 1.35rem;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .btn {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .suggestion-box {
+    padding: 0.85rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .common-issues {
+    padding: 1rem 1.15rem;
+  }
+}

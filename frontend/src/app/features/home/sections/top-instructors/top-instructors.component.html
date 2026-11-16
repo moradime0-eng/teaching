@@ -1,0 +1,112 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     👨‍🏫 Top Instructors — مدرسین برتر
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="inst block">
+  <header class="block__head">
+    <div>
+      <span class="eyebrow eyebrow--violet"> <mat-icon>school</mat-icon> مدرسین برتر </span>
+      <h2 class="block__title">یاد بگیر از بهترین‌های حوزه</h2>
+    </div>
+    <a routerLink="/courses" class="link-all">
+      <span>مشاهده‌ی همه</span>
+      <mat-icon>arrow_back</mat-icon>
+    </a>
+  </header>
+
+  @if (isLoading()) {
+    <div class="inst-grid">
+      @for (i of skeletonItems; track $index) {
+        <div class="inst-card inst-card--sk">
+          <span class="sh inst-card__avatar-sk"></span>
+          <span class="sh" style="width: 70%; height: 14px; border-radius: 6px"></span>
+          <span class="sh" style="width: 50%; height: 10px; border-radius: 6px"></span>
+          <div class="inst-card__stats-sk">
+            <span class="sh" style="width: 30%; height: 10px; border-radius: 6px"></span>
+            <span class="sh" style="width: 25%; height: 10px; border-radius: 6px"></span>
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (instructors().length > 0) {
+    <div class="inst-grid">
+      @for (inst of instructors(); track inst._id; let i = $index) {
+        <a
+          class="inst-card"
+          [routerLink]="['/instructor', inst._id]"
+          [style.animation-delay]="i * 70 + 'ms'"
+          tiltGlare
+          [intensity]="10"
+          [lift]="6"
+          [scale]="1.025"
+        >
+          <!-- Avatar + Rating badge (wrapper allows the badge to overflow the frame) -->
+          <div class="inst-card__avatar-wrap">
+            <div
+              class="inst-card__avatar"
+              [class.is-loading]="isImageLoading('inst-' + inst._id)"
+              [class.is-loaded]="loadedImages()['inst-' + inst._id]"
+            >
+              @if (shouldShowImage('inst-' + inst._id, inst.avatar)) {
+                <img
+                  [src]="resolveImageUrl(inst.avatar)"
+                  [alt]="inst.name"
+                  loading="lazy"
+                  decoding="async"
+                  fetchpriority="low"
+                  (load)="onImageLoad('inst-' + inst._id)"
+                  (error)="onImageError('inst-' + inst._id, $event)"
+                />
+              } @else {
+                <span class="inst-card__initials">{{ initials(inst.name) }}</span>
+              }
+              @if (isImageLoading('inst-' + inst._id)) {
+                <span class="inst-card__avatar-shimmer" aria-hidden="true"></span>
+              }
+            </div>
+
+            <!-- 🆕 Badge بیرون از قاب آواتار (که overflow:hidden دارد) تا بریده نشود -->
+            @if (inst.averageRating >= 4.5) {
+              <span
+                class="inst-card__badge-star"
+                [matTooltip]="'امتیاز ' + faNum(inst.averageRating)"
+                aria-label="مدرس برتر"
+              >
+                <mat-icon>star</mat-icon>
+              </span>
+            }
+          </div>
+
+          <!-- Info -->
+          <h4 class="inst-card__name">{{ inst.name }}</h4>
+          <p class="inst-card__headline">{{ plainText(inst.headline) || 'مدرس تخصصی' }}</p>
+
+          <!-- Stats -->
+          <div class="inst-card__stats">
+            <span class="inst-card__stat">
+              <mat-icon>groups</mat-icon>
+              {{ faNum(inst.totalStudents) }} دانشجو
+            </span>
+            <span class="inst-card__stat">
+              <mat-icon>menu_book</mat-icon>
+              {{ faNum(inst.totalCourses) }} دوره
+            </span>
+            @if (inst.averageRating > 0) {
+              <span class="inst-card__stat inst-card__stat--rating">
+                <mat-icon>star</mat-icon>
+                {{ faNum(inst.averageRating) }}
+              </span>
+            }
+          </div>
+        </a>
+      }
+    </div>
+  } @else {
+    <div class="empty">
+      <div class="empty__icon-wrap">
+        <mat-icon>school</mat-icon>
+      </div>
+      <h3>مدرسی یافت نشد</h3>
+      <p>به‌زودی مدرسین برتر در این بخش معرفی می‌شوند.</p>
+    </div>
+  }
+</section>

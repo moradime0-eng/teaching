@@ -1,0 +1,516 @@
+// ==========================================================================
+// 🗂️ Category Filter Bar — نسخه حرفه‌ای
+// طراحی مدرن با Scroll Shadows، Nav Buttons، و افکت‌های پیشرفته
+// ==========================================================================
+
+// === متغیرها ===
+$cfb-primary: #6c5ce7;
+$cfb-primary-light: #8778ec;
+$cfb-accent: #d946ef;
+$cfb-grad: linear-gradient(135deg, #6c5ce7 0%, #8778ec 50%, #a855f7 100%);
+$cfb-grad-hover: linear-gradient(135deg, #5849d3 0%, #7566e0 50%, #9333ea 100%);
+
+$cfb-ease: cubic-bezier(0.4, 0, 0.2, 1);
+$cfb-ease-smooth: cubic-bezier(0.16, 1, 0.3, 1);
+
+:host {
+  display: block;
+  --cfb-bg: #ffffff;
+  --cfb-chip-bg: #ffffff;
+  --cfb-chip-hover-bg: #faf9ff;
+  --cfb-chip-border: #e5e7eb;
+  --cfb-chip-border-hover: #c7bffa;
+  --cfb-text: #1f2937;
+  --cfb-text-muted: #6b7280;
+  --cfb-icon: #9ca3af;
+  --cfb-count-bg: #f3f4f6;
+  --cfb-count-text: #6b7280;
+  --cfb-shadow: 0 2px 8px rgba(108, 92, 231, 0.08);
+  --cfb-shadow-active: 0 8px 20px -6px rgba(108, 92, 231, 0.45);
+  --cfb-nav-bg: #ffffff;
+  --cfb-nav-shadow: 0 2px 12px rgba(15, 23, 42, 0.12);
+  --cfb-fade-color: 255, 255, 255;
+}
+
+// === Dark Theme ===
+:host-context(.dark-theme),
+:host-context(.dark-mode),
+:host-context(.dark),
+:host-context([data-theme='dark']) {
+  --cfb-bg: #0f1218;
+  --cfb-chip-bg: #1e232d;
+  --cfb-chip-hover-bg: #262c37;
+  --cfb-chip-border: #333a47;
+  --cfb-chip-border-hover: #6c5ce7;
+  --cfb-text: #e8ebf0;
+  --cfb-text-muted: #a8afbc;
+  --cfb-icon: #6b7280;
+  --cfb-count-bg: #262c37;
+  --cfb-count-text: #a8afbc;
+  --cfb-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --cfb-nav-bg: #1e232d;
+  --cfb-nav-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+  --cfb-fade-color: 15, 18, 24;
+}
+
+// ==========================================================================
+// Root Container
+// ==========================================================================
+.cfb {
+  position: relative;
+  margin-bottom: 1.75rem;
+  user-select: none;
+
+  // --- Wrapper برای scroll و دکمه‌ها ---
+  &__wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  // ==========================================================================
+  // Scroll Track
+  // ==========================================================================
+  &__track {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.4rem 0.25rem;
+    scroll-behavior: smooth;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    width: 100%;
+    mask-image: linear-gradient(to right, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 20px, #000 calc(100% - 20px), transparent 100%);
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
+
+    &--sk {
+      overflow: hidden;
+      mask-image: none;
+      -webkit-mask-image: none;
+    }
+  }
+
+  // ==========================================================================
+  // Chip (دکمه دسته‌بندی)
+  // ==========================================================================
+  &__chip {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 0 0 auto;
+    padding: 0.55rem 1rem 0.55rem 0.85rem;
+    border-radius: 100px;
+    border: 1.5px solid var(--cfb-chip-border);
+    background: var(--cfb-chip-bg);
+    color: var(--cfb-text);
+    font-family: inherit;
+    font-size: 0.84rem;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+    cursor: pointer;
+    scroll-snap-align: center;
+    overflow: hidden;
+    transition:
+      transform 0.25s $cfb-ease-smooth,
+      border-color 0.2s $cfb-ease,
+      background-color 0.2s $cfb-ease,
+      color 0.2s $cfb-ease,
+      box-shadow 0.3s $cfb-ease,
+      padding 0.25s $cfb-ease;
+
+    // افکت ripple پس‌زمینه
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: $cfb-grad;
+      opacity: 0;
+      transition: opacity 0.3s $cfb-ease;
+      z-index: 0;
+    }
+
+    // تمام محتوا بالای افکت باشد
+    > * {
+      position: relative;
+      z-index: 1;
+    }
+
+    // --- Icon ---
+    .cfb__chip-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--cfb-count-bg);
+      transition:
+        background-color 0.25s $cfb-ease,
+        transform 0.3s $cfb-ease-smooth;
+
+      mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+        color: var(--cfb-icon);
+        transition: color 0.2s $cfb-ease;
+      }
+    }
+
+    // --- Label ---
+    .cfb__chip-label {
+      display: inline-block;
+      letter-spacing: -0.1px;
+    }
+
+    // --- Count Badge ---
+    .cfb__chip-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 20px;
+      padding: 0 6px;
+      border-radius: 10px;
+      background: var(--cfb-count-bg);
+      color: var(--cfb-count-text);
+      font-size: 0.68rem;
+      font-weight: 700;
+      line-height: 1;
+      transition:
+        background-color 0.25s $cfb-ease,
+        color 0.25s $cfb-ease;
+    }
+
+    // ─── Hover state ───
+    &:hover:not(.is-active) {
+      transform: translateY(-2px);
+      border-color: var(--cfb-chip-border-hover);
+      background: var(--cfb-chip-hover-bg);
+      color: $cfb-primary;
+      box-shadow: var(--cfb-shadow);
+
+      .cfb__chip-icon {
+        background: rgba(108, 92, 231, 0.1);
+        transform: scale(1.1);
+
+        mat-icon {
+          color: $cfb-primary;
+        }
+      }
+    }
+
+    // ─── Focus state ───
+    &:focus-visible {
+      outline: none;
+      border-color: $cfb-primary;
+      box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.2);
+    }
+
+    // ─── Active state ───
+    &.is-active {
+      border-color: transparent;
+      color: #ffffff;
+      box-shadow: var(--cfb-shadow-active);
+      transform: translateY(-1px);
+
+      &::before {
+        opacity: 1;
+      }
+
+      .cfb__chip-icon {
+        background: rgba(255, 255, 255, 0.2);
+
+        mat-icon {
+          color: #ffffff;
+        }
+      }
+
+      .cfb__chip-count {
+        background: rgba(255, 255, 255, 0.22);
+        color: #ffffff;
+      }
+
+      &:hover {
+        box-shadow: 0 10px 25px -6px rgba(108, 92, 231, 0.55);
+        transform: translateY(-2px);
+
+        &::before {
+          background: $cfb-grad-hover;
+        }
+      }
+    }
+
+    // ─── Active press ───
+    &:active {
+      transform: translateY(0) scale(0.97);
+    }
+
+    // ─── Chip "همه" ───
+    &--all {
+      &.is-active {
+        &::before {
+          background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
+        }
+
+        &:hover::before {
+          background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+        }
+      }
+    }
+  }
+
+  // ==========================================================================
+  // Nav Buttons (دکمه‌های اسکرول)
+  // ==========================================================================
+  &__nav {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%) scale(0.8);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid var(--cfb-chip-border);
+    background: var(--cfb-nav-bg);
+    color: var(--cfb-text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 3;
+    box-shadow: var(--cfb-nav-shadow);
+    transition:
+      opacity 0.25s $cfb-ease,
+      transform 0.25s $cfb-ease,
+      background 0.2s $cfb-ease,
+      color 0.2s $cfb-ease,
+      border-color 0.2s $cfb-ease;
+
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+
+    &.is-visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(-50%) scale(1);
+    }
+
+    &:hover {
+      background: $cfb-primary;
+      color: #ffffff;
+      border-color: $cfb-primary;
+      box-shadow: 0 4px 14px rgba(108, 92, 231, 0.4);
+    }
+
+    &:active {
+      transform: translateY(-50%) scale(0.92);
+    }
+
+    &--start {
+      right: -8px;
+    }
+
+    &--end {
+      left: -8px;
+    }
+  }
+
+  // ==========================================================================
+  // Fade Shadows (سایه گرادیانت دو طرف)
+  // ==========================================================================
+  &__fade {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 60px;
+    pointer-events: none;
+    z-index: 2;
+    opacity: 0;
+    transition: opacity 0.3s $cfb-ease;
+
+    &.is-visible {
+      opacity: 1;
+    }
+
+    &--start {
+      right: 0;
+      background: linear-gradient(
+        to left,
+        rgba(var(--cfb-fade-color), 1) 0%,
+        rgba(var(--cfb-fade-color), 0) 100%
+      );
+    }
+
+    &--end {
+      left: 0;
+      background: linear-gradient(
+        to right,
+        rgba(var(--cfb-fade-color), 1) 0%,
+        rgba(var(--cfb-fade-color), 0) 100%
+      );
+    }
+  }
+
+  // ==========================================================================
+  // Skeleton
+  // ==========================================================================
+  &__sk {
+    display: block;
+    flex: 0 0 auto;
+    height: 38px;
+    border-radius: 100px;
+    background: linear-gradient(
+      90deg,
+      var(--cfb-chip-border) 25%,
+      var(--cfb-chip-hover-bg) 50%,
+      var(--cfb-chip-border) 75%
+    );
+    background-size: 200% 100%;
+    animation: cfb-shimmer 1.4s linear infinite;
+
+    &:nth-child(1) { width: 110px; }
+    &:nth-child(2) { width: 95px; }
+    &:nth-child(3) { width: 128px; }
+    &:nth-child(4) { width: 88px; }
+    &:nth-child(5) { width: 118px; }
+    &:nth-child(6) { width: 102px; }
+    &:nth-child(7) { width: 94px; }
+  }
+}
+
+// ==========================================================================
+// Animations
+// ==========================================================================
+@keyframes cfb-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes cfb-chip-pop {
+  0% {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+// ==========================================================================
+// Responsive
+// ==========================================================================
+@media (max-width: 768px) {
+  .cfb {
+    margin-bottom: 1.25rem;
+
+    &__track {
+      gap: 0.4rem;
+      mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+      -webkit-mask-image: linear-gradient(to right, transparent 0, #000 12px, #000 calc(100% - 12px), transparent 100%);
+    }
+
+    &__chip {
+      padding: 0.5rem 0.85rem 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      gap: 0.4rem;
+
+      .cfb__chip-icon {
+        width: 20px;
+        height: 20px;
+
+        mat-icon {
+          font-size: 13px;
+          width: 13px;
+          height: 13px;
+        }
+      }
+
+      .cfb__chip-count {
+        min-width: 18px;
+        height: 18px;
+        font-size: 0.65rem;
+      }
+    }
+
+    // در موبایل دکمه‌های nav را مخفی می‌کنیم (swipe طبیعی‌تر است)
+    &__nav {
+      display: none;
+    }
+
+    &__fade {
+      width: 40px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .cfb__chip {
+    padding: 0.45rem 0.75rem 0.45rem 0.65rem;
+    font-size: 0.78rem;
+  }
+}
+
+// ==========================================================================
+// Reduced motion
+// ==========================================================================
+@media (prefers-reduced-motion: reduce) {
+  .cfb {
+    &__chip,
+    &__nav,
+    &__fade {
+      transition: none !important;
+
+      &:hover:not(.is-active) {
+        transform: none;
+      }
+    }
+
+    &__chip-icon {
+      transition: none !important;
+    }
+
+    &__sk {
+      animation: none;
+    }
+
+    &__track {
+      scroll-behavior: auto;
+    }
+  }
+}
+
+// ==========================================================================
+// Print
+// ==========================================================================
+@media print {
+  .cfb__nav,
+  .cfb__fade {
+    display: none;
+  }
+
+  .cfb__track {
+    mask-image: none;
+    -webkit-mask-image: none;
+    overflow: visible;
+    flex-wrap: wrap;
+  }
+}

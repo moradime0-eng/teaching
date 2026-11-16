@@ -1,0 +1,288 @@
+<div class="instructor-profile-container" dir="rtl">
+  <!-- Header -->
+  <header class="page-header">
+    <div class="header-breadcrumb">
+      <a routerLink="/instructor/dashboard" class="breadcrumb-item">
+        <mat-icon>dashboard</mat-icon>
+        پنل مدرس
+      </a>
+      <mat-icon class="separator">chevron_left</mat-icon>
+      <span class="breadcrumb-active">پروفایل مدرس</span>
+    </div>
+    <div class="header-titles">
+      <h1 class="page-title">پروفایل مدرس</h1>
+      <p class="page-subtitle">اطلاعات حرفه‌ای، بیوگرافی و شبکه‌های اجتماعی خود را مدیریت کنید.</p>
+    </div>
+  </header>
+
+  <!-- Success Notification -->
+  <div class="alert-box success" *ngIf="successMsg()">
+    <div class="alert-content">
+      <mat-icon class="alert-icon">verified</mat-icon>
+      <div>
+        <strong>عملیات موفق</strong>
+        <p>{{ successMsg() }}</p>
+      </div>
+    </div>
+    <button class="alert-close" (click)="successMsg.set('')" aria-label="بستن">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Error Notification -->
+  <div class="alert-box error" *ngIf="errorMsg()">
+    <div class="alert-content">
+      <mat-icon class="alert-icon">error_outline</mat-icon>
+      <div>
+        <strong>خطا در انجام عملیات</strong>
+        <p>{{ errorMsg() }}</p>
+      </div>
+    </div>
+    <button class="alert-close" (click)="errorMsg.set('')" aria-label="بستن">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Layout -->
+  <div class="profile-layout">
+    <!-- LEFT: Avatar & Info -->
+    <aside class="profile-sidebar">
+      <div class="profile-card identity-card">
+        <div class="avatar-wrapper">
+          <div class="avatar-circle">
+            <img
+              *ngIf="avatarPreview()"
+              [src]="resolveAvatarUrl(avatarPreview())"
+              alt="Avatar"
+              class="avatar-image"
+              appImageFallback="avatar"
+              (error)="avatarPreview.set(null)"
+            />
+            <div *ngIf="!avatarPreview()" class="avatar-fallback">{{ userInitials }}</div>
+          </div>
+          <label class="avatar-upload-btn" title="تغییر تصویر پروفایل">
+            <mat-icon *ngIf="!isUploadingAvatar()">photo_camera</mat-icon>
+            <mat-icon *ngIf="isUploadingAvatar()" class="spinning">sync</mat-icon>
+            <input
+              type="file"
+              (change)="onAvatarChange($event)"
+              accept="image/png, image/jpeg, image/webp"
+            />
+          </label>
+        </div>
+
+        <div class="user-meta">
+          <h2 class="user-name">{{ fullNameCtrl.value || 'مدرس' }}</h2>
+          <span class="user-badge role-badge">
+            <mat-icon>school</mat-icon>
+            مدرس آکادمی
+          </span>
+          <span class="user-headline" *ngIf="headlineCtrl.value">{{ headlineCtrl.value }}</span>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="info-list">
+          <div class="info-item">
+            <div class="info-label"><mat-icon>email</mat-icon> ایمیل</div>
+            <span class="info-val ltr">{{ authService.currentUser()?.email || '—' }}</span>
+          </div>
+          <div class="info-item">
+            <div class="info-label"><mat-icon>verified_user</mat-icon> وضعیت</div>
+            <span class="status-pill active">
+              <span class="status-dot"></span>
+              فعال
+            </span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT: Edit Form -->
+    <main class="profile-main">
+      <div class="profile-card">
+        <div class="card-header">
+          <div class="card-title-wrap">
+            <mat-icon class="title-icon">manage_accounts</mat-icon>
+            <div>
+              <h3 class="card-title">ویرایش پروفایل حرفه‌ای</h3>
+              <span class="card-desc"
+                >این اطلاعات در صفحه جزئیات دوره‌های شما نمایش داده می‌شود</span
+              >
+            </div>
+          </div>
+          <span class="dirty-badge" *ngIf="isFormDirty">تغییرات ذخیره‌نشده</span>
+        </div>
+
+        <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="edit-form" novalidate>
+          <!-- Full Name -->
+          <div class="form-group" [class.has-error]="fullNameCtrl.invalid && fullNameCtrl.touched">
+            <label>نام و نام خانوادگی <span class="required-star">*</span></label>
+            <div class="input-container">
+              <mat-icon class="input-icon">person_outline</mat-icon>
+              <input type="text" formControlName="fullName" placeholder="مثال: علی رضایی" />
+            </div>
+          </div>
+
+          <!-- Phone -->
+          <div class="form-group" [class.has-error]="phoneCtrl.invalid && phoneCtrl.touched">
+            <label>شماره تلفن همراه</label>
+            <div class="input-container">
+              <mat-icon class="input-icon">phone_android</mat-icon>
+              <input
+                type="tel"
+                formControlName="phone"
+                dir="ltr"
+                placeholder="09123456789"
+                maxlength="11"
+              />
+            </div>
+          </div>
+
+          <!-- Headline -->
+          <div class="form-group">
+            <label><mat-icon>badge</mat-icon> عنوان شغلی (Headline)</label>
+            <div class="input-container">
+              <input
+                type="text"
+                formControlName="headline"
+                placeholder="مثال: مدرس ارشد هوش مصنوعی و توسعه وب"
+              />
+            </div>
+            <div class="field-hint">عنوان کوتاه حرفه‌ای که زیر نام شما نمایش داده می‌شود</div>
+          </div>
+
+          <!-- Bio -->
+          <div class="form-group">
+            <label><mat-icon>info</mat-icon> بیوگرافی کوتاه</label>
+            <div class="input-container">
+              <textarea
+                formControlName="bio"
+                rows="3"
+                maxlength="500"
+                placeholder="معرفی کوتاه از خودتان..."
+              ></textarea>
+            </div>
+            <div class="field-hint">{{ bioCtrl.value.length || 0 }} / 500</div>
+          </div>
+
+          <!-- Biography (Full) -->
+          <div class="form-group">
+            <label><mat-icon>article</mat-icon> بیوگرافی کامل</label>
+            <div class="input-container">
+              <app-rich-text-editor
+                formControlName="biography"
+                placeholder="درباره سوابق تحصیلی، حرفه‌ای و افتخارات خود بنویسید... (پشتیبانی از مارک‌داون)"
+                minHeight="200px"
+                [markdownMode]="true"
+                [autoExpand]="true"
+              ></app-rich-text-editor>
+            </div>
+            <div class="field-hint">{{ biographyCtrl.value.length || 0 }} / 3000</div>
+          </div>
+
+          <!-- Expertise -->
+          <div class="form-group">
+            <label><mat-icon>psychology</mat-icon> تخصص‌ها (با کاما جدا کنید)</label>
+            <div class="input-container">
+              <input
+                type="text"
+                formControlName="expertise"
+                placeholder="مثال: Angular, Node.js, Python, هوش مصنوعی"
+              />
+            </div>
+          </div>
+
+          <!-- Website -->
+          <div class="form-group">
+            <label><mat-icon>language</mat-icon> وبسایت شخصی</label>
+            <div class="input-container">
+              <input
+                type="url"
+                formControlName="website"
+                dir="ltr"
+                placeholder="https://example.com"
+              />
+            </div>
+          </div>
+
+          <!-- Social Links Section -->
+          <div class="section-divider">
+            <mat-icon>share</mat-icon>
+            <span>شبکه‌های اجتماعی</span>
+          </div>
+
+          <div class="form-group">
+            <label><mat-icon>link</mat-icon> لینکدین</label>
+            <div class="input-container">
+              <input
+                type="url"
+                formControlName="linkedin"
+                dir="ltr"
+                placeholder="https://linkedin.com/in/..."
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label><mat-icon>link</mat-icon> توییتر / X</label>
+            <div class="input-container">
+              <input
+                type="url"
+                formControlName="twitter"
+                dir="ltr"
+                placeholder="https://twitter.com/..."
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label><mat-icon>link</mat-icon> یوتیوب</label>
+            <div class="input-container">
+              <input
+                type="url"
+                formControlName="youtube"
+                dir="ltr"
+                placeholder="https://youtube.com/@..."
+              />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label><mat-icon>link</mat-icon> اینستاگرام</label>
+            <div class="input-container">
+              <input
+                type="url"
+                formControlName="instagram"
+                dir="ltr"
+                placeholder="https://instagram.com/..."
+              />
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="form-actions">
+            <button
+              type="button"
+              class="btn btn-reset"
+              (click)="resetForm()"
+              [disabled]="isUpdating() || !isFormDirty"
+            >
+              <mat-icon>undo</mat-icon>
+              بازنشانی
+            </button>
+            <button
+              type="submit"
+              class="btn btn-save"
+              [disabled]="isUpdating() || profileForm.invalid"
+            >
+              <mat-icon *ngIf="isUpdating()" class="spinning">sync</mat-icon>
+              <mat-icon *ngIf="!isUpdating()">save</mat-icon>
+              {{ isUpdating() ? 'در حال ذخیره...' : 'ذخیره تغییرات' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+</div>

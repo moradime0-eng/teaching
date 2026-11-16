@@ -1,0 +1,33 @@
+<div class="callback-container" dir="rtl">
+  <div class="callback-card">
+    <!-- Loading State -->
+    <div class="state-content" *ngIf="status() === 'loading'">
+      <div class="spinner-wrapper">
+        <div class="spinner"></div>
+      </div>
+      <h2>در حال ورود به حساب کاربری</h2>
+      <p>لطفاً چند لحظه شکیبا باشید...</p>
+    </div>
+
+    <!-- Success State -->
+    <div class="state-content" *ngIf="status() === 'success'">
+      <div class="icon-wrapper success">
+        <mat-icon>check_circle</mat-icon>
+      </div>
+      <h2>ورود موفقیت‌آمیز</h2>
+      <p>شما با موفقیت وارد شدید. در حال انتقال به صفحه اصلی...</p>
+    </div>
+
+    <!-- Error State -->
+    <div class="state-content" *ngIf="status() === 'error'">
+      <div class="icon-wrapper error">
+        <mat-icon>error_outline</mat-icon>
+      </div>
+      <h2>خطا در ورود</h2>
+      <p>{{ errorMessage() }}</p>
+      <div class="actions">
+        <a routerLink="/auth/login" class="btn btn-primary">بازگشت به صفحه ورود</a>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,988 @@
+// ================================================================
+//  صندوق پرسش و پاسخ مدرس — Styles
+//  ✅ تمام رنگ‌ها از توکن‌های تم استفاده می‌کنند تا در
+//     حالت روشن و تیره هر دو درست نمایش داده شوند.
+//     منبع توکن‌ها: src/styles.scss → :root و [data-theme='light']
+// ================================================================
+$amber: #f59e0b;
+$red: #ef4444;
+$green: #22c55e;
+$transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+// ── Theme-aware tokens ────────────────────────────────────────
+// --card-solid : پس‌زمینه کارت    (روشن: #ffffff | تیره: #110b28)
+// --border     : خط مرزی نرم      (روشن: rgba(23,14,60,.10) | تیره: rgba(255,255,255,.09))
+// --text-2     : متن ثانویه
+// --brand      : رنگ برند
+:host {
+  --iq-card: var(--card-solid, #ffffff);
+  --iq-surface: var(--bg-2, #f1f5f9);
+  --iq-border: var(--border, #e2e8f0);
+  --iq-border-2: var(--border-2, #cbd5e1);
+  --iq-text: var(--text, #0f172a);
+  --iq-text-2: var(--text-2, #475569);
+  --iq-text-3: var(--text-3, #94a3b8);
+  --iq-brand: var(--brand, #7c3aed);
+  --iq-brand-2: var(--brand-2, #c026d3);
+  --iq-shadow: var(--shadow-sm, 0 10px 30px -12px rgba(0, 0, 0, 0.12));
+
+  display: block;
+}
+
+.iq-page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 24px 16px 64px;
+  color: var(--iq-text);
+
+  a {
+    color: inherit;
+  }
+}
+
+// ── Header ────────────────────────────────────────────────────
+.iq-header {
+  margin-bottom: 24px;
+}
+
+.iq-header-top {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+/* دکمه ناوبری «پنل مدرس» — همان استایل پیل ناوبری اصلی سایت */
+.iq-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.55rem 0.95rem;
+  border-radius: 10px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  color: $amber;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.18));
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  transition: all $transition;
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: $amber;
+    box-shadow: 0 0 8px $amber;
+    animation: iq-pulse 2s ease-in-out infinite;
+    flex-shrink: 0;
+  }
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    transition: transform $transition;
+  }
+
+  &:hover {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.18), rgba(245, 158, 11, 0.25));
+
+    mat-icon {
+      transform: translateX(3px);
+    }
+  }
+
+  /* پنل مدیریت — همان رنگ قرمز ناوبری اصلی سایت */
+  &.admin {
+    color: $red;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(239, 68, 68, 0.18));
+    border-color: rgba(239, 68, 68, 0.25);
+
+    .dot {
+      background: $red;
+      box-shadow: 0 0 8px $red;
+    }
+
+    &:hover {
+      background: linear-gradient(135deg, rgba(239, 68, 68, 0.18), rgba(239, 68, 68, 0.25));
+    }
+  }
+}
+
+@keyframes iq-pulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.45;
+    transform: scale(0.82);
+  }
+}
+
+.iq-headings {
+  flex: 1;
+  min-width: 240px;
+
+  h1 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 6px;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--iq-text);
+
+    mat-icon {
+      color: var(--iq-brand);
+      font-size: 30px;
+      width: 30px;
+      height: 30px;
+    }
+  }
+
+  p {
+    margin: 0;
+    color: var(--iq-text-2);
+    font-size: 0.92rem;
+  }
+}
+
+// ── Stats ─────────────────────────────────────────────────────
+.iq-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.iq-stat {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 16px;
+  background: var(--iq-card);
+  border: 1px solid var(--iq-border);
+  cursor: pointer;
+  text-align: right;
+  font-family: inherit;
+  transition: all $transition;
+
+  &:hover {
+    border-color: var(--iq-border-2);
+    transform: translateY(-2px);
+    box-shadow: var(--iq-shadow);
+  }
+
+  &.active {
+    border-color: var(--iq-brand);
+
+    .iq-stat-body strong {
+      color: var(--iq-brand);
+    }
+  }
+}
+
+.iq-stat-icon {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  flex-shrink: 0;
+
+  mat-icon {
+    font-size: 22px;
+    width: 22px;
+    height: 22px;
+  }
+
+  &.warn {
+    background: rgba(245, 158, 11, 0.14);
+    color: $amber;
+  }
+
+  &.ok {
+    background: rgba(34, 197, 94, 0.14);
+    color: $green;
+  }
+
+  &.all {
+    background: color-mix(in srgb, var(--iq-brand) 14%, transparent);
+    color: var(--iq-brand);
+  }
+}
+
+.iq-stat-body {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+
+  strong {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: var(--iq-text);
+    transition: color $transition;
+  }
+
+  span {
+    font-size: 0.8rem;
+    color: var(--iq-text-2);
+  }
+}
+
+// ── Filters ───────────────────────────────────────────────────
+.iq-filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 14px;
+  border-radius: 16px;
+  background: var(--iq-card);
+  border: 1px solid var(--iq-border);
+  margin-bottom: 20px;
+}
+
+.iq-search {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+
+  > mat-icon {
+    position: absolute;
+    right: 14px;
+    color: var(--iq-text-3);
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+  }
+
+  input {
+    width: 100%;
+    padding: 12px 42px 12px 40px;
+    border-radius: 12px;
+    border: 1px solid var(--iq-border);
+    background: var(--iq-surface);
+    font-family: inherit;
+    font-size: 0.9rem;
+    color: var(--iq-text);
+    transition: all $transition;
+
+    &::placeholder {
+      color: var(--iq-text-3);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--iq-brand);
+      box-shadow: 0 0 0 3px var(--brand-glow, rgba(124, 58, 237, 0.25));
+    }
+  }
+}
+
+.iq-search-clear {
+  position: absolute;
+  left: 10px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 999px;
+  background: var(--iq-border-2);
+  color: var(--iq-text-2);
+  cursor: pointer;
+
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+  }
+}
+
+.iq-course-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  label {
+    font-size: 0.85rem;
+    color: var(--iq-text-2);
+    font-weight: 600;
+  }
+
+  select {
+    padding: 11px 14px;
+    min-width: 190px;
+    border-radius: 12px;
+    border: 1px solid var(--iq-border);
+    background: var(--iq-surface);
+    color: var(--iq-text);
+    font-family: inherit;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all $transition;
+
+    option {
+      background: var(--iq-card);
+      color: var(--iq-text);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--iq-brand);
+      box-shadow: 0 0 0 3px var(--brand-glow, rgba(124, 58, 237, 0.25));
+    }
+  }
+}
+
+.iq-reset {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 16px;
+  border-radius: 12px;
+  border: 1px dashed var(--iq-border-2);
+  background: transparent;
+  color: var(--iq-text-2);
+  font-family: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all $transition;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    border-color: $red;
+    color: $red;
+  }
+}
+
+// ── Loading / Empty ───────────────────────────────────────────
+.iq-loading,
+.iq-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 64px 24px;
+  text-align: center;
+  color: var(--iq-text-2);
+}
+
+.iq-loading p,
+.iq-empty p {
+  margin: 0;
+  font-size: 0.9rem;
+  max-width: 420px;
+}
+
+.iq-empty {
+  background: var(--iq-card);
+  border: 1px solid var(--iq-border);
+  border-radius: 16px;
+
+  h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: var(--iq-text);
+    font-weight: 700;
+  }
+}
+
+.iq-empty-icon {
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--iq-brand) 12%, transparent);
+  color: var(--iq-brand);
+
+  mat-icon {
+    font-size: 34px;
+    width: 34px;
+    height: 34px;
+  }
+}
+
+.iq-spinner {
+  display: inline-block;
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--iq-border);
+  border-top-color: var(--iq-brand);
+  border-radius: 999px;
+  animation: iq-spin 0.7s linear infinite;
+
+  &.sm {
+    width: 15px;
+    height: 15px;
+    border-width: 2px;
+    border-top-color: #fff;
+  }
+}
+
+@keyframes iq-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ── List / Card ───────────────────────────────────────────────
+.iq-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.iq-card {
+  background: var(--iq-card);
+  border: 1px solid var(--iq-border);
+  border-radius: 16px;
+  padding: 20px;
+  transition: all $transition;
+
+  &:hover {
+    border-color: var(--iq-border-2);
+    box-shadow: var(--iq-shadow);
+  }
+
+  &.resolved {
+    opacity: 0.72;
+  }
+}
+
+.iq-card-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.iq-avatar {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--iq-brand), var(--iq-brand-2));
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  flex-shrink: 0;
+
+  &.sm {
+    width: 32px;
+    height: 32px;
+    font-size: 0.78rem;
+  }
+}
+
+.iq-card-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.iq-meta-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  strong {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--iq-text);
+  }
+}
+
+.iq-course-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--iq-text-2);
+  flex-wrap: wrap;
+
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+    color: var(--iq-text-3);
+  }
+}
+
+.iq-dot {
+  color: var(--iq-text-3);
+}
+
+.iq-time {
+  font-size: 0.78rem;
+  color: var(--iq-text-3);
+}
+
+.iq-role-tag {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--iq-brand) 14%, transparent);
+  color: var(--iq-brand);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.iq-card-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.iq-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  white-space: nowrap;
+
+  mat-icon {
+    font-size: 14px;
+    width: 14px;
+    height: 14px;
+  }
+
+  &.pinned {
+    background: color-mix(in srgb, var(--iq-brand-2) 14%, transparent);
+    color: var(--iq-brand-2);
+  }
+
+  &.resolved {
+    background: rgba(34, 197, 94, 0.14);
+    color: $green;
+  }
+
+  &.pending {
+    background: rgba(245, 158, 11, 0.14);
+    color: $amber;
+  }
+}
+
+.iq-title {
+  margin: 0 0 8px;
+  font-size: 1.02rem;
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--iq-text);
+}
+
+.iq-content {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.85;
+  color: var(--iq-text-2);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+// ── Replies ───────────────────────────────────────────────────
+.iq-replies {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--iq-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.iq-reply {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--iq-surface);
+
+  &.ins {
+    background: color-mix(in srgb, var(--iq-brand) 8%, transparent);
+    border: 1px solid color-mix(in srgb, var(--iq-brand) 20%, transparent);
+    border-right: 3px solid var(--iq-brand);
+  }
+}
+
+.iq-reply-body {
+  flex: 1;
+  min-width: 0;
+
+  p {
+    margin: 6px 0 0;
+    font-size: 0.9rem;
+    line-height: 1.8;
+    color: var(--iq-text-2);
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+}
+
+.iq-reply-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+
+  strong {
+    font-size: 0.88rem;
+    color: var(--iq-text);
+  }
+}
+
+.iq-ins-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--iq-brand) 16%, transparent);
+  color: var(--iq-brand);
+  font-size: 0.72rem;
+  font-weight: 700;
+
+  mat-icon {
+    font-size: 13px;
+    width: 13px;
+    height: 13px;
+  }
+}
+
+// ── Editor ────────────────────────────────────────────────────
+.iq-editor {
+  margin-top: 16px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--iq-surface);
+  border: 1px solid color-mix(in srgb, var(--iq-brand) 28%, transparent);
+
+  textarea {
+    width: 100%;
+    margin-top: 10px;
+    padding: 12px 14px;
+    border-radius: 8px;
+    border: 1px solid var(--iq-border);
+    background: var(--iq-card);
+    font-family: inherit;
+    font-size: 0.92rem;
+    line-height: 1.85;
+    color: var(--iq-text);
+    resize: vertical;
+    transition: all $transition;
+
+    &::placeholder {
+      color: var(--iq-text-3);
+    }
+
+    &:focus {
+      outline: none;
+      border-color: var(--iq-brand);
+      box-shadow: 0 0 0 3px var(--brand-glow, rgba(124, 58, 237, 0.25));
+    }
+  }
+}
+
+.iq-editor-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--iq-brand);
+  font-weight: 700;
+
+  mat-icon {
+    font-size: 17px;
+    width: 17px;
+    height: 17px;
+  }
+}
+
+.iq-editor-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+
+  > span {
+    font-size: 0.78rem;
+    color: var(--iq-text-3);
+  }
+
+  > div {
+    display: flex;
+    gap: 8px;
+  }
+}
+
+// ── Buttons ───────────────────────────────────────────────────
+.iq-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  border: none;
+  font-family: inherit;
+  font-size: 0.87rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all $transition;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  &.iq-btn-primary {
+    background: var(--iq-brand);
+    color: #fff;
+
+    &:hover:not(:disabled) {
+      background: color-mix(in srgb, var(--iq-brand) 86%, #000);
+    }
+  }
+
+  &.iq-btn-ghost {
+    background: transparent;
+    color: var(--iq-text-2);
+    border: 1px solid var(--iq-border);
+
+    &:hover {
+      border-color: var(--iq-border-2);
+      color: var(--iq-text);
+    }
+  }
+
+  &.iq-btn-soft {
+    background: color-mix(in srgb, var(--iq-brand) 12%, transparent);
+    color: var(--iq-brand);
+
+    &:hover {
+      background: color-mix(in srgb, var(--iq-brand) 20%, transparent);
+    }
+  }
+}
+
+.iq-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--iq-border);
+  flex-wrap: wrap;
+}
+
+.iq-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--iq-border);
+  background: transparent;
+  color: var(--iq-text-2);
+  font-family: inherit;
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all $transition;
+
+  mat-icon {
+    font-size: 17px;
+    width: 17px;
+    height: 17px;
+  }
+
+  &:hover {
+    border-color: var(--iq-border-2);
+    color: var(--iq-text);
+    background: var(--iq-surface);
+  }
+
+  &.primary {
+    background: var(--iq-brand);
+    border-color: var(--iq-brand);
+    color: #fff;
+
+    &:hover {
+      background: color-mix(in srgb, var(--iq-brand) 86%, #000);
+      color: #fff;
+    }
+  }
+
+  &.answering {
+    background: var(--iq-surface);
+    border-color: var(--iq-border-2);
+    color: var(--iq-text);
+  }
+}
+
+.iq-spacer {
+  flex: 1;
+}
+
+.iq-counts {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  color: var(--iq-text-3);
+
+  mat-icon {
+    font-size: 15px;
+    width: 15px;
+    height: 15px;
+  }
+}
+
+.iq-icon-btn {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 12px;
+  border: 1px solid var(--iq-border);
+  background: transparent;
+  color: var(--iq-text-2);
+  cursor: pointer;
+  transition: all $transition;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    border-color: var(--iq-brand);
+    color: var(--iq-brand);
+    background: color-mix(in srgb, var(--iq-brand) 10%, transparent);
+  }
+
+  &.danger:hover {
+    border-color: $red;
+    color: $red;
+    background: rgba(239, 68, 68, 0.1);
+  }
+}
+
+// ── Pagination ────────────────────────────────────────────────
+.iq-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 28px;
+}
+
+.iq-page-btn {
+  display: grid;
+  place-items: center;
+  min-width: 38px;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 12px;
+  border: 1px solid var(--iq-border);
+  background: var(--iq-card);
+  color: var(--iq-text-2);
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all $transition;
+
+  mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  &:hover:not(:disabled) {
+    border-color: var(--iq-brand);
+    color: var(--iq-brand);
+  }
+
+  &.active {
+    background: var(--iq-brand);
+    border-color: var(--iq-brand);
+    color: #fff;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+// ── Responsive ────────────────────────────────────────────────
+@media (max-width: 768px) {
+  .iq-page {
+    padding: 16px 12px 48px;
+  }
+
+  .iq-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .iq-headings h1 {
+    font-size: 1.3rem;
+  }
+
+  .iq-card {
+    padding: 16px;
+  }
+
+  .iq-card-head {
+    flex-wrap: wrap;
+  }
+
+  .iq-course-filter {
+    width: 100%;
+
+    select {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  .iq-action {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .iq-card-foot .iq-icon-btn {
+    width: 40px;
+    height: 40px;
+  }
+}

@@ -1,0 +1,523 @@
+// ──────────────────────────────────────────────
+//  Design Tokens
+// ──────────────────────────────────────────────
+:host {
+  --success: #10b981;
+  --success-light: #d1fae5;
+  --danger: #ef4444;
+  --danger-light: #fef2f2;
+  --warning: #f59e0b;
+  --warning-light: #fffbeb;
+  --warning-border: #fde68a;
+  --info: #6366f1;
+  --info-light: #eef2ff;
+  --accent: #6366f1;
+  --accent-hover: #4f46e5;
+  --card-bg: #ffffff;
+  --page-bg: #f8fafc;
+  --text: #1e293b;
+  --text-muted: #64748b;
+  --border: #e2e8f0;
+  --surface: #f1f5f9;
+  --radius: 20px;
+  --radius-sm: 12px;
+
+  display: block;
+  font-family: 'Vazirmatn', 'IRANSans', system-ui, sans-serif;
+}
+
+// ──────────────────────────────────────────────
+//  Page
+// ──────────────────────────────────────────────
+.payment-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80vh;
+  padding: 2rem 1rem;
+  direction: rtl;
+  background: var(--page-bg);
+}
+
+// ──────────────────────────────────────────────
+//  Card
+// ──────────────────────────────────────────────
+.result-card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 3rem 2.5rem;
+  text-align: center;
+  max-width: 540px;
+  width: 100%;
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 8px 32px rgba(0, 0, 0, 0.06);
+}
+
+.animate-in {
+  animation: cardEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(24px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+// ──────────────────────────────────────────────
+//  Typography
+// ──────────────────────────────────────────────
+.title {
+  font-size: 1.55rem;
+  font-weight: 800;
+  margin: 0 0 0.5rem;
+  color: var(--text);
+}
+
+.working-title { color: var(--accent); }
+.success-title { color: var(--success); }
+.error-title   { color: var(--danger); }
+.info-title    { color: var(--info); }
+
+.subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  line-height: 1.9;
+  margin: 0 0 1.75rem;
+}
+
+// ──────────────────────────────────────────────
+//  SVG Spinner (Working)
+// ──────────────────────────────────────────────
+.spinner-wrapper {
+  margin-bottom: 1.5rem;
+}
+
+.spinner-svg {
+  width: 64px;
+  height: 64px;
+  animation: spinRotate 1.4s linear infinite;
+}
+
+.spinner-track {
+  fill: none;
+  stroke: var(--surface);
+  stroke-width: 5;
+}
+
+.spinner-fill {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 120 164;
+  animation: spinDash 1.4s ease-in-out infinite;
+}
+
+@keyframes spinRotate {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes spinDash {
+  0%   { stroke-dasharray: 1 164;  stroke-dashoffset: 0; }
+  50%  { stroke-dasharray: 90 164; stroke-dashoffset: -35; }
+  100% { stroke-dasharray: 90 164; stroke-dashoffset: -124; }
+}
+
+// ──────────────────────────────────────────────
+//  Step Progress (Working)
+// ──────────────────────────────────────────────
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  padding: 0.6rem 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  transition: color 0.3s;
+
+  &--active {
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  &--done {
+    color: var(--success);
+  }
+}
+
+.step-indicator {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  transition: all 0.3s;
+
+  .step--active & {
+    background: var(--info-light);
+    border-color: var(--accent);
+  }
+
+  .step--done & {
+    background: var(--success-light);
+    border-color: var(--success);
+  }
+}
+
+.step-icon {
+  width: 16px;
+  height: 16px;
+  fill: var(--success);
+}
+
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+}
+
+.step-pulse {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  position: relative;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 50%;
+    border: 2px solid var(--accent);
+    animation: pulseRing 1.5s ease-out infinite;
+  }
+}
+
+@keyframes pulseRing {
+  0%   { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+
+.step-connector {
+  position: absolute;
+  right: 13px;
+  top: calc(100% - 2px);
+  width: 2px;
+  height: 12px;
+  background: var(--border);
+  transition: background 0.3s;
+
+  &--done {
+    background: var(--success);
+  }
+}
+
+.step-label {
+  line-height: 1.4;
+}
+
+// ──────────────────────────────────────────────
+//  Animated Checkmark (Success)
+// ──────────────────────────────────────────────
+.icon-wrapper {
+  margin-bottom: 1.5rem;
+}
+
+.checkmark-svg {
+  width: 80px;
+  height: 80px;
+}
+
+.checkmark-circle {
+  fill: none;
+  stroke: var(--success);
+  stroke-width: 3;
+  stroke-dasharray: 226;
+  stroke-dashoffset: 226;
+  animation: drawCircle 0.6s 0.2s ease-out forwards;
+}
+
+.checkmark-check {
+  fill: none;
+  stroke: var(--success);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 60;
+  stroke-dashoffset: 60;
+  animation: drawCheck 0.4s 0.7s ease-out forwards;
+}
+
+@keyframes drawCircle { to { stroke-dashoffset: 0; } }
+@keyframes drawCheck  { to { stroke-dashoffset: 0; } }
+
+// ──────────────────────────────────────────────
+//  Countdown Badge (Success)
+// ──────────────────────────────────────────────
+.countdown-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--success-light);
+  color: #065f46;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 0.65rem 1.5rem;
+  border-radius: 999px;
+
+  strong {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: var(--success);
+    color: #fff;
+    border-radius: 50%;
+    font-size: 0.8rem;
+    animation: countPulse 1s ease-in-out infinite;
+  }
+
+  .icon-timer {
+    width: 18px;
+    height: 18px;
+    fill: #065f46;
+  }
+}
+
+@keyframes countPulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.15); }
+}
+
+// ──────────────────────────────────────────────
+//  Animated X (Error)
+// ──────────────────────────────────────────────
+.error-svg {
+  width: 80px;
+  height: 80px;
+}
+
+.error-circle {
+  fill: none;
+  stroke: var(--danger);
+  stroke-width: 3;
+  stroke-dasharray: 226;
+  stroke-dashoffset: 226;
+  animation: drawCircle 0.6s 0.2s ease-out forwards;
+}
+
+.error-x1,
+.error-x2 {
+  stroke: var(--danger);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 34;
+  stroke-dashoffset: 34;
+  animation: drawCheck 0.3s 0.7s ease-out forwards;
+}
+
+.error-x2 { animation-delay: 0.85s; }
+
+// ──────────────────────────────────────────────
+//  Hint Box (Error)
+// ──────────────────────────────────────────────
+.hint-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  background: var(--warning-light);
+  border: 1px solid var(--warning-border);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.75rem;
+  text-align: right;
+  color: #92400e;
+  font-size: 0.875rem;
+  line-height: 1.8;
+
+  .icon-info {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    fill: var(--warning);
+    margin-top: 0.15rem;
+  }
+}
+
+// ──────────────────────────────────────────────
+//  Info SVG (Nothing)
+// ──────────────────────────────────────────────
+.info-svg {
+  width: 80px;
+  height: 80px;
+}
+
+.info-circle {
+  fill: none;
+  stroke: var(--info);
+  stroke-width: 3;
+  stroke-dasharray: 226;
+  stroke-dashoffset: 226;
+  animation: drawCircle 0.6s 0.2s ease-out forwards;
+}
+
+.info-stem {
+  stroke: var(--info);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 18;
+  stroke-dashoffset: 18;
+  animation: drawCheck 0.3s 0.7s ease-out forwards;
+}
+
+.info-dot {
+  fill: var(--info);
+  opacity: 0;
+  animation: fadeIn 0.3s 0.9s ease-out forwards;
+}
+
+@keyframes fadeIn { to { opacity: 1; } }
+
+// ──────────────────────────────────────────────
+//  Auto-Verify Box (Nothing)
+// ──────────────────────────────────────────────
+.auto-verify-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--info-light);
+  color: var(--info);
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
+  margin-bottom: 1.75rem;
+
+  .icon-sync {
+    width: 18px;
+    height: 18px;
+    fill: var(--info);
+    animation: spinRotate 2s linear infinite;
+  }
+}
+
+// ──────────────────────────────────────────────
+//  Shared Icons
+// ──────────────────────────────────────────────
+.icon {
+  width: 16px;
+  height: 16px;
+  fill: currentColor;
+  flex-shrink: 0;
+}
+
+// ──────────────────────────────────────────────
+//  Action Buttons
+// ──────────────────────────────────────────────
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.8rem 1.75rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.925rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  border: none;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease,
+    background 0.2s ease;
+
+  &:active { transform: scale(0.97); }
+
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+
+  &:hover {
+    background: var(--accent-hover);
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.35);
+  }
+}
+
+.btn-secondary {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+
+  &:hover { background: var(--border); }
+}
+
+// ──────────────────────────────────────────────
+//  Accessibility
+// ──────────────────────────────────────────────
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+// ──────────────────────────────────────────────
+//  Responsive
+// ──────────────────────────────────────────────
+@media (max-width: 480px) {
+  .result-card {
+    padding: 2rem 1.25rem;
+  }
+
+  .title {
+    font-size: 1.3rem;
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+
+  .btn {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .step-label {
+    font-size: 0.8rem;
+  }
+}

@@ -1,0 +1,445 @@
+<div class="instructor-dashboard" dir="rtl">
+  <!-- ============================================
+       LOADING STATE (Skeleton)
+       ============================================ -->
+  <div class="dashboard-loading" *ngIf="isLoading()">
+    <div class="skel-hero shimmer"></div>
+    <div class="skel-stats">
+      <div class="skel-stat-card shimmer" *ngFor="let s of skeletonArray"></div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       MAIN CONTENT
+       ============================================ -->
+  <ng-container *ngIf="!isLoading()">
+    <!-- ============================================
+         HERO / WELCOME BANNER
+         ============================================ -->
+    <section class="dashboard-hero">
+      <div class="hero-bg-pattern">
+        <div class="bg-blob blob-1"></div>
+        <div class="bg-blob blob-2"></div>
+        <div class="bg-grid"></div>
+      </div>
+
+      <div class="hero-content">
+        <div class="hero-left">
+          <div class="greeting-line">
+            <span class="wave">👋</span>
+            <span>{{ currentTime() }}</span>
+          </div>
+          <h1 class="hero-title">
+            خوش آمدید،
+            <span class="hero-name">{{ authService.userName() || 'مدرس عزیز' }}</span>
+          </h1>
+          <p class="hero-desc">
+            امروز آماده مدیریت دوره‌ها و پاسخگویی به دانشجویان خود هستید. آمار عملکرد شما در ادامه
+            نمایش داده شده است.
+          </p>
+
+          <div class="hero-actions">
+            <a routerLink="/instructor/course-builder" class="btn-hero-primary">
+              <mat-icon>add_circle</mat-icon>
+              <span>ایجاد دوره جدید</span>
+            </a>
+            <a routerLink="/instructor/analytics" class="btn-hero-ghost">
+              <mat-icon>insights</mat-icon>
+              <span>مشاهده آمار</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="hero-right">
+          <div class="hero-illustration">
+            <div class="illust-card card-1">
+              <mat-icon>school</mat-icon>
+              <div>
+                <span class="il-value">{{ displayStats().totalCourses }}</span>
+                <span class="il-label">دوره</span>
+              </div>
+            </div>
+            <div class="illust-card card-2">
+              <mat-icon>people_alt</mat-icon>
+              <div>
+                <span class="il-value">{{ displayStats().totalStudents }}</span>
+                <span class="il-label">دانشجو</span>
+              </div>
+            </div>
+            <div class="illust-card card-3">
+              <mat-icon>star</mat-icon>
+              <div>
+                <span class="il-value">{{ displayStats().averageRating | number: '1.1-1' }}</span>
+                <span class="il-label">امتیاز</span>
+              </div>
+            </div>
+            <div class="illust-orb"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================
+         MAIN CONTAINER
+         ============================================ -->
+    <div class="dashboard-container">
+      <!-- Period Filter -->
+      <div class="period-selector">
+        <div class="section-label">
+          <mat-icon>analytics</mat-icon>
+          <h2>خلاصه عملکرد</h2>
+        </div>
+        <div class="period-tabs">
+          <button
+            *ngFor="let p of periods"
+            class="period-tab"
+            [class.active]="selectedPeriod() === p.value"
+            (click)="setPeriod(p.value)"
+          >
+            {{ p.label }}
+          </button>
+        </div>
+      </div>
+
+      <!-- ============================================
+           STAT CARDS
+           ============================================ -->
+      <section class="stats-grid">
+        <!-- Total Courses -->
+        <div class="stat-card" data-color="blue">
+          <div class="stat-header">
+            <div class="stat-icon">
+              <mat-icon>school</mat-icon>
+            </div>
+            <div class="stat-trend up">
+              <mat-icon>trending_up</mat-icon>
+              <span>+۱۲٪</span>
+            </div>
+          </div>
+          <div class="stat-body">
+            <span class="stat-value">{{ displayStats().totalCourses }}</span>
+            <span class="stat-label">کل دوره‌ها</span>
+          </div>
+          <div class="stat-footer">
+            <div class="stat-mini-detail">
+              <span class="dot published"></span>
+              <span>{{ displayStats().publishedCourses }} منتشر شده</span>
+            </div>
+            <div class="stat-mini-detail">
+              <span class="dot draft"></span>
+              <span>{{ displayStats().draftCourses }} پیش‌نویس</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Students -->
+        <div class="stat-card" data-color="green">
+          <div class="stat-header">
+            <div class="stat-icon">
+              <mat-icon>groups</mat-icon>
+            </div>
+            <div class="stat-trend up">
+              <mat-icon>trending_up</mat-icon>
+              <span>+۲۴٪</span>
+            </div>
+          </div>
+          <div class="stat-body">
+            <span class="stat-value">{{ displayStats().totalStudents | number }}</span>
+            <span class="stat-label">دانشجویان فعال</span>
+          </div>
+          <div class="stat-footer">
+            <div class="mini-avatars">
+              <div class="mini-avatar" *ngFor="let a of [1, 2, 3, 4]" [style.z-index]="5 - a">
+                <mat-icon>person</mat-icon>
+              </div>
+              <span class="more-count"
+                >+{{
+                  displayStats().totalStudents - 4 > 0 ? displayStats().totalStudents - 4 : 0
+                }}</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <!-- Total Revenue -->
+        <div class="stat-card highlighted" data-color="amber">
+          <div class="stat-header">
+            <div class="stat-icon">
+              <mat-icon>payments</mat-icon>
+            </div>
+            <div class="stat-trend up">
+              <mat-icon>trending_up</mat-icon>
+              <span>+۳۸٪</span>
+            </div>
+          </div>
+          <div class="stat-body">
+            <span class="stat-value revenue">{{ displayStats().totalRevenue | toman }}</span>
+            <span class="stat-label">درآمد کل</span>
+          </div>
+          <div class="stat-footer">
+            <div class="progress-mini">
+              <div class="progress-mini-bar" [style.width.%]="65"></div>
+            </div>
+            <span class="progress-mini-text">۶۵٪ از هدف ماهانه</span>
+          </div>
+        </div>
+
+        <!-- Average Rating -->
+        <div class="stat-card" data-color="purple">
+          <div class="stat-header">
+            <div class="stat-icon">
+              <mat-icon>star</mat-icon>
+            </div>
+            <div class="stat-badge">
+              <mat-icon>verified</mat-icon>
+              عالی
+            </div>
+          </div>
+          <div class="stat-body">
+            <span class="stat-value">
+              {{ displayStats().averageRating | number: '1.1-1' }}
+              <span class="stat-value-sub">/ ۵</span>
+            </span>
+            <span class="stat-label">میانگین امتیاز</span>
+          </div>
+          <div class="stat-footer">
+            <div class="star-row">
+              <mat-icon
+                *ngFor="let s of [1, 2, 3, 4, 5]"
+                [class.filled]="s <= displayStats().averageRating"
+              >
+                {{ s <= displayStats().averageRating ? 'star' : 'star_border' }}
+              </mat-icon>
+            </div>
+            <span class="reviews-count">{{ displayStats().totalReviews }} نظر</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================================
+           CONTENT GRID (2 columns)
+           ============================================ -->
+      <div class="content-grid">
+        <!-- LEFT: Top Courses -->
+        <section class="content-panel top-courses-panel">
+          <div class="panel-header">
+            <div class="panel-title">
+              <mat-icon>emoji_events</mat-icon>
+              <h3>دوره‌های برتر شما</h3>
+            </div>
+          </div>
+
+          <div class="panel-body">
+            <!-- Empty State -->
+            <div class="empty-panel-state" *ngIf="topCourses().length === 0">
+              <div class="empty-icon-wrap">
+                <mat-icon>school</mat-icon>
+              </div>
+              <h4>هنوز دوره‌ای ایجاد نکرده‌اید</h4>
+              <p>اولین دوره خود را بسازید؛ بعد از ارسال برای بازبینی اینجا دیده می‌شود</p>
+              <a routerLink="/instructor/course-builder" class="btn-empty-cta">
+                <mat-icon>add</mat-icon>
+                ایجاد دوره
+              </a>
+            </div>
+
+            <!-- Course List -->
+            <div class="top-course-list" *ngIf="topCourses().length > 0">
+              <div
+                class="top-course-item clickable"
+                *ngFor="
+                  let course of topCourses().slice(0, 5);
+                  let i = index;
+                  trackBy: trackByCourse
+                "
+                (click)="openCourse(course)"
+                role="button"
+                tabindex="0"
+                (keydown.enter)="openCourse(course)"
+              >
+                <div class="course-rank" [attr.data-rank]="i + 1">
+                  <span *ngIf="i > 2">{{ i + 1 }}</span>
+                  <mat-icon *ngIf="i === 0">workspace_premium</mat-icon>
+                  <mat-icon *ngIf="i === 1">military_tech</mat-icon>
+                  <mat-icon *ngIf="i === 2">star</mat-icon>
+                </div>
+
+                <!-- 🆕 آپدیت بخش عکس (هندلینگ هوشمند عکس‌های خراب) -->
+                <div class="course-thumb">
+                  <img
+                    *ngIf="shouldShowThumb(course)"
+                    [src]="course.thumbnail!"
+                    [alt]="course.title"
+                    loading="lazy"
+                    (error)="onThumbError(course, $event)"
+                  />
+                  <!-- نمایش آیکون پلیر در صورت نبود عکس یا خراب بودن آن -->
+                  <div class="thumb-placeholder" *ngIf="!shouldShowThumb(course)">
+                    <mat-icon>play_circle</mat-icon>
+                  </div>
+                </div>
+
+                <div class="course-info">
+                  <h4>{{ course.title }}</h4>
+                  <div class="course-metrics">
+                    <span class="metric">
+                      <mat-icon>people</mat-icon>
+                      {{ course.students | number }}
+                    </span>
+                    <span class="metric">
+                      <mat-icon>star</mat-icon>
+                      {{ course.rating | number: '1.1-1' }}
+                    </span>
+                    <span class="metric status-badge" [attr.data-status]="course.status">
+                      {{ statusLabel(course.status) }}
+                    </span>
+                  </div>
+                  <!-- نمایش دلیل رد دوره -->
+                  <div
+                    class="rejection-reason"
+                    *ngIf="course.status === 'rejected' && course.rejectionReason"
+                  >
+                    <mat-icon>info_outline</mat-icon>
+                    <span [innerHTML]="course.rejectionReason | sanitizeHtml"></span>
+                  </div>
+                </div>
+
+                <div class="course-revenue">
+                  <span class="rev-value">{{ course.revenue | toman }}</span>
+                  <span class="rev-label">درآمد</span>
+                </div>
+
+                <mat-icon class="course-arrow">chevron_left</mat-icon>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- RIGHT: Recent Activity + Quick Actions -->
+        <aside class="content-sidebar">
+          <!-- Quick Actions Card -->
+          <div class="sidebar-panel actions-panel">
+            <div class="panel-header">
+              <div class="panel-title">
+                <mat-icon>bolt</mat-icon>
+                <h3>اقدامات سریع</h3>
+              </div>
+            </div>
+
+            <div class="quick-actions-list">
+              <a routerLink="/instructor/profile" class="quick-action-item">
+                <div class="qa-icon qa-purple">
+                  <mat-icon>person</mat-icon>
+                </div>
+                <div class="qa-text">
+                  <span class="qa-title">پروفایل مدرس</span>
+                  <span class="qa-desc">ویرایش بیوگرافی و اطلاعات</span>
+                </div>
+                <mat-icon class="qa-arrow">chevron_left</mat-icon>
+              </a>
+
+              <a routerLink="/instructor/course-builder" class="quick-action-item">
+                <div class="qa-icon qa-purple">
+                  <mat-icon>add_circle</mat-icon>
+                </div>
+                <div class="qa-text">
+                  <span class="qa-title">ایجاد دوره جدید</span>
+                  <span class="qa-desc">شروع ساخت دوره تازه</span>
+                </div>
+                <mat-icon class="qa-arrow">chevron_left</mat-icon>
+              </a>
+
+              <a routerLink="/instructor/analytics" class="quick-action-item">
+                <div class="qa-icon qa-blue">
+                  <mat-icon>insights</mat-icon>
+                </div>
+                <div class="qa-text">
+                  <span class="qa-title">تحلیل و آمار</span>
+                  <span class="qa-desc">نمودار درآمد و پیشرفت</span>
+                </div>
+                <mat-icon class="qa-arrow">chevron_left</mat-icon>
+              </a>
+
+              <a routerLink="/messages" class="quick-action-item">
+                <div class="qa-icon qa-green">
+                  <mat-icon>chat_bubble</mat-icon>
+                </div>
+                <div class="qa-text">
+                  <span class="qa-title">پیام دانشجویان</span>
+                  <span class="qa-desc">پاسخ به سوالات</span>
+                </div>
+                <span class="qa-badge">۳</span>
+                <mat-icon class="qa-arrow">chevron_left</mat-icon>
+              </a>
+
+              <a routerLink="/instructor/questions" class="quick-action-item">
+                <div class="qa-icon qa-blue">
+                  <mat-icon>question_answer</mat-icon>
+                </div>
+                <div class="qa-text">
+                  <span class="qa-title">پرسش و پاسخ</span>
+                  <span class="qa-desc">پاسخ به پرسش‌های دوره‌ها</span>
+                </div>
+                <mat-icon class="qa-arrow">chevron_left</mat-icon>
+              </a>
+            </div>
+          </div>
+
+          <!-- Performance Tip Card -->
+          <div class="tip-card">
+            <div class="tip-icon">
+              <mat-icon>lightbulb</mat-icon>
+            </div>
+            <h4>نکته امروز</h4>
+            <p>پاسخ سریع به سوالات دانشجویان رضایت آنها را تا ۴۰٪ افزایش می‌دهد.</p>
+          </div>
+        </aside>
+      </div>
+
+      <!-- ============================================
+           RECENT ACTIVITY (Full Width)
+           ============================================ -->
+      <section class="activity-section">
+        <div class="panel-header">
+          <div class="panel-title">
+            <mat-icon>history</mat-icon>
+            <h3>فعالیت‌های اخیر</h3>
+          </div>
+        </div>
+
+        <div class="activity-timeline">
+          <!-- Empty Activity -->
+          <div class="empty-panel-state compact" *ngIf="recentActivities().length === 0">
+            <mat-icon>event_note</mat-icon>
+            <h4>هنوز فعالیتی ثبت نشده</h4>
+            <p>فعالیت‌های دوره‌های شما اینجا نمایش داده می‌شود</p>
+          </div>
+
+          <!-- Activity Items -->
+          <div class="activity-list" *ngIf="recentActivities().length > 0">
+            <div
+              class="activity-item"
+              *ngFor="let activity of recentActivities()"
+              [attr.data-type]="activity.type"
+            >
+              <div class="activity-line"></div>
+              <div class="activity-icon">
+                <mat-icon>{{ activity.icon }}</mat-icon>
+              </div>
+              <div class="activity-content">
+                <div class="activity-header">
+                  <h4>{{ activity.title }}</h4>
+                  <span class="activity-time">{{ activity.time }}</span>
+                </div>
+                <p>{{ activity.description }}</p>
+                <span class="activity-amount" *ngIf="activity.amount">
+                  {{ activity.amount | toman }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </ng-container>
+</div>

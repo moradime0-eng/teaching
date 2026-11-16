@@ -1,0 +1,246 @@
+<div class="admin-tickets" [class.mobile-detail-open]="selectedTicket() && isMobileView()" dir="rtl">
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <h1>
+        <mat-icon>support_agent</mat-icon>
+        <span>مدیریت تیکت‌های پشتیبانی</span>
+      </h1>
+      <p>مشاهده و پاسخ به تیکت‌های کاربران</p>
+    </div>
+    <div class="header-stats">
+      <div class="stat-pill">
+        <span class="stat-num">{{ stats().total }}</span>
+        <span class="stat-label">کل</span>
+      </div>
+      <div class="stat-pill warning">
+        <span class="stat-num">{{ stats().open }}</span>
+        <span class="stat-label">باز</span>
+      </div>
+      <div class="stat-pill info">
+        <span class="stat-num">{{ stats().inProgress }}</span>
+        <span class="stat-label">در حال بررسی</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-bar">
+    <!-- Mobile filter toggle -->
+    <button class="mobile-filter-toggle" (click)="toggleMobileFilters()">
+      <mat-icon>filter_list</mat-icon>
+      <span>فیلترها</span>
+      <mat-icon class="chevron" [class.rotated]="showMobileFilters()">expand_more</mat-icon>
+    </button>
+
+    <div class="filters-content" [class.mobile-open]="showMobileFilters()">
+      <div class="filter-row">
+        <!-- Status Filter -->
+        <div class="filter-tabs">
+          <button [class.active]="activeFilter() === 'all'" (click)="setFilter('all')">
+            <mat-icon>list</mat-icon>
+            <span>همه</span>
+          </button>
+          <button [class.active]="activeFilter() === 'open'" (click)="setFilter('open')">
+            <mat-icon>mark_email_unread</mat-icon>
+            <span>باز</span>
+          </button>
+          <button
+            [class.active]="activeFilter() === 'in_progress'"
+            (click)="setFilter('in_progress')"
+          >
+            <mat-icon>sync</mat-icon>
+            <span>در حال بررسی</span>
+          </button>
+          <button [class.active]="activeFilter() === 'resolved'" (click)="setFilter('resolved')">
+            <mat-icon>check_circle</mat-icon>
+            <span>حل شده</span>
+          </button>
+          <button [class.active]="activeFilter() === 'closed'" (click)="setFilter('closed')">
+            <mat-icon>lock</mat-icon>
+            <span>بسته</span>
+          </button>
+        </div>
+        <!-- Role Filter -->
+        <div class="role-filter">
+          <button [class.active]="roleFilter() === 'all'" (click)="setRoleFilter('all')">
+            همه
+          </button>
+          <button [class.active]="roleFilter() === 'student'" (click)="setRoleFilter('student')">
+            <mat-icon>school</mat-icon>
+            <span>دانشجوها</span>
+          </button>
+          <button
+            [class.active]="roleFilter() === 'instructor'"
+            (click)="setRoleFilter('instructor')"
+          >
+            <mat-icon>co_present</mat-icon>
+            <span>مدرسین</span>
+          </button>
+        </div>
+      </div>
+      <div class="search-box">
+        <mat-icon>search</mat-icon>
+        <input type="text" placeholder="جستجو..." [(ngModel)]="searchQuery" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Content Grid -->
+  <div class="content-grid">
+    <!-- Ticket List -->
+    <div class="ticket-list-panel">
+      <div *ngIf="isLoading()" class="loading-state">
+        <div class="skel-item" *ngFor="let s of [1, 2, 3, 4, 5]">
+          <div class="skel-avatar shimmer"></div>
+          <div class="skel-body">
+            <div class="skel-line shimmer"></div>
+            <div class="skel-line short shimmer"></div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="!isLoading() && filteredTickets().length === 0" class="empty-state">
+        <mat-icon>inbox</mat-icon>
+        <p>تیکتی یافت نشد</p>
+      </div>
+
+      <div class="ticket-items" *ngIf="!isLoading() && filteredTickets().length > 0">
+        <div
+          *ngFor="let ticket of filteredTickets(); trackBy: trackById"
+          class="ticket-item"
+          [class.active]="selectedTicket()?._id === ticket._id"
+          [class.unread]="ticket.status === 'open'"
+          (click)="selectTicket(ticket)"
+        >
+          <div class="ticket-user-avatar">
+            <mat-icon>person</mat-icon>
+          </div>
+          <div class="ticket-info">
+            <div class="ticket-top">
+              <span class="ticket-subject">{{ ticket.subject }}</span>
+              <span class="status-dot" [attr.data-status]="ticket.status"></span>
+            </div>
+            <div class="ticket-meta">
+              <span class="meta-num">{{ ticket.ticketNumber }}</span>
+              <span class="meta-sep">•</span>
+              <span class="meta-user">{{ extractUserName(ticket.user) }}</span>
+              <span class="role-badge" [attr.data-role]="extractUserRole(ticket.user)">
+                {{ getRoleLabel(extractUserRole(ticket.user)) }}
+              </span>
+              <span class="meta-sep hide-on-mobile">•</span>
+              <span class="meta-date hide-on-mobile">{{ ticket.createdAt | jalaliDate }}</span>
+            </div>
+            <div class="ticket-preview" *ngIf="ticket.messages.length">
+              {{ getLastMessagePreview(ticket) }}
+            </div>
+          </div>
+          <div class="ticket-status-badge" [attr.data-status]="ticket.status">
+            {{ getStatusLabel(ticket.status) }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detail Panel -->
+    <div class="ticket-detail-panel" *ngIf="selectedTicket()">
+      <!-- Mobile Back Button -->
+      <button class="mobile-back-btn" (click)="closeMobileDetail()" aria-label="بازگشت">
+        <mat-icon>arrow_forward</mat-icon>
+        <span>بازگشت به لیست</span>
+      </button>
+
+      <div class="detail-header">
+        <div class="detail-title">
+          <h2>{{ selectedTicket()!.subject }}</h2>
+          <div class="detail-meta">
+            <span class="ticket-number">{{ selectedTicket()!.ticketNumber }}</span>
+            <span class="status-badge" [attr.data-status]="selectedTicket()!.status">
+              {{ getStatusLabel(selectedTicket()!.status) }}
+            </span>
+            <span class="priority-badge" [attr.data-priority]="selectedTicket()!.priority">
+              {{ getPriorityLabel(selectedTicket()!.priority) }}
+            </span>
+          </div>
+        </div>
+        <div class="detail-actions">
+          <select [(ngModel)]="newStatus" (change)="changeStatus()" class="status-select">
+            <option value="open">باز</option>
+            <option value="in_progress">در حال بررسی</option>
+            <option value="resolved">حل شده</option>
+            <option value="closed">بسته شده</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="user-info-bar">
+        <mat-icon>person</mat-icon>
+        <span class="user-name-text">{{ extractUserName(selectedTicket()!.user) }}</span>
+        <span class="role-badge" [attr.data-role]="extractUserRole(selectedTicket()!.user)">
+          {{ getRoleLabel(extractUserRole(selectedTicket()!.user)) }}
+        </span>
+        <span class="user-email">{{ extractUserEmail(selectedTicket()!.user) }}</span>
+        <span class="meta-sep">•</span>
+        <span class="user-date">{{ selectedTicket()!.createdAt | jalaliDate }}</span>
+      </div>
+
+      <!-- Messages Thread -->
+      <div class="messages-thread" #messagesContainer>
+        <div
+          *ngFor="let msg of detailMessages(); let i = index"
+          class="message-row"
+          [class.admin-row]="isSenderAdmin(msg)"
+          [class.user-row]="!isSenderAdmin(msg)"
+        >
+          <div class="msg-avatar" *ngIf="!isSenderAdmin(msg)">
+            <mat-icon>person</mat-icon>
+          </div>
+          <div
+            class="msg-bubble"
+            [class.admin-bubble]="isSenderAdmin(msg)"
+            [class.user-bubble]="!isSenderAdmin(msg)"
+          >
+            <div class="msg-header">
+              <span class="msg-sender">
+                {{ isSenderAdmin(msg) ? '🛡️ پشتیبانی' : extractSenderName(msg.sender) }}
+              </span>
+              <span class="msg-time">{{ msg.createdAt | jalaliDate }}</span>
+            </div>
+            <div class="msg-text" [innerHTML]="msg.content | sanitizeHtml"></div>
+          </div>
+          <div class="msg-avatar admin-avatar" *ngIf="isSenderAdmin(msg)">
+            <mat-icon>support_agent</mat-icon>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reply Box -->
+      <div class="reply-box" *ngIf="selectedTicket()!.status !== 'closed'">
+        <app-rich-text-editor
+          [(ngModel)]="replyText"
+          placeholder="پاسخ خود را بنویسید..."
+          minHeight="120px"
+          [autoExpand]="true"
+        ></app-rich-text-editor>
+        <div class="reply-footer">
+          <span class="char-count">{{ replyText.length }} / ۵۰۰۰</span>
+          <button class="btn-send" [disabled]="!canReply() || isSending()" (click)="sendReply()">
+            <mat-icon *ngIf="!isSending()">send</mat-icon>
+            <span class="spinner" *ngIf="isSending()"></span>
+            <span class="btn-text">{{ isSending() ? 'در حال ارسال...' : 'ارسال پاسخ' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="closed-notice" *ngIf="selectedTicket()!.status === 'closed'">
+        <mat-icon>lock</mat-icon>
+        <span>این تیکت بسته شده است</span>
+      </div>
+    </div>
+
+    <div class="no-selection" *ngIf="!selectedTicket()">
+      <mat-icon>touch_app</mat-icon>
+      <p>یک تیکت را برای مشاهده جزئیات انتخاب کنید</p>
+    </div>
+  </div>
+</div>

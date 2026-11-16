@@ -1,0 +1,1077 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   HOMAYOUN Card Design System
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --h-bg: #070412;
+  --h-bg-2: #0b0720;
+  --h-bg-3: #100a2a;
+  --h-card: rgba(255, 255, 255, 0.035);
+  --h-card-2: rgba(255, 255, 255, 0.065);
+  --h-card-solid: #110b28;
+  --h-border: rgba(255, 255, 255, 0.09);
+  --h-border-2: rgba(255, 255, 255, 0.16);
+  --h-text: #f5f3ff;
+  --h-text-2: rgba(245, 243, 255, 0.66);
+  --h-text-3: rgba(245, 243, 255, 0.42);
+  --h-brand: #8b5cf6;
+  --h-brand-2: #d946ef;
+  --h-brand-glow: rgba(139, 92, 246, 0.42);
+  --h-shadow: 0 20px 60px -18px rgba(0, 0, 0, 0.65);
+  --h-shadow-sm: 0 10px 30px -12px rgba(0, 0, 0, 0.5);
+  --h-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --h-radius: 22px;
+  --h-radius-sm: 14px;
+  --h-radius-pill: 999px;
+  --ins-color: #22d3ee;
+}
+
+[data-theme='light'] {
+  --h-bg: #f7f5ff;
+  --h-bg-2: #efe9ff;
+  --h-bg-3: #e8e0ff;
+  --h-card: rgba(23, 14, 60, 0.035);
+  --h-card-2: rgba(23, 14, 60, 0.065);
+  --h-card-solid: #ffffff;
+  --h-border: rgba(23, 14, 60, 0.1);
+  --h-border-2: rgba(23, 14, 60, 0.18);
+  --h-text: #171233;
+  --h-text-2: rgba(23, 18, 51, 0.68);
+  --h-text-3: rgba(23, 18, 51, 0.46);
+  --h-brand: #7c3aed;
+  --h-brand-2: #c026d3;
+  --h-brand-glow: rgba(124, 58, 237, 0.25);
+  --h-shadow: 0 20px 50px -20px rgba(76, 40, 160, 0.22);
+  --h-shadow-sm: 0 10px 30px -16px rgba(76, 40, 160, 0.14);
+}
+
+/* ─────────────────────────── KEYFRAMES ─────────────────────────── */
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(28px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes sk-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   1 · COURSE CARD (.course-card)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.course-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+
+  min-width: 0;
+  max-width: 100%;
+  border-radius: var(--h-radius);
+  background: var(--h-card);
+  border: 1px solid var(--h-border);
+  overflow: hidden;
+  transform-style: preserve-3d;
+  will-change: transform, box-shadow;
+  /* NO transform in transition! Handled by TiltGlareDirective */
+  transition:
+    border-color 0.35s var(--h-ease),
+    box-shadow 0.45s var(--h-ease);
+  cursor: pointer;
+
+  /* ─── لایه‌ی شیشه‌ای پشتی ─── */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.015) 100%
+    );
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ─── حاشیه‌ی نورانی مخفی ─── */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    background: linear-gradient(
+      160deg,
+      transparent 30%,
+      rgba(139, 92, 246, 0.08) 50%,
+      transparent 70%
+    );
+    opacity: 0;
+    transition: opacity 0.5s var(--h-ease);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  &.enter {
+    animation: card-enter 0.6s var(--h-ease) both;
+  }
+
+  &:hover {
+    border-color: var(--h-border-2);
+    box-shadow:
+      0 32px 72px -24px rgba(0, 0, 0, 0.6),
+      0 0 56px -20px var(--h-brand-glow);
+
+    &::after {
+      opacity: 1;
+    }
+
+    .cc-thumb img {
+      transform: scale(1.08);
+    }
+
+    .cc-title {
+      color: #c4b5fd;
+    }
+
+    .cc-cta {
+      border-color: var(--h-brand);
+      background: rgba(139, 92, 246, 0.12);
+      color: var(--h-brand);
+    }
+  }
+}
+
+.cc-thumb {
+  position: relative;
+  aspect-ratio: 16 / 9.5;
+  overflow: hidden;
+  display: block;
+  background: var(--h-bg-3);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.6s var(--h-ease);
+    display: block;
+  }
+
+  /* ─── گرادینت روی تصویر برای خوانایی بهتر ─── */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, transparent 55%, rgba(7, 4, 18, 0.6) 100%);
+    pointer-events: none;
+    z-index: 1;
+  }
+}
+
+[data-theme='light'] .cc-thumb::after {
+  background: linear-gradient(180deg, transparent 55%, rgba(247, 245, 255, 0.5) 100%);
+}
+
+.cc-badges {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 3;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-wrap: nowrap;
+}
+
+.cc-badges > span,
+.cc-badges .is-cat,
+.cc-badges .is-free,
+.cc-badges .is-off-badge {
+  position: relative !important;
+  top: auto !important;
+  right: auto !important;
+  left: auto !important;
+  margin: 0 !important;
+}
+
+.is-cat {
+  padding: 4px 10px;
+  border-radius: var(--h-radius-pill);
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  line-height: 1.4;
+}
+
+.is-free {
+  padding: 4px 10px;
+  border-radius: var(--h-radius-pill);
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  background: #10b981;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  line-height: 1.4;
+}
+
+/* ─── تخفیف‌بند روی تصویر ─── */
+.is-off-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(135deg, #f43f5e, #e11d48);
+  box-shadow: 0 4px 16px -2px rgba(244, 63, 94, 0.5);
+  line-height: 1.4;
+  animation: off-badge-pulse 2s ease-in-out infinite;
+}
+
+@keyframes off-badge-pulse {
+  0%,
+  100% {
+    box-shadow: 0 4px 16px -2px rgba(244, 63, 94, 0.5);
+  }
+  50% {
+    box-shadow: 0 4px 24px -2px rgba(244, 63, 94, 0.75);
+  }
+}
+
+/* ─── کمپین‌بند روی تصویر ─── */
+.campaign-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.4;
+  animation: campaign-badge-pulse 2s ease-in-out infinite;
+
+  mat-icon {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+  }
+
+  /* Theme variants */
+  &.theme-fire {
+    background: linear-gradient(135deg, #ff6b35, #f7931e);
+    box-shadow: 0 4px 16px -2px rgba(255, 107, 53, 0.5);
+  }
+
+  &.theme-cold {
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    box-shadow: 0 4px 16px -2px rgba(30, 60, 114, 0.5);
+  }
+
+  &.theme-gold {
+    background: linear-gradient(135deg, #d4a017, #ffd700);
+    box-shadow: 0 4px 16px -2px rgba(212, 160, 23, 0.5);
+    color: #1a1a0a;
+  }
+
+  &.theme-green {
+    background: linear-gradient(135deg, #0f5132, #28a745);
+    box-shadow: 0 4px 16px -2px rgba(15, 81, 50, 0.5);
+  }
+}
+
+@keyframes campaign-badge-pulse {
+  0%,
+  100% {
+    box-shadow: 0 4px 16px -2px currentColor;
+  }
+  50% {
+    box-shadow: 0 4px 24px -2px currentColor;
+  }
+}
+
+.cc-sessions {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  z-index: 3;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: var(--h-radius-pill);
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  line-height: 1.4;
+
+  mat-icon {
+    font-size: 12px;
+    width: 12px;
+    height: 12px;
+  }
+}
+
+.cc-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  /* ⚠️ FIX RESPONSIVE: اجازه‌ی فشرده‌شدن محتوای بدنه */
+  min-width: 0;
+  padding: 14px 18px 18px;
+  z-index: 1;
+}
+
+.cc-rating {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  /* ⚠️ FIX RESPONSIVE: این ردیف نیرومندترین عنصر کارت بود و کف min-content را
+     بالا می‌برد. min-width صفر اجازه‌ی فشرده‌شدن می‌دهد، اما مرورگر نباید
+     ستاره‌ها را بشکند؛ برای همین nowrap و کوچک‌سازی در media query پایین. */
+  min-width: 0;
+  flex-wrap: nowrap;
+  white-space: nowrap;
+
+  app-rating-stars {
+    display: inline-flex;
+    align-items: center;
+  }
+  .star {
+    color: #fbbf24;
+    font-size: 13px;
+    filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.3));
+  }
+  b {
+    color: var(--h-text);
+    font-weight: 800;
+  }
+  .votes {
+    color: var(--h-text-3);
+    font-weight: 600;
+  }
+  .level {
+    margin-right: auto;
+    color: var(--h-text-3);
+    font-weight: 600;
+    font-size: 10.5px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background: var(--h-card);
+  }
+}
+
+.cc-title {
+  margin: 10px 0 0;
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.75;
+  min-height: 3.5rem;
+  color: var(--h-text);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.25s ease;
+}
+
+.cc-instructor {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    font-size: 11px;
+    font-weight: 800;
+    color: #fff;
+    background: linear-gradient(135deg, var(--ins-color), var(--h-brand-2));
+    box-shadow: 0 4px 14px -4px color-mix(in srgb, var(--ins-color) 50%, transparent);
+    flex-shrink: 0;
+    position: relative;
+    overflow: hidden;
+
+    /* 🖼️ عکس مدرس (در صورت وجود) */
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+      display: block;
+    }
+
+    /* ─── حلقه‌ی نورانی اطراف آواتار ─── */
+    &::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 50%;
+      border: 1.5px solid color-mix(in srgb, var(--ins-color) 25%, transparent);
+      pointer-events: none;
+    }
+  }
+
+  div {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  b {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--h-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  small {
+    font-size: 10px;
+    color: var(--h-text-3);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.cc-meta {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--h-text-3);
+  /* ⚠️ FIX RESPONSIVE: اجازه‌ی فشرده‌شدن در موبایل */
+  min-width: 0;
+  flex-wrap: wrap;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 0;
+    mat-icon {
+      font-size: 13px;
+      width: 13px;
+      height: 13px;
+    }
+  }
+}
+
+.cc-price-row {
+  margin-top: auto;
+  padding-top: 14px;
+  border-top: 1px solid var(--h-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  /* ⚠️ FIX RESPONSIVE: اجازه‌ی فشرده‌شدن و شکستن در موبایل */
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.old {
+  font-size: 11px;
+  color: var(--h-text-3);
+  text-decoration: line-through;
+}
+.now {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--h-text);
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  small {
+    font-size: 10.5px;
+    font-weight: 700;
+    color: var(--h-text-3);
+  }
+  &.free {
+    color: #34d399;
+    font-size: 17px;
+  }
+}
+
+.price-discount {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+/* Campaign price variant */
+.campaign-price {
+  position: relative;
+}
+
+.off {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 11px;
+  font-weight: 900;
+  color: #fff;
+  background: linear-gradient(135deg, #f43f5e, #e11d48);
+  box-shadow: 0 4px 16px -2px rgba(244, 63, 94, 0.4);
+  flex-shrink: 0;
+}
+
+/* ─── شمارنده‌ی معکوس (Countdown Chip) ─── */
+.countdown-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex-shrink: 0;
+  min-width: 0;
+  max-width: 110px;
+
+  &__inner {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 3px 8px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(244, 63, 94, 0.15), rgba(234, 179, 8, 0.12));
+    border: 1px solid rgba(244, 63, 94, 0.25);
+    direction: ltr;
+  }
+
+  &__icon {
+    font-size: 12px !important;
+    width: 12px !important;
+    height: 12px !important;
+    color: #f43f5e;
+    flex-shrink: 0;
+  }
+
+  &__label {
+    font-size: 10px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: #f43f5e;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    direction: ltr;
+    unicode-bidi: plaintext;
+  }
+
+  &__bar {
+    height: 2px;
+    border-radius: 2px;
+    background: rgba(244, 63, 94, 0.15);
+    overflow: hidden;
+  }
+
+  &__fill {
+    display: block;
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #f43f5e, #eab308);
+    transition: width 1s linear;
+  }
+
+  &.active {
+    .countdown-chip__inner {
+      animation: countdown-glow 2s ease-in-out infinite;
+    }
+  }
+}
+
+@keyframes countdown-glow {
+  0%,
+  100% {
+    border-color: rgba(244, 63, 94, 0.25);
+  }
+  50% {
+    border-color: rgba(244, 63, 94, 0.55);
+  }
+}
+
+/* ─── کارت‌هایی که شمارنده دارند ─── */
+.course-card.has-countdown {
+  .cc-price-row {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+}
+
+.cc-cta {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--h-radius-sm);
+  display: grid;
+  place-items: center;
+  color: var(--h-text);
+  background: var(--h-card);
+  border: 1px solid var(--h-border);
+  flex-shrink: 0;
+  transition:
+    background 0.25s ease,
+    border-color 0.25s ease,
+    color 0.25s ease,
+    transform 0.25s ease;
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+
+  &:hover {
+    transform: scale(1.05);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   2 · CATEGORY CARD (.cat-card)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cat-card {
+  --accent: linear-gradient(135deg, #8b5cf6, #d946ef);
+  --accent-glow: rgba(139, 92, 246, 0.35);
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: var(--h-radius);
+  background: var(--h-card);
+  border: 1px solid var(--h-border);
+  text-decoration: none;
+  overflow: hidden;
+  /* NO transform in transition! */
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.4s var(--h-ease);
+  cursor: pointer;
+
+  &:hover {
+    border-color: var(--h-border-2);
+    box-shadow: 0 16px 48px -16px var(--accent-glow);
+    .cat-tile {
+      transform: scale(1.08);
+    }
+  }
+}
+
+.cat-tile {
+  position: relative;
+  z-index: 1;
+  width: 58px;
+  height: 58px;
+  border-radius: 17px;
+  display: grid;
+  place-items: center;
+  background: var(--accent);
+  color: #fff;
+  flex-shrink: 0;
+  transition: transform 0.35s var(--h-ease);
+  mat-icon {
+    font-size: 26px;
+    width: 26px;
+    height: 26px;
+  }
+}
+
+.cat-meta {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  b {
+    font-size: 14px;
+    font-weight: 800;
+    color: var(--h-text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  small {
+    font-size: 12px;
+    color: var(--h-text-3);
+    font-weight: 600;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   3 · FEATURE CARD (.feature-card)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.feature-card {
+  --f-grad: linear-gradient(135deg, #8b5cf6, #d946ef);
+  --f-glow: rgba(139, 92, 246, 0.4);
+
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 22px 20px;
+  border-radius: var(--h-radius);
+  background: var(--h-card);
+  border: 1px solid var(--h-border);
+  overflow: hidden;
+  /* NO transform in transition! */
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.4s var(--h-ease);
+
+  &:hover {
+    border-color: var(--h-border-2);
+    box-shadow: 0 20px 50px -18px var(--f-glow);
+    .feature-icon {
+      transform: scale(1.08);
+    }
+  }
+}
+
+.feature-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: var(--f-grad);
+  color: #fff;
+  flex-shrink: 0;
+  transition: transform 0.35s var(--h-ease);
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.feature-card h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--h-text);
+}
+.feature-card p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.8;
+  color: var(--h-text-2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   4 · FLOATING CHIP (.float-chip)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.float-chip {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px 10px 10px;
+  border-radius: 18px;
+  background: var(--h-card-solid);
+  border: 1px solid var(--h-border);
+  box-shadow: var(--h-shadow-sm);
+  cursor: pointer;
+  z-index: 5;
+  transition:
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+
+  .cat-tile {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    flex-shrink: 0;
+    mat-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+    }
+  }
+  div {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    text-align: right;
+  }
+  b {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--h-text);
+    white-space: nowrap;
+  }
+  small {
+    font-size: 10px;
+    color: var(--h-text-3);
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  &:hover {
+    box-shadow: 0 12px 36px -8px rgba(139, 92, 246, 0.35);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   5 · SKELETON LOADING
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.sk {
+  display: block;
+  border-radius: 10px;
+  background: linear-gradient(90deg, var(--h-card) 25%, var(--h-card-2) 50%, var(--h-card) 75%);
+  background-size: 200% 100%;
+  animation: sk-shimmer 1.5s ease-in-out infinite;
+
+  &.line {
+    height: 12px;
+    width: 100%;
+    border-radius: 6px;
+    &.md {
+      width: 65%;
+    }
+    &.sm {
+      width: 40%;
+      height: 10px;
+    }
+  }
+}
+
+.sk-card {
+  pointer-events: none;
+  user-select: none;
+  .sk-thumb {
+    width: 100%;
+    aspect-ratio: 16 / 9.5;
+    border-radius: var(--h-radius) var(--h-radius) 0 0;
+  }
+}
+.sk-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
+}
+
+
+@media (max-width: 768px) {
+  .cc-body {
+    padding: 12px 13px 14px;
+  }
+
+  .cc-title {
+    font-size: 13.5px;
+    line-height: 1.65;
+    min-height: 3rem;
+  }
+
+  .cc-rating {
+    gap: 4px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
+    overflow: hidden;
+  }
+
+  .cc-rating app-rating-stars {
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .cc-rating .star {
+    font-size: 11px;
+  }
+
+  /* The level badge is the least important item — drop it on small screens */
+  .cc-rating .level {
+    display: none;
+  }
+
+  .cc-meta {
+    gap: 10px;
+    font-size: 10px;
+  }
+
+  .cc-price-row {
+    padding-top: 10px;
+    gap: 4px;
+  }
+
+  .cc-price-row .now {
+    font-size: 14px;
+  }
+
+  .cc-price-row .old {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 380px) {
+  .cc-body {
+    padding: 11px 11px 12px;
+  }
+
+  .cc-rating .votes {
+    display: none;
+  }
+
+  .cc-meta {
+    gap: 8px;
+  }
+}
+/* ═══════════════════════════════════════════════════════════════════════════
+   6 · WISHLIST BUTTON (.cc-wishlist-btn) - CLEAN DESIGN
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+.cc-wishlist-btn {
+  position: absolute;
+  top: 12px;
+  left: 12px; /* RTL: این دکمه را گوشه بالا-چپ قرار می‌دهد */
+  z-index: 10;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: none;
+  
+  /* دیزاین شیشه‌ای روشن */
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  outline: none;
+  
+  /* رنگ پیش‌فرض آیکون قلب (خاکستری تیره) */
+  color: #64748b; 
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+
+  mat-icon {
+    font-size: 19px;
+    width: 19px;
+    height: 19px;
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    z-index: 1;
+  }
+
+  /* ─── Hover ─── */
+  &:hover:not(:disabled) {
+    background: #ffffff;
+    color: #f43f5e; /* تغییر به قرمز/صورتی در هاور */
+    transform: scale(1.08);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  }
+
+  /* ─── Active / Favorited ─── */
+  &.active {
+    color: #e11d48; /* رنگ قرمز تیره تر برای حالت انتخاب شده */
+    background: #ffffff;
+    box-shadow: 0 4px 14px rgba(225, 29, 72, 0.25);
+
+    mat-icon {
+      animation: wishlist-heart-beat 0.5s ease-out forwards;
+    }
+  }
+
+  /* ─── Disabled / Loading ─── */
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.8;
+    pointer-events: none;
+  }
+}
+
+/* ─── دارک تم ─── */
+[data-theme='dark'] .cc-wishlist-btn {
+  background: rgba(15, 23, 42, 0.7);
+  color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+
+  &:hover:not(:disabled) {
+    background: rgba(15, 23, 42, 0.95);
+    color: #f43f5e;
+  }
+  
+  &.active {
+    background: rgba(15, 23, 42, 0.95);
+    color: #f43f5e;
+  }
+}
+
+/* ─── انیمیشن ضربان قلب ─── */
+@keyframes wishlist-heart-beat {
+  0%   { transform: scale(1); }
+  25%  { transform: scale(1.3); }
+  50%  { transform: scale(0.9); }
+  75%  { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+
+/* ─── لودینگ داخلی دکمه ─── */
+.wishlist-spinner {
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  border-top-color: #f43f5e;
+  border-right-color: #f43f5e;
+  animation: wishlist-spin 0.7s linear infinite;
+  z-index: 2;
+}
+
+@keyframes wishlist-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─── ریسپانسیو دکمه ─── */
+@media (max-width: 768px) {
+  .cc-wishlist-btn {
+    width: 32px;
+    height: 32px;
+    top: 10px;
+    left: 10px;
+
+    mat-icon {
+      font-size: 17px;
+      width: 17px;
+      height: 17px;
+    }
+  }
+}

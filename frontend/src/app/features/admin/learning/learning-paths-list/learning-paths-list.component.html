@@ -1,0 +1,343 @@
+﻿<div class="list-container" dir="rtl">
+
+  <!-- ══════ PAGE HEADER & STATS ══════ -->
+  <header class="page-header">
+    <div class="header-main">
+      <div class="header-title-box">
+        <div class="header-icon-box"><mat-icon>route</mat-icon></div>
+        <div>
+          <h1 class="page-title">مسیرهای یادگیری</h1>
+          <p class="page-subtitle">طراحی، مدیریت و انتشار مسیرهای آموزشی قدم‌به‌قدم</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn btn-ghost" (click)="loadPaths()" [disabled]="loading()">
+          <mat-icon [class.spin]="loading()">refresh</mat-icon> <span class="hide-sm">بروزرسانی</span>
+        </button>
+        <button class="btn btn-primary" routerLink="/admin/learning-paths/create">
+          <mat-icon>add</mat-icon> مسیر جدید
+        </button>
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card violet">
+        <div class="stat-icon"><mat-icon>layers</mat-icon></div>
+        <div class="stat-info">
+          <span class="stat-val">{{ stats().total | faNum }}</span>
+          <span class="stat-lbl">کل مسیرها</span>
+        </div>
+      </div>
+      <div class="stat-card teal">
+        <div class="stat-icon"><mat-icon>public</mat-icon></div>
+        <div class="stat-info">
+          <span class="stat-val">{{ stats().published | faNum }}</span>
+          <span class="stat-lbl">منتشر شده</span>
+        </div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-icon"><mat-icon>edit_note</mat-icon></div>
+        <div class="stat-info">
+          <span class="stat-val">{{ stats().draft | faNum }}</span>
+          <span class="stat-lbl">پیش‌نویس</span>
+        </div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-icon"><mat-icon>groups</mat-icon></div>
+        <div class="stat-info">
+          <span class="stat-val">{{ stats().totalStudents | faNum }}</span>
+          <span class="stat-lbl">دانشجو فعال</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ══════ TOOLBAR ══════ -->
+  <div class="toolbar">
+    <!-- Tabs -->
+    <div class="filter-tabs">
+      @for (tab of filterTabs; track tab.value) {
+        <button class="filter-tab" [class.active]="statusFilter() === tab.value" (click)="setStatusFilter(tab.value)">
+          <mat-icon>{{ tab.icon }}</mat-icon>
+          <span>{{ tab.label }}</span>
+        </button>
+      }
+    </div>
+
+    <!-- Controls -->
+    <div class="toolbar-controls">
+      <div class="search-box">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input class="input search-input" [formControl]="searchControl" placeholder="جستجوی مسیر...">
+        @if (searchControl.value) {
+          <button class="clear-search" (click)="searchControl.setValue('')"><mat-icon>close</mat-icon></button>
+        }
+      </div>
+
+      <button class="btn btn-secondary sort-btn" [matMenuTriggerFor]="sortMenu">
+        <mat-icon>sort</mat-icon>
+        <span class="hide-sm">{{ currentSortLabel() }}</span>
+        <mat-icon>expand_more</mat-icon>
+      </button>
+      <mat-menu #sortMenu="matMenu" class="modern-menu">
+        @for (opt of sortOptions; track opt.value) {
+          <button mat-menu-item (click)="setSort(opt.value)" [class.active-menu-item]="sortBy() === opt.value">
+            <mat-icon>{{ opt.icon }}</mat-icon>
+            <span>{{ opt.label }}</span>
+            @if (sortBy() === opt.value) { <mat-icon class="check-icon">check</mat-icon> }
+          </button>
+        }
+      </mat-menu>
+
+      <div class="view-toggles">
+        <button class="icon-btn-sm" [class.active]="viewMode() === 'table'" (click)="toggleViewMode('table')" title="لیست"><mat-icon>view_list</mat-icon></button>
+        <button class="icon-btn-sm" [class.active]="viewMode() === 'grid'" (click)="toggleViewMode('grid')" title="شبکه"><mat-icon>grid_view</mat-icon></button>
+      </div>
+
+      @if (hasActiveFilters()) {
+        <button class="icon-btn-sm text-rose" (click)="clearFilters()" title="پاک کردن فیلترها"><mat-icon>filter_alt_off</mat-icon></button>
+      }
+    </div>
+  </div>
+
+  <!-- ══════ BULK ACTIONS BANNER ══════ -->
+  @if (hasSelection()) {
+    <div class="bulk-banner animate-slide-down">
+      <div class="bulk-info">
+        <label class="custom-checkbox white">
+          <input type="checkbox" [checked]="isAllSelected()" (change)="toggleSelectAll()">
+          <span class="checkmark"></span>
+        </label>
+        <span class="bulk-text"><strong>{{ selectedCount() | faNum }}</strong> مسیر انتخاب شده</span>
+      </div>
+      <div class="bulk-actions">
+        <button class="btn btn-ghost white-btn" (click)="bulkArchive()">
+          <mat-icon>archive</mat-icon> آرشیو
+        </button>
+        <button class="btn btn-primary danger-btn" (click)="bulkDelete()">
+          <mat-icon>delete</mat-icon> حذف
+        </button>
+        <button class="icon-btn-sm text-white" (click)="clearSelection()"><mat-icon>close</mat-icon></button>
+      </div>
+    </div>
+  }
+
+  <!-- Loading Bar -->
+  @if (loading() && hasPaths()) {
+    <div class="loading-line"><div class="loading-bar"></div></div>
+  }
+
+  <!-- ══════ CONTENT ══════ -->
+  <main class="content-area">
+    
+    <!-- Skeletons -->
+    @if (loading() && !hasPaths()) {
+      <div class="skeleton-grid" [class.list-mode]="viewMode() === 'table'">
+        @for (i of [1,2,3,4,5,6]; track i) {
+          <div class="skeleton-card">
+            <div class="skeleton-thumb anim-shimmer"></div>
+            <div class="skeleton-body">
+              <div class="skeleton-line lg anim-shimmer"></div>
+              <div class="skeleton-line sm anim-shimmer"></div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+    
+    <!-- Empty State -->
+    @else if (!hasPaths()) {
+      <div class="empty-state">
+        <div class="empty-icon">
+          <mat-icon>{{ hasActiveFilters() ? 'search_off' : 'route' }}</mat-icon>
+        </div>
+        <h3 class="empty-title">{{ hasActiveFilters() ? 'مسیری یافت نشد' : 'هنوز مسیری نساخته‌اید' }}</h3>
+        <p class="empty-desc">
+          {{ hasActiveFilters() ? 'با این فیلترها نتیجه‌ای پیدا نشد.' : 'مسیرهای یادگیری به کاربران کمک می‌کنند قدم‌به‌قدم پیش بروند.' }}
+        </p>
+        @if (hasActiveFilters()) {
+          <button class="btn btn-secondary mt-4" (click)="clearFilters()">پاک کردن فیلترها</button>
+        } @else {
+          <button class="btn btn-primary mt-4" routerLink="/admin/learning-paths/create"><mat-icon>add</mat-icon> ساخت اولین مسیر</button>
+        }
+      </div>
+    }
+
+    <!-- Table View -->
+    @else if (viewMode() === 'table') {
+      <div class="table-container">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th style="width: 48px">
+                <label class="custom-checkbox">
+                  <input type="checkbox" [checked]="isAllSelected()" (change)="toggleSelectAll()">
+                  <span class="checkmark" [class.indeterminate]="hasSelection() && !isAllSelected()"></span>
+                </label>
+              </th>
+              <th>مسیر یادگیری</th>
+              <th>وضعیت</th>
+              <th>سطح</th>
+              <th>مراحل / دوره‌ها</th>
+              <th>دانشجو</th>
+              <th>عملیات</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (path of paths(); track trackByPathId($index, path)) {
+              <tr [class.selected]="isSelected(path._id!)" [class.loading]="actionInProgress() === path._id">
+                <td (click)="$event.stopPropagation()">
+                  <label class="custom-checkbox">
+                    <input type="checkbox" [checked]="isSelected(path._id!)" (change)="toggleSelection(path._id!)">
+                    <span class="checkmark"></span>
+                  </label>
+                </td>
+                <td>
+                  <div class="td-title-wrap" [routerLink]="['/admin/learning-paths', path._id, 'edit']">
+                    <div class="td-thumb" [class.emoji-bg]="!path.coverImage">
+                      @if (path.coverImage) { <img [src]="path.coverImage" alt="Cover"> }
+                      @else { <span>{{ path.icon || '🛤️' }}</span> }
+                    </div>
+                    <div class="td-title-info">
+                      <p class="td-title">{{ path.title }} @if(path.isFeatured){<mat-icon class="text-amber">star</mat-icon>}</p>
+                      <p class="td-desc">{{ path.shortDescription }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span class="status-badge" [attr.data-status]="path.status">
+                    <mat-icon>{{ getStatusIcon(path.status) }}</mat-icon> {{ getStatusLabel(path.status) }}
+                  </span>
+                </td>
+                <td>
+                  <span class="diff-badge" [style.color]="getDifficultyColor(path.difficulty)" [style.background]="getDifficultyColor(path.difficulty) + '1A'">
+                    {{ getDifficultyLabel(path.difficulty) }}
+                  </span>
+                </td>
+                <td>
+                  <div class="td-stats">
+                    <div class="stage-dots">
+                      @for (color of getStagePreviewColors(path); track $index) { <span class="s-dot" [style.background]="color"></span> }
+                      @if (getExtraStagesCount(path) > 0) { <span class="s-more">+{{ getExtraStagesCount(path) | faNum }}</span> }
+                    </div>
+                    <span class="td-stats-text">{{ path.stages.length | faNum }} مرحله · {{ path.totalCourses | faNum }} دوره</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="td-students"><mat-icon>groups</mat-icon> {{ path.enrolledStudents || 0 | faNum }}</span>
+                </td>
+                <td>
+                  <div class="td-actions" (click)="$event.stopPropagation()">
+                    <button class="icon-btn-sm" [routerLink]="['/admin/learning-paths', path._id, 'edit']" title="ویرایش"><mat-icon>edit</mat-icon></button>
+                    <button class="icon-btn-sm" [matMenuTriggerFor]="rowMenu"><mat-icon>more_vert</mat-icon></button>
+                    
+                    <!-- Menu -->
+                    <mat-menu #rowMenu="matMenu" class="modern-menu">
+                      @if (path.status === 'published') { <button mat-menu-item (click)="previewPath(path, $event)"><mat-icon>open_in_new</mat-icon> <span>مشاهده در سایت</span></button> }
+                      <button mat-menu-item (click)="duplicatePath(path, $event)"><mat-icon>content_copy</mat-icon> <span>کپی مسیر</span></button>
+                      @if (path.status === 'draft') { <button mat-menu-item (click)="publishPath(path, $event)"><mat-icon class="text-teal">publish</mat-icon> <span>انتشار</span></button> }
+                      @if (path.status === 'published') { <button mat-menu-item (click)="archivePath(path, $event)"><mat-icon>archive</mat-icon> <span>آرشیو</span></button> }
+                      <div class="menu-divider"></div>
+                      <button mat-menu-item (click)="deletePath(path, $event)" class="menu-danger"><mat-icon>delete</mat-icon> <span>حذف دائمی</span></button>
+                    </mat-menu>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+
+    <!-- Grid View -->
+    @else if (viewMode() === 'grid') {
+      <div class="grid-container">
+        @for (path of paths(); track trackByPathId($index, path)) {
+          <div class="grid-card" [class.selected]="isSelected(path._id!)" [class.loading]="actionInProgress() === path._id">
+            
+            <div class="gc-cover" [routerLink]="['/admin/learning-paths', path._id, 'edit']">
+              @if (path.coverImage) { <img [src]="path.coverImage" alt="Cover" class="gc-img"> }
+              @else { 
+                <div class="gc-fallback" [style.background]="'linear-gradient(135deg, ' + getDifficultyColor(path.difficulty) + '40, ' + getDifficultyColor(path.difficulty) + '10)'">
+                  <span>{{ path.icon || '🛤️' }}</span>
+                </div>
+              }
+              <div class="gc-overlay"></div>
+              
+              <!-- Badges -->
+              <div class="gc-badges">
+                <span class="status-badge small" [attr.data-status]="path.status">
+                  <mat-icon>{{ getStatusIcon(path.status) }}</mat-icon> {{ getStatusLabel(path.status) }}
+                </span>
+                @if (path.isFeatured) { <span class="featured-star"><mat-icon>star</mat-icon></span> }
+              </div>
+
+              <!-- Checkbox -->
+              <div class="gc-checkbox" (click)="$event.stopPropagation()">
+                <label class="custom-checkbox">
+                  <input type="checkbox" [checked]="isSelected(path._id!)" (change)="toggleSelection(path._id!)">
+                  <span class="checkmark"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="gc-body">
+              <h3 class="gc-title" [routerLink]="['/admin/learning-paths', path._id, 'edit']">
+                {{ path.icon }} {{ path.title }}
+              </h3>
+              <p class="gc-desc">{{ path.shortDescription }}</p>
+
+              <div class="gc-meta-grid">
+                <div class="gc-meta-item"><mat-icon>layers</mat-icon> {{ path.stages.length | faNum }} مرحله</div>
+                <div class="gc-meta-item"><mat-icon>school</mat-icon> {{ path.totalCourses | faNum }} دوره</div>
+                <div class="gc-meta-item"><mat-icon>schedule</mat-icon> {{ path.estimatedTotalDuration | duration }}</div>
+                <div class="gc-meta-item"><mat-icon>groups</mat-icon> {{ path.enrolledStudents || 0 | faNum }}</div>
+              </div>
+            </div>
+
+            <div class="gc-footer">
+              <button class="btn btn-secondary btn-sm" [routerLink]="['/admin/learning-paths', path._id, 'edit']">
+                <mat-icon>edit</mat-icon> ویرایش
+              </button>
+              <button class="icon-btn" [matMenuTriggerFor]="gridMenu"><mat-icon>more_vert</mat-icon></button>
+              <mat-menu #gridMenu="matMenu" class="modern-menu">
+                @if (path.status === 'published') { <button mat-menu-item (click)="previewPath(path, $event)"><mat-icon>open_in_new</mat-icon> <span>مشاهده سایت</span></button> }
+                <button mat-menu-item (click)="duplicatePath(path, $event)"><mat-icon>content_copy</mat-icon> <span>کپی</span></button>
+                @if (path.status === 'draft') { <button mat-menu-item (click)="publishPath(path, $event)"><mat-icon class="text-teal">publish</mat-icon> <span>انتشار</span></button> }
+                @if (path.status === 'published') { <button mat-menu-item (click)="archivePath(path, $event)"><mat-icon>archive</mat-icon> <span>آرشیو</span></button> }
+                <div class="menu-divider"></div>
+                <button mat-menu-item (click)="deletePath(path, $event)" class="menu-danger"><mat-icon>delete</mat-icon> <span>حذف دائمی</span></button>
+              </mat-menu>
+            </div>
+            
+            @if (actionInProgress() === path._id) {
+              <div class="gc-loading-overlay"><div class="spin-loader"></div></div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Pagination -->
+    @if (hasPaths() && totalPages() > 1) {
+      <div class="pagination-bar">
+        <p class="page-info">
+          نمایش <strong>{{ ((currentPage() - 1) * perPage() + 1) | faNum }}</strong> تا <strong>{{ (currentPage() * perPage() < total() ? currentPage() * perPage() : total()) | faNum }}</strong> از <strong>{{ total() | faNum }}</strong>
+        </p>
+        <div class="page-controls">
+          <button class="icon-btn" (click)="prevPage()" [disabled]="currentPage() === 1"><mat-icon>chevron_right</mat-icon></button>
+          @for (p of visiblePages(); track trackByPage($index, p)) {
+            @if (p === 'dots') { <span class="page-dots">...</span> }
+            @else {
+              <button class="page-btn" [class.active]="p === currentPage()" (click)="goToPage(p)">
+                {{ p | faNum }}
+              </button>
+            }
+          }
+          <button class="icon-btn" (click)="nextPage()" [disabled]="currentPage() === totalPages()"><mat-icon>chevron_left</mat-icon></button>
+        </div>
+      </div>
+    }
+  </main>
+</div>

@@ -1,0 +1,100 @@
+<!-- ═══════════════════════════════════════════════════════════════
+     🆕 New Releases — جدیدترین دوره‌ها
+     ═══════════════════════════════════════════════════════════════ -->
+<section class="nr block">
+  <header class="block__head">
+    <div>
+      <span class="eyebrow eyebrow--cyan">
+        <mat-icon>new_releases</mat-icon> تازه منتشر شد
+      </span>
+      <h2 class="block__title">{{ sectionTitle() }}</h2>
+    </div>
+    <a
+      routerLink="/courses"
+      class="link-all"
+      [queryParams]="activeCategory() ? { category: activeCategory() } : { sort: 'newest' }"
+    >
+      <span>مشاهده‌ی همه</span>
+      <mat-icon>arrow_back</mat-icon>
+    </a>
+  </header>
+
+  <!-- ─── Category filter bar ─── -->
+  <app-category-filter-bar
+    [categories]="categories()"
+    [activeId]="activeCategory()"
+    [loading]="isLoadingCategories()"
+    allLabel="همه جدیدترین‌ها"
+    ariaLabel="فیلتر دسته‌بندی جدیدترین دوره‌ها"
+    (categoryChange)="onCategoryChange($event)"
+  ></app-category-filter-bar>
+
+  @if (isLoading()) {
+    <div class="nr-scroll">
+      <div class="nr-scroll__track">
+        @for (i of skeletonItems; track $index) {
+          <div class="nr-sk">
+            <span class="nr-sk__thumb sh"></span>
+            <span class="nr-sk__body">
+              <span class="sh" style="width:70%;height:13px"></span>
+              <span class="sh" style="width:50%;height:10px"></span>
+            </span>
+          </div>
+        }
+      </div>
+    </div>
+  } @else if (courses().length > 0) {
+    <div class="nr-scroll">
+      <!-- Navigation arrows -->
+      <button type="button" class="nr-scroll__nav nr-scroll__nav--left" (click)="scrollLeft()" aria-label="بعدی">
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+      <button type="button" class="nr-scroll__nav nr-scroll__nav--right" (click)="scrollRight()" aria-label="قبلی">
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+
+      <div class="nr-scroll__track">
+        @for (course of courses(); track course._id || course.id || course.slug; let i = $index) {
+          <div class="nr-item" [style.animation-delay]="(i * 60) + 'ms'">
+            <span class="nr-badge">جدید</span>
+            <div class="nr-item__inner">
+              <app-course-card [course]="course" [index]="i"></app-course-card>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  } @else if (error()) {
+    <div class="empty empty--error">
+      <div class="empty__icon-wrap">
+        <mat-icon>cloud_off</mat-icon>
+      </div>
+      <h3>دریافت دوره‌ها ناموفق بود</h3>
+      <p>اتصال اینترنت خود را بررسی کنید و دوباره تلاش کنید.</p>
+      <button type="button" class="retry-btn" (click)="retry()">
+        <mat-icon>refresh</mat-icon>
+        <span>تلاش مجدد</span>
+      </button>
+    </div>
+  } @else {
+    <div class="empty">
+      <div class="empty__icon-wrap">
+        <mat-icon>new_releases</mat-icon>
+      </div>
+      <h3>
+        @if (activeCategoryName()) {
+          در دسته‌ی «{{ activeCategoryName() }}» دوره‌ی جدیدی منتشر نشده
+        } @else {
+          دوره‌ای تازه منتشر نشده
+        }
+      </h3>
+      <p>دسته‌بندی دیگری را انتخاب کنید یا همه‌ی دوره‌های جدید را ببینید.</p>
+      @if (activeCategory()) {
+        <button type="button" class="retry-btn" (click)="onCategoryChange(null)">
+          <mat-icon>apps</mat-icon>
+          <span>مشاهده‌ی همه‌ی جدیدترین‌ها</span>
+        </button>
+      }
+    </div>
+  }
+</section>

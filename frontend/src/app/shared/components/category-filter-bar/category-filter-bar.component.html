@@ -1,0 +1,96 @@
+<!-- ================================================================
+     نوار افقی فیلتر دسته‌بندی - طراحی حرفه‌ای
+     ================================================================ -->
+<div class="cfb" role="group" [attr.aria-label]="ariaLabel" dir="rtl">
+  @if (loading) {
+    <!-- حالت لودینگ -->
+    <div class="cfb__wrapper">
+      <div class="cfb__track cfb__track--sk">
+        @for (_ of skeletonItems; track $index) {
+          <span class="cfb__sk"></span>
+        }
+      </div>
+    </div>
+  } @else {
+    <div class="cfb__wrapper">
+      <!-- دکمه اسکرول به ابتدا (راست در RTL) -->
+      <button
+        type="button"
+        class="cfb__nav cfb__nav--start"
+        [class.is-visible]="canScrollStart()"
+        (click)="scrollBy('start')"
+        aria-label="قبلی"
+        tabindex="-1"
+      >
+        <mat-icon>chevron_right</mat-icon>
+      </button>
+
+      <!-- سایه گرادیانت ابتدا -->
+      <div class="cfb__fade cfb__fade--start" [class.is-visible]="canScrollStart()"></div>
+
+      <!-- اسکرول اصلی -->
+      <div
+        #trackEl
+        class="cfb__track"
+        role="tablist"
+        (scroll)="onScroll()"
+      >
+        <!-- گزینه‌ی «همه دوره‌ها» -->
+        <button
+          type="button"
+          class="cfb__chip cfb__chip--all"
+          role="tab"
+          [class.is-active]="isActive(null)"
+          [attr.aria-selected]="isActive(null)"
+          (click)="select(null)"
+        >
+          <span class="cfb__chip-icon">
+            <mat-icon>grid_view</mat-icon>
+          </span>
+          <span class="cfb__chip-label">{{ allLabel }}</span>
+        </button>
+
+        @for (cat of categories; track trackById($index, cat)) {
+          <button
+            type="button"
+            class="cfb__chip"
+            role="tab"
+            [class.is-active]="isActive(cat._id)"
+            [attr.aria-selected]="isActive(cat._id)"
+            (click)="select(cat._id)"
+          >
+            <span class="cfb__chip-icon">
+              <app-category-icon
+                [icon]="cat.icon"
+                [iconType]="cat.iconType"
+                [customIconUrl]="cat.customIconUrl"
+                [size]="20"
+                fallback="folder_open"
+              />
+              <!-- Support for local images: use customIconUrl like '/assets/images/categories/...' -->
+            </span>
+            <span class="cfb__chip-label">{{ cat.name }}</span>
+            @if (showCount && cat.totalCourses) {
+              <span class="cfb__chip-count">{{ cat.totalCourses }}</span>
+            }
+          </button>
+        }
+      </div>
+
+      <!-- سایه گرادیانت انتها -->
+      <div class="cfb__fade cfb__fade--end" [class.is-visible]="canScrollEnd()"></div>
+
+      <!-- دکمه اسکرول به انتها (چپ در RTL) -->
+      <button
+        type="button"
+        class="cfb__nav cfb__nav--end"
+        [class.is-visible]="canScrollEnd()"
+        (click)="scrollBy('end')"
+        aria-label="بعدی"
+        tabindex="-1"
+      >
+        <mat-icon>chevron_left</mat-icon>
+      </button>
+    </div>
+  }
+</div>

@@ -1,0 +1,734 @@
+<div class="admin-courses" dir="rtl">
+  <!-- ==========================================
+       PAGE HEADER
+       ========================================== -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="breadcrumb">
+        <a routerLink="/admin/dashboard">
+          <mat-icon>dashboard</mat-icon>
+          پنل مدیریت
+        </a>
+        <mat-icon class="breadcrumb-sep">chevron_left</mat-icon>
+        <span>مدیریت دوره‌ها</span>
+      </div>
+
+      <div class="header-main">
+        <div class="header-title-wrap">
+          <div class="header-icon">
+            <mat-icon>library_books</mat-icon>
+          </div>
+          <div>
+            <h1>مدیریت دوره‌ها</h1>
+            <p>بررسی، تأیید و مدیریت تمامی دوره‌های آموزشی</p>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <a
+            routerLink="/admin/course-builder"
+            class="btn-create"
+            style="
+              display: inline-flex;
+              align-items: center;
+              gap: 6px;
+              padding: 10px 18px;
+              border-radius: 10px;
+              border: none;
+              background: linear-gradient(135deg, #8b5cf6, #6366f1);
+              color: #fff;
+              font-weight: 600;
+              font-size: 0.9rem;
+              cursor: pointer;
+              text-decoration: none;
+            "
+          >
+            <mat-icon>add_circle</mat-icon>
+            <span>ایجاد دوره</span>
+          </a>
+          <button class="btn-refresh" (click)="loadCourses(); loadStats()">
+            <mat-icon>refresh</mat-icon>
+            <span>بروزرسانی</span>
+          </button>
+
+          <div class="view-toggle">
+            <button
+              class="view-btn"
+              [class.active]="viewMode() === 'list'"
+              (click)="viewMode.set('list')"
+              title="نمای لیست"
+            >
+              <mat-icon>view_list</mat-icon>
+            </button>
+            <button
+              class="view-btn"
+              [class.active]="viewMode() === 'grid'"
+              (click)="viewMode.set('grid')"
+              title="نمای شبکه"
+            >
+              <mat-icon>grid_view</mat-icon>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==========================================
+       STATS CARDS
+       ========================================== -->
+  <section class="stats-grid">
+    <div
+      class="stat-card"
+      data-color="amber"
+      [class.active]="filterStatus() === 'pending'"
+      (click)="setFilter('pending')"
+    >
+      <div class="stat-icon">
+        <mat-icon>schedule</mat-icon>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ totalPending() }}</span>
+        <span class="stat-label">در انتظار تأیید</span>
+      </div>
+      <div class="stat-pulse" *ngIf="totalPending() > 0"></div>
+    </div>
+
+    <div
+      class="stat-card"
+      data-color="green"
+      [class.active]="filterStatus() === 'published'"
+      (click)="setFilter('published')"
+    >
+      <div class="stat-icon">
+        <mat-icon>check_circle</mat-icon>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ totalPublished() }}</span>
+        <span class="stat-label">منتشر شده</span>
+      </div>
+    </div>
+
+    <div
+      class="stat-card"
+      data-color="red"
+      [class.active]="filterStatus() === 'rejected'"
+      (click)="setFilter('rejected')"
+    >
+      <div class="stat-icon">
+        <mat-icon>cancel</mat-icon>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ totalRejected() }}</span>
+        <span class="stat-label">رد شده</span>
+      </div>
+    </div>
+
+    <div
+      class="stat-card"
+      data-color="slate"
+      [class.active]="filterStatus() === 'draft'"
+      (click)="setFilter('draft')"
+    >
+      <div class="stat-icon">
+        <mat-icon>edit_note</mat-icon>
+      </div>
+      <div class="stat-info">
+        <span class="stat-value">{{ totalDraft() }}</span>
+        <span class="stat-label">پیش‌نویس</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       TOOLBAR
+       ========================================== -->
+  <section class="toolbar">
+    <div class="filter-tabs">
+      <button
+        *ngFor="let filter of statusFilters"
+        class="filter-tab"
+        [class.active]="filterStatus() === filter.value"
+        [attr.data-color]="filter.color"
+        (click)="setFilter(filter.value)"
+      >
+        <mat-icon>{{ filter.icon }}</mat-icon>
+        <span>{{ filter.label }}</span>
+        <span class="filter-count" *ngIf="filter.count && filter.count > 0">
+          {{ filter.count }}
+        </span>
+      </button>
+    </div>
+
+    <div class="toolbar-right">
+      <div class="search-box">
+        <mat-icon class="search-icon">search</mat-icon>
+        <input
+          type="text"
+          placeholder="جستجو در دوره‌ها..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+        />
+        <button
+          class="btn-clear-search"
+          *ngIf="searchQuery()"
+          (click)="searchQuery.set('')"
+        >
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="sort-dropdown">
+        <mat-icon>sort</mat-icon>
+        <select [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)">
+          <option *ngFor="let opt of sortOptions" [value]="opt.value">
+            {{ opt.label }}
+          </option>
+        </select>
+        <mat-icon class="dropdown-arrow">expand_more</mat-icon>
+      </div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       CONTENT AREA
+       ========================================== -->
+  <section class="content-area">
+    <div class="skeleton-list" *ngIf="isLoading()">
+      <div class="skel-item shimmer" *ngFor="let s of skeletonArray"></div>
+    </div>
+
+    <div
+      class="empty-state"
+      *ngIf="!isLoading() && displayedCourses().length === 0"
+    >
+      <div class="empty-illustration">
+        <div class="empty-circle-bg"></div>
+        <mat-icon>{{ currentFilterInfo()?.icon || 'inbox' }}</mat-icon>
+      </div>
+      <h3>
+        <ng-container *ngIf="!searchQuery()">
+          هیچ دوره‌ای در این وضعیت وجود ندارد
+        </ng-container>
+        <ng-container *ngIf="searchQuery()">
+          نتیجه‌ای برای «{{ searchQuery() }}» یافت نشد
+        </ng-container>
+      </h3>
+      <p>
+        <ng-container *ngIf="filterStatus() === 'pending'">
+          در حال حاضر دوره‌ای برای بررسی وجود ندارد. زمانی که مدرسان دوره جدیدی
+          ارسال کنند، اینجا نمایش داده می‌شود.
+        </ng-container>
+        <ng-container *ngIf="filterStatus() === 'published'">
+          هنوز دوره‌ای منتشر نشده است.
+        </ng-container>
+        <ng-container *ngIf="filterStatus() === 'rejected'">
+          دوره رد شده‌ای وجود ندارد.
+        </ng-container>
+        <ng-container *ngIf="filterStatus() === 'draft'">
+          پیش‌نویسی از دوره‌ها وجود ندارد.
+        </ng-container>
+      </p>
+      <button
+        class="btn-clear-filter"
+        *ngIf="searchQuery()"
+        (click)="searchQuery.set('')"
+      >
+        <mat-icon>refresh</mat-icon>
+        پاک کردن جستجو
+      </button>
+    </div>
+
+    <!-- LIST VIEW -->
+    <div
+      class="courses-list"
+      *ngIf="
+        !isLoading() && displayedCourses().length > 0 && viewMode() === 'list'
+      "
+    >
+      <article
+        *ngFor="let course of displayedCourses(); trackBy: trackByCourse"
+        class="course-item"
+        [class.processing]="processingId() === course._id"
+      >
+        <!-- Thumbnail -->
+        <div class="course-thumb">
+          <img
+            *ngIf="course.thumbnail"
+            [src]="course.thumbnail"
+            [alt]="course.title"
+            appImageFallback
+            loading="lazy"
+          />
+          <div class="thumb-placeholder" *ngIf="!course.thumbnail">
+            <mat-icon>play_circle</mat-icon>
+          </div>
+          <div class="thumb-overlay">
+            <a
+              [routerLink]="['/course', course.slug]"
+              target="_blank"
+              class="preview-btn"
+            >
+              <mat-icon>visibility</mat-icon>
+              <span>پیش‌نمایش</span>
+            </a>
+          </div>
+          <span class="thumb-status" [attr.data-status]="course.status">
+            <mat-icon>{{
+              course.status === 'published'
+                ? 'check_circle'
+                : course.status === 'pending'
+                  ? 'schedule'
+                  : course.status === 'rejected'
+                    ? 'cancel'
+                    : 'edit_note'
+            }}</mat-icon>
+          </span>
+        </div>
+
+        <!-- Info -->
+        <div class="course-info">
+          <h3 class="course-title">{{ course.title }}</h3>
+
+          <div class="course-instructor" *ngIf="course.instructor">
+            <div class="instructor-avatar">
+              <img
+                *ngIf="course.instructor.avatar"
+                [src]="course.instructor.avatar"
+                [alt]="course.instructor.fullName"
+                appImageFallback
+              />
+              <div class="avatar-placeholder" *ngIf="!course.instructor.avatar">
+                {{ course.instructor.fullName[0] || 'م' }}
+              </div>
+            </div>
+            <div class="instructor-info">
+              <span class="instructor-name">{{
+                course.instructor.fullName || 'مدرس'
+              }}</span>
+              <span class="instructor-role">مدرس دوره</span>
+            </div>
+          </div>
+
+          <div class="course-meta">
+            <div class="meta-chip">
+              <mat-icon>payments</mat-icon>
+              <span>{{ course.price | toman }}</span>
+            </div>
+            <div class="meta-chip">
+              <mat-icon>play_lesson</mat-icon>
+              <span>{{ course.totalLectures || 0 }} درس</span>
+            </div>
+            <div class="meta-chip" *ngIf="course.level">
+              <mat-icon>signal_cellular_alt</mat-icon>
+              <span>{{ levelLabel(course.level) }}</span>
+            </div>
+            <div class="meta-chip" *ngIf="course.category">
+              <mat-icon>category</mat-icon>
+              <span>{{ course.category.name || course.category }}</span>
+            </div>
+            <div class="meta-chip" *ngIf="course.createdAt">
+              <mat-icon>schedule</mat-icon>
+              <span>{{ course.createdAt | jalaliDate }}</span>
+            </div>
+          </div>
+
+          <div
+            class="rejection-note"
+            *ngIf="course.status === 'rejected' && course.rejectionReason"
+          >
+            <mat-icon>info</mat-icon>
+            <div>
+              <strong>دلیل رد:</strong>
+              <span [innerHTML]="course.rejectionReason | sanitizeHtml"></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="course-actions">
+          <ng-container *ngIf="filterStatus() === 'pending'">
+            <button
+              class="btn-action btn-approve"
+              (click)="approveCourse(course)"
+              [disabled]="processingId() === course._id"
+            >
+              <div
+                class="mini-spinner light"
+                *ngIf="processingId() === course._id"
+              ></div>
+              <mat-icon *ngIf="processingId() !== course._id">check</mat-icon>
+              <span>تأیید</span>
+            </button>
+            <button
+              class="btn-action btn-reject"
+              (click)="openRejectModal(course)"
+              [disabled]="processingId() === course._id"
+            >
+              <mat-icon>close</mat-icon>
+              <span>رد</span>
+            </button>
+          </ng-container>
+
+          <ng-container *ngIf="filterStatus() === 'published'">
+            <a
+              [routerLink]="['/course', course.slug]"
+              target="_blank"
+              class="btn-action btn-view"
+            >
+              <mat-icon>open_in_new</mat-icon>
+              <span>مشاهده</span>
+            </a>
+          </ng-container>
+
+          <ng-container *ngIf="filterStatus() === 'rejected'">
+            <button
+              class="btn-action btn-restore"
+              (click)="approveCourse(course)"
+              [disabled]="processingId() === course._id"
+            >
+              <mat-icon>restore</mat-icon>
+              <span>بازگردانی</span>
+            </button>
+          </ng-container>
+
+          <!-- دکمه ویرایش برای همه وضعیت‌ها -->
+          <a
+            [routerLink]="['/admin/course-builder', course._id]"
+            class="btn-action btn-edit"
+            title="ویرایش دوره"
+          >
+            <mat-icon>edit</mat-icon>
+            <span>ویرایش</span>
+          </a>
+
+          <!-- دکمه حذف برای همه وضعیت‌ها (فقط ادمین) -->
+          <button
+            class="btn-action btn-delete"
+            (click)="openDeleteModal(course)"
+            [disabled]="processingId() === course._id"
+            title="حذف دوره"
+          >
+            <mat-icon>delete</mat-icon>
+            <span>حذف</span>
+          </button>
+        </div>
+      </article>
+    </div>
+
+    <!-- GRID VIEW -->
+    <div
+      class="courses-grid"
+      *ngIf="
+        !isLoading() && displayedCourses().length > 0 && viewMode() === 'grid'
+      "
+    >
+      <article
+        *ngFor="let course of displayedCourses(); trackBy: trackByCourse"
+        class="course-card"
+        [class.processing]="processingId() === course._id"
+      >
+        <div class="card-thumb">
+          <img
+            *ngIf="course.thumbnail"
+            [src]="course.thumbnail"
+            [alt]="course.title"
+            appImageFallback
+            loading="lazy"
+          />
+          <div class="thumb-placeholder" *ngIf="!course.thumbnail">
+            <mat-icon>play_circle</mat-icon>
+          </div>
+          <span class="card-status-badge" [attr.data-status]="course.status">
+            <mat-icon>{{
+              course.status === 'published'
+                ? 'check_circle'
+                : course.status === 'pending'
+                  ? 'schedule'
+                  : course.status === 'rejected'
+                    ? 'cancel'
+                    : 'edit_note'
+            }}</mat-icon>
+            {{ currentFilterInfo()?.label }}
+          </span>
+        </div>
+
+        <div class="card-body">
+          <h3 class="card-title">{{ course.title }}</h3>
+
+          <div class="card-instructor" *ngIf="course.instructor">
+            <mat-icon>person</mat-icon>
+            <span>{{ course.instructor.fullName || 'مدرس' }}</span>
+          </div>
+
+          <div class="card-meta">
+            <div class="meta-item">
+              <mat-icon>payments</mat-icon>
+              <span>{{ course.price | toman }}</span>
+            </div>
+            <div class="meta-item">
+              <mat-icon>play_lesson</mat-icon>
+              <span>{{ course.totalLectures || 0 }}</span>
+            </div>
+          </div>
+
+          <div class="card-actions">
+            <ng-container *ngIf="filterStatus() === 'pending'">
+              <button
+                class="btn-action btn-approve full"
+                (click)="approveCourse(course)"
+                [disabled]="processingId() === course._id"
+              >
+                <mat-icon>check</mat-icon>
+                تأیید
+              </button>
+              <button
+                class="btn-action btn-reject full"
+                (click)="openRejectModal(course)"
+                [disabled]="processingId() === course._id"
+              >
+                <mat-icon>close</mat-icon>
+                رد
+              </button>
+            </ng-container>
+
+            <ng-container *ngIf="filterStatus() !== 'pending'">
+              <a
+                [routerLink]="['/course', course.slug]"
+                target="_blank"
+                class="btn-action btn-view full"
+              >
+                <mat-icon>open_in_new</mat-icon>
+                مشاهده
+              </a>
+            </ng-container>
+
+            <!-- دکمه حذف برای همه وضعیت‌ها (فقط ادمین) -->
+            <button
+              class="btn-action btn-delete full"
+              (click)="openDeleteModal(course)"
+              [disabled]="processingId() === course._id"
+              title="حذف دوره"
+            >
+              <mat-icon>delete</mat-icon>
+              حذف
+            </button>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       REJECT MODAL WITH RICH TEXT EDITOR
+       ========================================== -->
+  <div class="modal-backdrop" *ngIf="showRejectModal()" (click)="closeRejectModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon danger">
+            <mat-icon>report_problem</mat-icon>
+          </div>
+          <div>
+            <h2>رد کردن دوره</h2>
+            <p>لطفاً دلیل رد دوره را برای مدرس مشخص کنید</p>
+          </div>
+        </div>
+        <button class="btn-close" (click)="closeRejectModal()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-course-preview" *ngIf="selectedCourse()">
+          <img
+            *ngIf="selectedCourse().thumbnail"
+            [src]="selectedCourse().thumbnail"
+            [alt]="selectedCourse().title"
+            appImageFallback
+          />
+          <div class="thumb-placeholder" *ngIf="!selectedCourse().thumbnail">
+            <mat-icon>play_circle</mat-icon>
+          </div>
+          <div>
+            <h4>{{ selectedCourse().title }}</h4>
+            <span
+              >{{ selectedCourse().price | toman }} •
+              {{ selectedCourse().totalLectures || 0 }} درس</span
+            >
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>
+            دلیل رد دوره
+            <span class="required">*</span>
+          </label>
+
+          <!-- ⭐ استفاده از Rich Text Editor ⭐ -->
+          <app-rich-text-editor
+            [direction]="'rtl'"
+            [placeholder]="'دلیل رد دوره را به صورت کامل و دقیق توضیح دهید...'"
+            [minHeight]="'180px'"
+            [maxHeight]="'400px'"
+            [autoExpand]="true"
+            [(ngModel)]="rejectReason"
+            (contentChanged)="onRejectReasonChange($event)"
+          ></app-rich-text-editor>
+
+          <div class="field-footer">
+            <span class="field-hint">
+              <mat-icon>info</mat-icon>
+              حداقل ۵ کاراکتر - این متن برای مدرس نمایش داده می‌شود
+            </span>
+          </div>
+        </div>
+
+        <div class="quick-reasons">
+          <span class="quick-label">دلایل رایج:</span>
+          <div class="reason-chips">
+            <button
+              class="reason-chip"
+              (click)="
+                rejectReason.set(
+                  '<p>کیفیت ویدیوها مناسب نیست و نیاز به ضبط مجدد دارد.</p>'
+                )
+              "
+            >
+              کیفیت ویدیو
+            </button>
+            <button
+              class="reason-chip"
+              (click)="
+                rejectReason.set(
+                  '<p>محتوای دوره ناقص است و بخش‌های مهم پوشش داده نشده.</p>'
+                )
+              "
+            >
+              محتوای ناقص
+            </button>
+            <button
+              class="reason-chip"
+              (click)="
+                rejectReason.set('<p>صدای ضبط شده کیفیت مناسبی ندارد.</p>')
+              "
+            >
+              کیفیت صدا
+            </button>
+            <button
+              class="reason-chip"
+              (click)="
+                rejectReason.set(
+                  '<p>توضیحات دوره کافی نیست و باید تکمیل شود.</p>'
+                )
+              "
+            >
+              توضیحات کم
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeRejectModal()">
+          انصراف
+        </button>
+        <button
+          class="btn-danger"
+          (click)="confirmReject()"
+          [disabled]="rejectReason().trim().length < 5 || processingId()"
+        >
+          <div class="mini-spinner light" *ngIf="processingId()"></div>
+          <mat-icon *ngIf="!processingId()">block</mat-icon>
+          <span>{{ processingId() ? 'در حال ارسال...' : 'رد کردن دوره' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <!-- ==========================================
+       DELETE MODAL
+       ========================================== -->
+  <div class="modal-backdrop" *ngIf="showDeleteModal()" (click)="closeDeleteModal()">
+    <div class="modal-container" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <div class="modal-icon danger">
+            <mat-icon>warning</mat-icon>
+          </div>
+          <div>
+            <h2>حذف دوره</h2>
+            <p>این عملیات غیرقابل بازگشت است. تمام داده‌های مرتبط حذف خواهند شد.</p>
+          </div>
+        </div>
+        <button class="btn-close" (click)="closeDeleteModal()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        <div class="modal-course-preview" *ngIf="selectedCourse()">
+          <img
+            *ngIf="selectedCourse().thumbnail"
+            [src]="selectedCourse().thumbnail"
+            [alt]="selectedCourse().title"
+            appImageFallback
+          />
+          <div class="thumb-placeholder" *ngIf="!selectedCourse().thumbnail">
+            <mat-icon>play_circle</mat-icon>
+          </div>
+          <div>
+            <h4>{{ selectedCourse().title }}</h4>
+            <span
+              >{{ selectedCourse().price | toman }} •
+              {{ selectedCourse().totalLectures || 0 }} درس</span
+            >
+          </div>
+        </div>
+
+        <div class="delete-warning">
+          <mat-icon>warning</mat-icon>
+          <div>
+            <strong>هشدار:</strong> با حذف این دوره، موارد زیر برای همیشه حذف می‌شوند:
+            <ul>
+              <li>تمام فصل‌ها و درس‌های دوره</li>
+              <li>ثبت‌نام‌های دانشجویان</li>
+              <li>نظرات و امتیازات</li>
+              <li>گواهی‌نامه‌ها</li>
+              <li>پرداخت‌ها و تراکنش‌های مالی مرتبط</li>
+              <li>پیشرفت‌های یادگیری</li>
+              <li>بحث‌ها و گفتگوهای دوره</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="form-field">
+          <label>
+            دلیل حذف (اختیاری)
+          </label>
+          <textarea
+            [(ngModel)]="deleteReason"
+            placeholder="دلیل حذف را توضیح دهید (اختیاری)..."
+            rows="4"
+            class="delete-reason-textarea"
+          ></textarea>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-secondary" (click)="closeDeleteModal()">
+          انصراف
+        </button>
+        <button
+          class="btn-danger"
+          (click)="confirmDelete()"
+          [disabled]="processingId()"
+        >
+          <div class="mini-spinner light" *ngIf="processingId()"></div>
+          <mat-icon *ngIf="!processingId()">delete_forever</mat-icon>
+          <span>{{ processingId() ? 'در حال حذف...' : 'حذف دائمی' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>

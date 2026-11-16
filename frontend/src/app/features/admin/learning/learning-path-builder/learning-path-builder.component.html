@@ -1,0 +1,1149 @@
+<div class="builder-layout" dir="rtl">
+  <!-- ════════════════════════════════════════════
+       HEADER (Sticky)
+       ════════════════════════════════════════════ -->
+  <header class="builder-header">
+    <div class="header-container">
+      <!-- Left: Back & Title -->
+      <div class="header-left">
+        <button class="icon-btn" (click)="goBack()" aria-label="بازگشت">
+          <mat-icon>arrow_forward</mat-icon>
+        </button>
+        <div class="header-title-box">
+          <div class="header-icon-display">
+            {{ iconControl.value || '🛤️' }}
+          </div>
+          <div class="header-title-text">
+            <div class="title-row">
+              <h1>{{ titleControl.value || 'مسیر یادگیری جدید' }}</h1>
+              <span class="status-badge" [class.published]="status() === 'published'">
+                <mat-icon>{{ status() === 'published' ? 'public' : 'edit_document' }}</mat-icon>
+                {{ status() === 'published' ? 'منتشر شده' : 'پیش‌نویس' }}
+              </span>
+            </div>
+            <div class="save-status">
+              @if (saveState() === 'saving') {
+                <span class="saving"><span class="pulse-dot"></span> در حال ذخیره...</span>
+              } @else if (saveState() === 'saved') {
+                <span class="saved"><mat-icon>check</mat-icon> ذخیره شد</span>
+              } @else if (saveState() === 'dirty') {
+                <span class="dirty"><mat-icon>cloud_upload</mat-icon> تغییرات ذخیره‌نشده</span>
+              } @else {
+                <span class="idle"><mat-icon>edit_note</mat-icon> شروع به نوشتن کنید</span>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center: Stepper -->
+      <div class="header-center">
+        <nav class="stepper">
+          @for (s of steps; track s.id) {
+            <button
+              class="step-btn"
+              [class.active]="currentStep() === s.id"
+              (click)="setStep(s.id)"
+            >
+              <span
+                class="step-icon-box"
+                [class.done]="stepValidations()[s.id] && currentStep() !== s.id"
+              >
+                @if (stepValidations()[s.id] && currentStep() !== s.id) {
+                  <mat-icon>check</mat-icon>
+                } @else {
+                  <mat-icon>{{ s.icon }}</mat-icon>
+                }
+              </span>
+              <span class="step-label">{{ s.label }}</span>
+            </button>
+          }
+        </nav>
+      </div>
+
+      <!-- Right: Actions -->
+      <div class="header-right">
+        <div class="history-actions">
+          <button class="icon-btn" (click)="undo()" [disabled]="!canUndo()" title="بازگشت (Ctrl+Z)">
+            <mat-icon>undo</mat-icon>
+          </button>
+          <button
+            class="icon-btn"
+            (click)="redo()"
+            [disabled]="!canRedo()"
+            title="انجام دوباره (Ctrl+Shift+Z)"
+          >
+            <mat-icon>redo</mat-icon>
+          </button>
+        </div>
+
+        <button class="icon-btn" (click)="toggleFocusMode()" title="حالت تمرکز">
+          <mat-icon>{{ focusMode() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+        </button>
+
+        <button class="btn btn-ghost hide-mobile" (click)="openPreview()">
+          <mat-icon>visibility</mat-icon> پیش‌نمایش
+        </button>
+
+        <button class="btn btn-secondary" (click)="saveDraft()" [disabled]="saving()">
+          @if (saving()) {
+            <mat-icon class="spin">autorenew</mat-icon>
+          } @else {
+            <mat-icon>save</mat-icon>
+          }
+          <span class="hide-mobile">ذخیره</span>
+        </button>
+
+        <button
+          class="btn btn-primary"
+          (click)="publishPath()"
+          [disabled]="saving() || !canPublish()"
+        >
+          <mat-icon>rocket_launch</mat-icon>
+          <span class="hide-mobile">انتشار</span>
+          @if (canPublish() && !saving()) {
+            <span class="btn-pulse-dot"></span>
+          }
+        </button>
+      </div>
+    </div>
+
+    <!-- Progress Line -->
+    @if (saving()) {
+      <div class="saving-progress">
+        <div class="saving-progress-bar"></div>
+      </div>
+    }
+  </header>
+
+  <!-- ════════════════════════════════════════════
+       MAIN CONTENT
+       ════════════════════════════════════════════ -->
+  <main class="builder-main">
+    <div class="main-container" [class.focus-mode]="focusMode()">
+      <!-- ─── Center Column (Steps) ─── -->
+      <div class="step-container">
+        <!-- STEP 1: BASICS -->
+        @if (currentStep() === 'basics') {
+          <div class="step-panel animate-fade-in">
+            <div class="step-heading">
+              <div class="heading-icon accent"><mat-icon>info</mat-icon></div>
+              <div class="heading-text">
+                <h2>اطلاعات پایه</h2>
+                <p>
+                  هویت و توصیف مسیر یادگیری را بسازید؛ این همان چیزی است که در نگاه اول دیده می‌شود
+                </p>
+              </div>
+            </div>
+
+            <!-- Identity -->
+            <section class="card-section">
+              <header class="section-header">
+                <div class="header-icon"><mat-icon>fingerprint</mat-icon></div>
+                <h3>هویت بصری</h3>
+              </header>
+              <div class="form-row">
+                <div class="col-auto">
+                  <label class="field-label">آیکون مسیر</label>
+                  <div class="emoji-picker-container">
+                    <button class="emoji-trigger" (click)="showEmojiPicker.set(true)">
+                      {{ iconControl.value || '🛤️' }}
+                      <span class="trigger-hover"><mat-icon>photo_camera</mat-icon></span>
+                    </button>
+                    @if (showEmojiPicker()) {
+                      <div class="emoji-dropdown">
+                        <div class="dropdown-header">
+                          <span>انتخاب آیکون مسیر</span>
+                          <button class="icon-btn-sm" (click)="showEmojiPicker.set(false)">
+                            <mat-icon>close</mat-icon>
+                          </button>
+                        </div>
+                        <div class="emoji-grid">
+                          @for (e of quickEmojis; track e) {
+                            <button
+                              class="emoji-grid-btn"
+                              [class.active]="iconControl.value === e"
+                              (click)="selectEmoji(e)"
+                            >
+                              {{ e }}
+                            </button>
+                          }
+                        </div>
+                        <div class="dropdown-footer">
+                          <input
+                            class="input input-sm center-text"
+                            [formControl]="iconControl"
+                            placeholder="یا ایموجی دلخواه…"
+                            maxlength="4"
+                          />
+                        </div>
+                      </div>
+                      <div class="backdrop" (click)="showEmojiPicker.set(false)"></div>
+                    }
+                  </div>
+                </div>
+                <div class="col-expand space-y-4">
+                  <div class="field">
+                    <div class="field-label-row">
+                      <label class="field-label">عنوان مسیر یادگیری</label>
+                      <span class="char-count"
+                        >{{ titleControl.value.length | faNum }} / {{ 200 | faNum }}</span
+                      >
+                    </div>
+                    <input
+                      class="input input-lg"
+                      [formControl]="titleControl"
+                      placeholder="مثال: مسیر توسعه‌دهنده فول‌استک جاوااسکریپت"
+                      maxlength="200"
+                    />
+                  </div>
+                  <div class="field">
+                    <div class="field-label-row">
+                      <label class="field-label"
+                        >زیرعنوان <span class="badge-optional">اختیاری</span></label
+                      >
+                    </div>
+                    <input
+                      class="input"
+                      [formControl]="subtitleControl"
+                      placeholder="یک خط توضیح جذاب و کوتاه"
+                      maxlength="300"
+                    />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Description -->
+            <section class="card-section">
+              <header class="section-header">
+                <div class="header-icon"><mat-icon>format_align_right</mat-icon></div>
+                <h3>توضیحات مسیر</h3>
+              </header>
+              <div class="field">
+                <div class="field-label-row">
+                  <label class="field-label">خلاصه کوتاه</label>
+                  <span class="char-count"
+                    >{{ shortDescriptionControl.value.length | faNum }} / {{ 300 | faNum }}</span
+                  >
+                </div>
+                <textarea
+                  class="textarea"
+                  [formControl]="shortDescriptionControl"
+                  rows="3"
+                  maxlength="300"
+                  placeholder="خلاصه‌ای جذاب برای نمایش در کارت‌ها و لیست‌ها…"
+                ></textarea>
+                <p class="field-hint">این متن در کارت‌ها و نتایج جستجو نمایش داده می‌شود</p>
+              </div>
+              <div class="field mt-4">
+                <div class="field-label-row">
+                  <label class="field-label">توضیحات کامل</label>
+                </div>
+                <app-rich-text-editor
+                  [formControl]="descriptionControl"
+                  [placeholder]="'توضیحات جامع درباره مسیر یادگیری… (پشتیبانی از مارک‌داون)'"
+                  [minHeight]="'200px'"
+                  [maxHeight]="'500px'"
+                  [markdownMode]="true"
+                  [autoExpand]="true"
+                  direction="rtl"
+                ></app-rich-text-editor>
+                <p class="field-hint">
+                  درباره اهداف، پیش‌نیازها و تجربه‌ای که در انتظار دانشجو است بنویسید
+                </p>
+              </div>
+            </section>
+
+            <!-- Difficulty -->
+            <section class="card-section">
+              <header class="section-header">
+                <div class="header-icon"><mat-icon>tune</mat-icon></div>
+                <h3>سطح دشواری</h3>
+              </header>
+              <div class="difficulty-grid">
+                @for (d of ['beginner', 'intermediate', 'advanced', 'mixed']; track d) {
+                  <button
+                    class="diff-card"
+                    [class.active]="difficultyControl.value === d"
+                    [style.--diff-color]="difficultyMeta[d].color"
+                    (click)="difficultyControl.setValue(d)"
+                  >
+                    <span class="diff-dot"></span>
+                    <div class="diff-text">
+                      <span class="diff-title">{{ difficultyMeta[d].label }}</span>
+                      <span class="diff-desc">{{ difficultyMeta[d].desc }}</span>
+                    </div>
+                    <div class="diff-check">
+                      <mat-icon>check</mat-icon>
+                    </div>
+                  </button>
+                }
+              </div>
+            </section>
+
+            <!-- Cover -->
+            <section class="card-section cover-section">
+              <header class="section-header">
+                <div class="header-icon"><mat-icon>image</mat-icon></div>
+                <h3>تصویر کاور</h3>
+                @if (coverImage()) {
+                  <span class="badge-success ml-auto"
+                    ><mat-icon>check_circle</mat-icon> انتخاب شده</span
+                  >
+                }
+              </header>
+
+              <div class="cover-picker-wrap">
+                <input
+                  type="file"
+                  #fileInput
+                  accept="image/*"
+                  class="hidden"
+                  (change)="handleCoverFile($event)"
+                />
+
+                <div
+                  class="cover-dropzone"
+                  [class.has-image]="!!coverImage()"
+                  (click)="!coverImage() && showCoverGallery.set(true)"
+                >
+                  @if (coverImage()) {
+                    <img [src]="coverImage()" alt="کاور" class="cover-img" />
+                    <div class="cover-overlay">
+                      <span class="overlay-text"
+                        ><mat-icon>photo_camera</mat-icon> تغییر تصویر</span
+                      >
+                    </div>
+                    <button
+                      class="cover-remove-btn"
+                      (click)="$event.stopPropagation(); coverImage.set('')"
+                    >
+                      <mat-icon>delete</mat-icon>
+                    </button>
+                  } @else {
+                    <div class="dropzone-content">
+                      <div class="dropzone-icon"><mat-icon>cloud_upload</mat-icon></div>
+                      <h4>تصویر کاور را انتخاب کنید</h4>
+                      <p>از گالری آماده انتخاب کنید یا فایل خودتان را آپلود کنید</p>
+                      <span class="dropzone-hint"
+                        ><mat-icon>info</mat-icon> JPG، PNG، WebP · حداکثر ۵MB · نسبت پیشنهادی
+                        ۱۶:۹</span
+                      >
+                    </div>
+                  }
+                </div>
+
+                <!-- Gallery Dropdown -->
+                @if (showCoverGallery()) {
+                  <div class="gallery-panel animate-slide-down">
+                    <div class="gallery-header">
+                      <span>گالری کاورهای آماده</span>
+                      <button class="btn btn-ghost btn-sm" (click)="triggerCoverUpload(fileInput)">
+                        <mat-icon>cloud_upload</mat-icon> آپلود فایل
+                      </button>
+                    </div>
+                    <div class="gallery-grid">
+                      @for (img of galleryCovers; track img) {
+                        <button
+                          class="gallery-item"
+                          [class.active]="coverImage() === img"
+                          (click)="selectCover(img)"
+                        >
+                          <img [src]="img" alt="Cover" />
+                          @if (coverImage() === img) {
+                            <div class="gallery-check"><mat-icon>check_circle</mat-icon></div>
+                          }
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            </section>
+          </div>
+        }
+
+        <!-- STEP 2: STRUCTURE -->
+        @if (currentStep() === 'structure') {
+          <div class="step-panel animate-fade-in">
+            <div class="step-heading">
+              <div class="heading-icon teal"><mat-icon>route</mat-icon></div>
+              <div class="heading-text">
+                <h2>ساختار مسیر</h2>
+                <p>مراحل و دوره‌ها را روی نقشه مسیر بچینید؛ با درگ کردن مرتب کنید</p>
+              </div>
+              @if (stages().length > 0) {
+                <div class="heading-actions">
+                  <button class="btn btn-ghost btn-sm" (click)="expandAllStages()">
+                    <mat-icon>unfold_more</mat-icon> باز کردن همه
+                  </button>
+                  <button class="btn btn-ghost btn-sm" (click)="collapseAllStages()">
+                    <mat-icon>unfold_less</mat-icon> بستن همه
+                  </button>
+                </div>
+              }
+            </div>
+
+            <!-- Stats Tiles -->
+            @if (stages().length > 0) {
+              <div class="stats-tiles">
+                <div class="tile tile-violet">
+                  <div class="tile-icon"><mat-icon>layers</mat-icon></div>
+                  <div class="tile-text">
+                    <span class="tile-val">{{ stages().length | faNum }}</span>
+                    <span class="tile-lbl">مرحله</span>
+                  </div>
+                </div>
+                <div class="tile tile-teal">
+                  <div class="tile-icon"><mat-icon>school</mat-icon></div>
+                  <div class="tile-text">
+                    <span class="tile-val">{{ totalCoursesCount() | faNum }}</span>
+                    <span class="tile-lbl">دوره</span>
+                  </div>
+                </div>
+                <div class="tile tile-blue">
+                  <div class="tile-icon"><mat-icon>schedule</mat-icon></div>
+                  <div class="tile-text">
+                    <span class="tile-val">{{ estimatedDuration() | duration }}</span>
+                    <span class="tile-lbl">زمان کل</span>
+                  </div>
+                </div>
+                <div class="tile tile-amber">
+                  <div class="tile-icon"><mat-icon>star</mat-icon></div>
+                  <div class="tile-text">
+                    <span class="tile-val">{{ requiredCoursesCount() | faNum }}</span>
+                    <span class="tile-lbl">دوره اجباری</span>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Empty State -->
+            @if (stages().length === 0) {
+              <div class="empty-path-card">
+                <!-- SVG Art (Simplified for brevity) -->
+                <svg viewBox="0 0 460 150" class="empty-art" fill="none">
+                  <!-- خط منحنی پس‌زمینه (نقطه‌چین) -->
+                  <path
+                    d="M20 115 C 90 30, 160 140, 230 70 S 370 30, 440 60"
+                    stroke="#d8cfb8"
+                    stroke-width="3"
+                    stroke-dasharray="1 10"
+                    stroke-linecap="round"
+                    fill="none"
+                  />
+
+                  <!-- خط منحنی انیمیشنی (متحرک) -->
+                  <path
+                    d="M20 115 C 90 30, 160 140, 230 70 S 370 30, 440 60"
+                    stroke="#e4532f"
+                    stroke-width="3"
+                    stroke-dasharray="60 400"
+                    stroke-linecap="round"
+                    fill="none"
+                    class="anim-dash"
+                  />
+
+                  <!-- گره‌های مسیر -->
+                  <circle
+                    cx="20"
+                    cy="115"
+                    r="11"
+                    fill="#fffdf9"
+                    stroke="#d8cfb8"
+                    stroke-width="2.5"
+                  />
+                  <circle
+                    cx="230"
+                    cy="70"
+                    r="11"
+                    fill="#fffdf9"
+                    stroke="#d8cfb8"
+                    stroke-width="2.5"
+                  />
+
+                  <!-- گره هدف با حلقه پالس -->
+                  <circle cx="440" cy="60" r="12" fill="#e4532f" />
+                  <circle
+                    cx="440"
+                    cy="60"
+                    r="12"
+                    fill="none"
+                    stroke="#e4532f"
+                    stroke-width="2"
+                    class="anim-pulse-circle"
+                  />
+
+                  <!-- پرچم هدف -->
+                  <g transform="translate(440 22)">
+                    <line
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="26"
+                      stroke="#1c1710"
+                      stroke-width="2.5"
+                      stroke-linecap="round"
+                    />
+                    <path d="M2 2 L20 6.5 L2 11 Z" fill="#e4532f" />
+                  </g>
+
+                  <!-- متن راهنما -->
+                  <text
+                    x="230"
+                    y="47"
+                    text-anchor="middle"
+                    font-size="13"
+                    fill="#9a8f7e"
+                    font-weight="700"
+                  >
+                    نقطه شروع شما
+                  </text>
+                </svg>
+
+                <h3>مسیر یادگیری‌ات را طراحی کن</h3>
+                <p>
+                  با افزودن اولین مرحله شروع کن؛ بعد دوره‌های کاتالوگ را به هر مرحله اضافه کن و
+                  ترتیب یادگیری را با درگ و دراپ مشخص نما.
+                </p>
+
+                <button class="btn btn-primary mt-6" (click)="addNewStage()">
+                  <mat-icon>add</mat-icon> افزودن اولین مرحله
+                </button>
+
+                <div class="empty-tips">
+                  <div class="tip-box">
+                    <span class="tip-icon"><mat-icon>layers</mat-icon></span>
+                    <span class="tip-text">هر مرحله می‌تواند شامل چند دوره باشد</span>
+                  </div>
+                  <div class="tip-box">
+                    <span class="tip-icon"><mat-icon>mouse</mat-icon></span>
+                    <span class="tip-text">مراحل و دوره‌ها را با درگ مرتب کن</span>
+                  </div>
+                  <div class="tip-box">
+                    <span class="tip-icon"><mat-icon>emoji_events</mat-icon></span>
+                    <span class="tip-text">برای هر مرحله نقطه عطف تعریف کن</span>
+                  </div>
+                </div>
+              </div>
+            } @else {
+              <!-- Stages List -->
+              <div class="stages-timeline">
+                <div class="timeline-line"></div>
+
+                <div cdkDropList (cdkDropListDropped)="onStageDrop($event)" class="stages-dnd-list">
+                  @for (stage of stages(); track getStageId(stage); let i = $index) {
+                    <div cdkDrag class="stage-card-wrap">
+                      <!-- Stage Marker -->
+                      <div class="stage-marker">
+                        <button cdkDragHandle class="marker-btn" [style.background]="stage.color">
+                          <span class="marker-icon">{{ stage.icon }}</span>
+                          <span class="marker-num">{{ i + 1 | faNum }}</span>
+                        </button>
+                      </div>
+
+                      <!-- Stage Card -->
+                      <div class="stage-card">
+                        <!-- Header -->
+                        <div
+                          class="stage-card-header"
+                          (click)="toggleStageExpansion(getStageId(stage))"
+                        >
+                          <div class="stage-header-info">
+                            <div class="stage-title-row">
+                              <h4>{{ stage.title }}</h4>
+                              @if (stage.milestone) {
+                                <span class="milestone-badge"
+                                  ><mat-icon>emoji_events</mat-icon>
+                                  {{ stage.milestone.title }}</span
+                                >
+                              }
+                            </div>
+                            <div class="stage-meta-row">
+                              <span
+                                ><mat-icon>school</mat-icon>
+                                {{ stage.courses.length | faNum }} دوره</span
+                              >
+                              @if (stage.courses.length > 0) {
+                                <span
+                                  ><mat-icon>schedule</mat-icon>
+                                  {{ estimatedDuration() | duration }}</span
+                                >
+                                <!-- Simplified for demo -->
+                              }
+                            </div>
+                          </div>
+                          <div class="stage-header-actions" (click)="$event.stopPropagation()">
+                            <button
+                              class="icon-btn teal-text"
+                              (click)="openCoursePicker(i)"
+                              title="افزودن دوره"
+                            >
+                              <mat-icon>add</mat-icon>
+                            </button>
+                            <button class="icon-btn" [matMenuTriggerFor]="stageMenu">
+                              <mat-icon>more_horiz</mat-icon>
+                            </button>
+                            <mat-menu #stageMenu="matMenu">
+                              <button mat-menu-item (click)="editStage(i)">
+                                <mat-icon>edit</mat-icon> ویرایش مرحله
+                              </button>
+                              <button mat-menu-item (click)="duplicateStage(i)">
+                                <mat-icon>content_copy</mat-icon> کپی مرحله
+                              </button>
+                              <button mat-menu-item (click)="removeStage(i)" class="text-rose">
+                                <mat-icon>delete</mat-icon> حذف مرحله
+                              </button>
+                            </mat-menu>
+                            <mat-icon
+                              class="expand-icon"
+                              [class.rotated]="expandedStages().has(getStageId(stage))"
+                              >expand_more</mat-icon
+                            >
+                          </div>
+                        </div>
+
+                        <!-- Body -->
+                        @if (expandedStages().has(getStageId(stage))) {
+                          <div class="stage-card-body animate-slide-down">
+                            @if (stage.description) {
+                              <div class="stage-desc-box">
+                                <mat-icon>sticky_note_2</mat-icon>
+                                <div [innerHTML]="stage.description | markdown"></div>
+                              </div>
+                            }
+
+                            <!-- Courses List -->
+                            @if (stage.courses.length > 0) {
+                              <div
+                                cdkDropList
+                                [cdkDropListData]="stage.courses"
+                                (cdkDropListDropped)="onCourseDrop($event, i)"
+                                class="courses-dnd-list"
+                              >
+                                @for (cn of stage.courses; track getCourseId(cn); let j = $index) {
+                                  <div cdkDrag class="course-row">
+                                    <button cdkDragHandle class="drag-handle">
+                                      <mat-icon>drag_indicator</mat-icon>
+                                    </button>
+                                    <div
+                                      class="course-num"
+                                      [style.color]="stage.color"
+                                      [style.background]="stage.color + '1c'"
+                                    >
+                                      {{ j + 1 | faNum }}
+                                    </div>
+
+                                    <!-- Custom Thumb (CSS based on hue) -->
+                                    <div
+                                      class="course-thumb-sm"
+                                      [style.background]="
+                                        'linear-gradient(135deg, hsl(' +
+                                        getCourseHue(cn) +
+                                        ' 68% 52%), hsl(' +
+                                        (getCourseHue(cn) + 38) +
+                                        ' 72% 38%))'
+                                      "
+                                    >
+                                      <span class="course-thumb-icon">{{
+                                        getCourseIcon(cn) || '📚'
+                                      }}</span>
+                                    </div>
+
+                                    <div class="course-info">
+                                      <div class="c-title-row">
+                                        <h5>{{ cn.customTitle || getCourseTitle(cn) }}</h5>
+                                        <span class="c-req-badge" [class.opt]="!cn.isRequired">
+                                          <mat-icon>{{
+                                            cn.isRequired ? 'star' : 'star_border'
+                                          }}</mat-icon>
+                                          {{ cn.isRequired ? 'اجباری' : 'اختیاری' }}
+                                        </span>
+                                      </div>
+                                      <div class="c-meta-row">
+                                        <span
+                                          ><mat-icon>schedule</mat-icon>
+                                          {{ cn.estimatedDuration | duration }}</span
+                                        >
+                                        <span
+                                          ><mat-icon>play_circle</mat-icon>
+                                          {{ getCourseLectures(cn) | faNum }} درس</span
+                                        >
+                                        <span class="text-amber"
+                                          ><mat-icon>star</mat-icon>
+                                          {{ getCourseRating(cn) | faNum }}</span
+                                        >
+                                      </div>
+                                    </div>
+
+                                    <div class="course-actions">
+                                      <button class="icon-btn-sm" (click)="editCourseNode(i, j)">
+                                        <mat-icon>settings</mat-icon>
+                                      </button>
+                                      <button
+                                        class="icon-btn-sm danger"
+                                        (click)="removeCourseNode(i, j)"
+                                      >
+                                        <mat-icon>close</mat-icon>
+                                      </button>
+                                    </div>
+                                  </div>
+                                }
+                              </div>
+                            } @else {
+                              <div class="empty-courses-box">
+                                <mat-icon>library_books</mat-icon>
+                                <p>هنوز دوره‌ای در این مرحله نیست</p>
+                              </div>
+                            }
+
+                            <button class="add-course-dashed-btn" (click)="openCoursePicker(i)">
+                              <mat-icon>add</mat-icon> افزودن دوره به «{{ stage.title }}»
+                            </button>
+
+                            @if (stage.milestone) {
+                              <div class="milestone-callout">
+                                <div class="ms-icon">{{ stage.milestone.badge || '🏆' }}</div>
+                                <div class="ms-text">
+                                  <span class="ms-label"
+                                    ><mat-icon>emoji_events</mat-icon> نقطه عطف این مرحله</span
+                                  >
+                                  <h6>{{ stage.milestone.title }}</h6>
+                                  <p>{{ stage.milestone.description }}</p>
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+
+                <!-- Add Stage Button -->
+                <div class="add-stage-wrap">
+                  <div class="add-stage-marker">
+                    <div class="dashed-circle"><mat-icon>add</mat-icon></div>
+                  </div>
+                  <button class="add-stage-btn" (click)="addNewStage()">
+                    <div class="add-stage-text">
+                      <h5>افزودن مرحله جدید</h5>
+                      <p>ایستگاه بعدی مسیر یادگیری را تعریف کنید</p>
+                    </div>
+                    <mat-icon class="add-arrow">add</mat-icon>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- STEP 3: SETTINGS -->
+        @if (currentStep() === 'settings') {
+          <div class="step-panel animate-fade-in">
+            <div class="step-heading">
+              <div class="heading-icon violet"><mat-icon>tune</mat-icon></div>
+              <div class="heading-text">
+                <h2>تنظیمات و انتشار</h2>
+                <p>برچسب‌ها، مخاطبان، گواهینامه و جزئیات نهایی قبل از انتشار</p>
+              </div>
+            </div>
+
+            <section class="card-section">
+              <header class="section-header">
+                <div class="header-icon"><mat-icon>folder_open</mat-icon></div>
+                <h3>دسته‌بندی</h3>
+              </header>
+              <div class="field">
+                <label class="field-label">دسته‌بندی مسیر</label>
+                <div class="select-wrapper">
+                  <select class="select" [formControl]="categoryControl">
+                    <option value="">بدون دسته‌بندی</option>
+                    @for (c of categories(); track c._id) {
+                      <option [value]="c._id">{{ c.icon }} {{ c.name }}</option>
+                    }
+                  </select>
+                  <mat-icon class="select-arrow">expand_more</mat-icon>
+                </div>
+                <p class="field-hint">مسیر در فهرست این دسته نمایش داده می‌شود</p>
+              </div>
+            </section>
+
+            <!-- Custom Chip Inputs -->
+            <section class="card-section">
+              <header class="section-header">
+                <div class="header-icon"><mat-icon>local_offer</mat-icon></div>
+                <h3>برچسب‌ها</h3>
+              </header>
+              <p class="field-hint -mt-2 mb-3">
+                برچسب‌ها به کاربران کمک می‌کنند مسیر شما را راحت‌تر پیدا کنند
+              </p>
+
+              <div class="chip-input-container accent">
+                <div class="chips-wrap">
+                  @for (t of tags(); track t) {
+                    <span class="chip">
+                      <mat-icon>local_offer</mat-icon> {{ t }}
+                      <button (click)="removeArrayItem(t, tags)"><mat-icon>close</mat-icon></button>
+                    </span>
+                  }
+                  <div class="chip-input-box">
+                    <input
+                      [formControl]="newTagInput"
+                      placeholder="مثال: جاوااسکریپت و Enter"
+                      (keydown)="onChipKeydown($event, newTagInput, tags)"
+                    />
+                    @if (newTagInput.value?.trim()) {
+                      <button class="add-chip-btn" (click)="addArrayItem(newTagInput, tags)">
+                        <mat-icon>add</mat-icon> افزودن
+                      </button>
+                    }
+                  </div>
+                </div>
+                @if (tags().length) {
+                  <span class="chip-count">{{ tags().length | faNum }} مورد</span>
+                }
+              </div>
+            </section>
+
+            <section class="card-section">
+              <header class="section-header">
+                <div class="header-icon"><mat-icon>groups</mat-icon></div>
+                <h3>مخاطبان هدف</h3>
+              </header>
+              <p class="field-hint -mt-2 mb-3">این مسیر برای چه کسانی طراحی شده است؟</p>
+
+              <div class="chip-input-container teal">
+                <div class="chips-wrap">
+                  @for (a of targetAudience(); track a) {
+                    <span class="chip">
+                      <mat-icon>person</mat-icon> {{ a }}
+                      <button (click)="removeArrayItem(a, targetAudience)">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    </span>
+                  }
+                  <div class="chip-input-box">
+                    <input
+                      [formControl]="newAudienceInput"
+                      placeholder="مثال: توسعه‌دهنده‌های تازه‌کار و Enter"
+                      (keydown)="onChipKeydown($event, newAudienceInput, targetAudience)"
+                    />
+                    @if (newAudienceInput.value?.trim()) {
+                      <button
+                        class="add-chip-btn"
+                        (click)="addArrayItem(newAudienceInput, targetAudience)"
+                      >
+                        <mat-icon>add</mat-icon> افزودن
+                      </button>
+                    }
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="card-section">
+              <header class="section-header">
+                <div class="header-icon"><mat-icon>flag</mat-icon></div>
+                <h3>اهداف یادگیری</h3>
+              </header>
+              <p class="field-hint -mt-2 mb-3">
+                بعد از تکمیل مسیر، دانشجو دقیقاً چه چیزی یاد می‌گیرد؟
+              </p>
+
+              <div class="chip-input-container violet">
+                <div class="chips-wrap">
+                  @for (o of learningOutcomes(); track o) {
+                    <span class="chip">
+                      <mat-icon>check_circle</mat-icon> {{ o }}
+                      <button (click)="removeArrayItem(o, learningOutcomes)">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    </span>
+                  }
+                  <div class="chip-input-box">
+                    <input
+                      [formControl]="newOutcomeInput"
+                      placeholder="مثال: ساخت پروژه واقعی و Enter"
+                      (keydown)="onChipKeydown($event, newOutcomeInput, learningOutcomes)"
+                    />
+                    @if (newOutcomeInput.value?.trim()) {
+                      <button
+                        class="add-chip-btn"
+                        (click)="addArrayItem(newOutcomeInput, learningOutcomes)"
+                      >
+                        <mat-icon>add</mat-icon> افزودن
+                      </button>
+                    }
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="card-section">
+              <header class="section-header">
+                <div class="header-icon"><mat-icon>workspace_premium</mat-icon></div>
+                <h3>گواهینامه</h3>
+              </header>
+              <div
+                class="toggle-card"
+                [class.active]="hasCertificateControl.value"
+                (click)="hasCertificateControl.setValue(!hasCertificateControl.value)"
+              >
+                <div class="tc-icon teal"><mat-icon>verified</mat-icon></div>
+                <div class="tc-text">
+                  <p class="tc-title">صدور گواهینامه تکمیل مسیر</p>
+                  <p class="tc-desc">پس از گذراندن همه دوره‌های اجباری، گواهینامه اعطا می‌شود</p>
+                </div>
+                <div class="switch teal" [class.on]="hasCertificateControl.value">
+                  <div class="thumb"></div>
+                </div>
+              </div>
+
+              @if (hasCertificateControl.value) {
+                <div class="field mt-4 animate-slide-down">
+                  <label class="field-label">عنوان گواهینامه</label>
+                  <input
+                    class="input"
+                    [formControl]="certificateTitleControl"
+                    placeholder="مثال: گواهینامه توسعه‌دهنده فول‌استک"
+                    maxlength="100"
+                  />
+                </div>
+              }
+            </section>
+
+            <section class="card-section">
+              <header class="section-header">
+                <div class="header-icon"><mat-icon>star</mat-icon></div>
+                <h3>نمایش ویژه</h3>
+              </header>
+              <div
+                class="toggle-card"
+                [class.active]="isFeaturedControl.value"
+                (click)="isFeaturedControl.setValue(!isFeaturedControl.value)"
+              >
+                <div class="tc-icon accent"><mat-icon>auto_awesome</mat-icon></div>
+                <div class="tc-text">
+                  <p class="tc-title">نمایش در بخش ویژه صفحه اصلی</p>
+                  <p class="tc-desc">این مسیر در بخش پیشنهادی، به همه کاربران نمایش داده می‌شود</p>
+                </div>
+                <div class="switch accent" [class.on]="isFeaturedControl.value">
+                  <div class="thumb"></div>
+                </div>
+              </div>
+            </section>
+
+            <!-- Publish Banner -->
+            @if (canPublish()) {
+              <div class="publish-banner ready">
+                <div class="pb-bg"></div>
+                <div class="pb-icon"><mat-icon>rocket_launch</mat-icon></div>
+                <div class="pb-text">
+                  <h3>آماده انتشار است!</h3>
+                  <p>همه موارد ضروری تکمیل شده؛ می‌توانید مسیر را همین حالا منتشر کنید.</p>
+                </div>
+                <button class="btn btn-primary" (click)="publishPath()" [disabled]="saving()">
+                  <mat-icon>rocket_launch</mat-icon> انتشار مسیر
+                </button>
+              </div>
+            } @else {
+              <div class="publish-banner not-ready">
+                <div class="pb-icon"><mat-icon>data_usage</mat-icon></div>
+                <div class="pb-text">
+                  <h3>هنوز چند مورد باقی مانده</h3>
+                  <p>برای انتشار، چک‌لیست آمادگی در پنل کناری را کامل کنید.</p>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- Bottom Nav -->
+        <div class="bottom-nav">
+          <button class="btn btn-secondary" (click)="prevStep()" [disabled]="isFirstStep()">
+            <mat-icon>arrow_forward</mat-icon> <span class="hide-mobile">مرحله قبل</span>
+          </button>
+
+          <div class="step-dots">
+            @for (s of steps; track s.id) {
+              <button
+                class="step-dot"
+                [class.active]="currentStep() === s.id"
+                [class.done]="stepValidations()[s.id]"
+                (click)="setStep(s.id)"
+              ></button>
+            }
+          </div>
+
+          @if (isLastStep()) {
+            <button
+              class="btn btn-primary"
+              (click)="publishPath()"
+              [disabled]="saving() || !canPublish()"
+            >
+              @if (saving()) {
+                <mat-icon class="spin">autorenew</mat-icon>
+              }
+              انتشار مسیر
+            </button>
+          } @else {
+            <button class="btn btn-primary" (click)="nextStep()">
+              <span class="hide-mobile">مرحله بعد</span> <mat-icon>arrow_back</mat-icon>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- ─── Right Sidebar ─── -->
+      @if (!focusMode()) {
+        <aside class="builder-sidebar animate-fade-in">
+          <!-- Readiness -->
+          <div class="sidebar-card">
+            <div class="sidebar-header">
+              <div class="sh-icon"><mat-icon>fact_check</mat-icon></div>
+              <h3>آمادگی انتشار</h3>
+            </div>
+
+            <div class="readiness-summary">
+              <div class="progress-ring-wrap">
+                <svg viewBox="0 0 64 64" class="progress-ring">
+                  <circle cx="32" cy="32" r="26" class="ring-bg" />
+                  <circle
+                    cx="32"
+                    cy="32"
+                    r="26"
+                    class="ring-fill"
+                    [class.done]="completionPercent() === 100"
+                    [style.stroke-dasharray]="163.36"
+                    [style.stroke-dashoffset]="163.36 - (163.36 * completionPercent()) / 100"
+                  />
+                </svg>
+                <span class="ring-text" [class.done]="completionPercent() === 100"
+                  >{{ completionPercent() | faNum }}٪</span
+                >
+              </div>
+              <div class="rs-text">
+                <p class="rs-title">
+                  @if (completionPercent() === 100) {
+                    همه چیز آماده است
+                  } @else {
+                    {{ passedCount() | faNum }} از {{ publishChecklist().length | faNum }} مورد
+                    تکمیل شده
+                  }
+                </p>
+                <p class="rs-desc">
+                  @if (completionPercent() === 100) {
+                    می‌توانید مسیر را منتشر کنید
+                  } @else {
+                    روی هر مورد کلیک کنید تا به همان بخش بروید
+                  }
+                </p>
+              </div>
+            </div>
+
+            <div class="checklist">
+              @for (c of publishChecklist(); track c.key) {
+                <button
+                  class="check-item"
+                  [class.passed]="c.passed"
+                  [class.active]="currentStep() === c.step && !c.passed"
+                  (click)="setStep(c.step)"
+                >
+                  <mat-icon class="ci-icon">{{
+                    c.passed ? 'check_circle' : 'radio_button_unchecked'
+                  }}</mat-icon>
+                  <span class="ci-label">{{ c.label }}</span>
+                  <mat-icon class="ci-arrow">chevron_left</mat-icon>
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Stats -->
+          <div class="sidebar-card">
+            <div class="sidebar-header">
+              <div class="sh-icon"><mat-icon>pie_chart</mat-icon></div>
+              <h3>خلاصه مسیر</h3>
+            </div>
+            <div class="stats-grid">
+              <div class="stat-box">
+                <div class="sb-icon violet"><mat-icon>layers</mat-icon></div>
+                <p class="sb-val">{{ stages().length | faNum }}</p>
+                <p class="sb-lbl">مرحله</p>
+              </div>
+              <div class="stat-box">
+                <div class="sb-icon teal"><mat-icon>school</mat-icon></div>
+                <p class="sb-val">{{ totalCoursesCount() | faNum }}</p>
+                <p class="sb-lbl">دوره</p>
+              </div>
+              <div class="stat-box">
+                <div class="sb-icon blue"><mat-icon>schedule</mat-icon></div>
+                <p class="sb-val">{{ estimatedDuration() | duration }}</p>
+                <p class="sb-lbl">زمان کل</p>
+              </div>
+              <div class="stat-box">
+                <div class="sb-icon amber"><mat-icon>star</mat-icon></div>
+                <p class="sb-val">{{ requiredCoursesCount() | faNum }}</p>
+                <p class="sb-lbl">اجباری</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tree -->
+          @if (stages().length > 0) {
+            <div class="sidebar-card">
+              <div class="sidebar-header">
+                <div class="sh-icon"><mat-icon>account_tree</mat-icon></div>
+                <h3>نمای درختی مسیر</h3>
+              </div>
+              <div class="tree-view">
+                @for (s of stages(); track getStageId(s); let i = $index; let last = $last) {
+                  <div class="tree-node">
+                    <div class="tree-node-content">
+                      <span class="tree-num" [style.background]="s.color">{{ i + 1 | faNum }}</span>
+                      <div class="tree-text">
+                        <p class="tree-title">{{ s.icon }} {{ s.title }}</p>
+                        <p class="tree-sub">{{ s.courses.length | faNum }} دوره</p>
+                      </div>
+                    </div>
+                    @if (!last) {
+                      <div class="tree-line" [style.background]="s.color"></div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Shortcuts -->
+          <div class="sidebar-card">
+            <div class="sidebar-header">
+              <div class="sh-icon"><mat-icon>keyboard</mat-icon></div>
+              <h3>میانبرهای صفحه‌کلید</h3>
+            </div>
+            <div class="shortcuts-list">
+              <div class="shortcut-row">
+                <span>ذخیره پیش‌نویس</span>
+                <div class="kbd-wrap" dir="ltr"><kbd>Ctrl</kbd><kbd>S</kbd></div>
+              </div>
+              <div class="shortcut-row">
+                <span>پیش‌نمایش مسیر</span>
+                <div class="kbd-wrap" dir="ltr"><kbd>Ctrl</kbd><kbd>P</kbd></div>
+              </div>
+              <div class="shortcut-row">
+                <span>بازگشت</span>
+                <div class="kbd-wrap" dir="ltr"><kbd>Ctrl</kbd><kbd>Z</kbd></div>
+              </div>
+              <div class="shortcut-row">
+                <span>انجام دوباره</span>
+                <div class="kbd-wrap" dir="ltr"><kbd>Ctrl</kbd><kbd>Shift</kbd><kbd>Z</kbd></div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      }
+    </div>
+  </main>
+</div>

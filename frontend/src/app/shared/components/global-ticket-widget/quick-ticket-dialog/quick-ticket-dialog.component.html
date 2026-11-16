@@ -1,0 +1,221 @@
+<!-- Quick Ticket Dialog -->
+<div class="quick-ticket-dialog" dir="rtl">
+  <!-- Dialog Header -->
+  <div class="dialog-header">
+    <div class="header-content">
+      <div class="header-icon">
+        <mat-icon>support_agent</mat-icon>
+      </div>
+      <div class="header-text">
+        <h2>ثبت تیکت جدید</h2>
+        <p>تیکت پشتیبانی سریع از هر صفحه</p>
+      </div>
+    </div>
+    <button class="close-btn" (click)="close()" matTooltip="بستن" type="button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Context Banner (Collapsible) -->
+  @if (data?.context; as ctx) {
+    @if (ctx.courseId || ctx.lectureId || ctx.url !== '/') {
+      <div class="context-banner" [class.expanded]="showContext()" (click)="toggleContext()">
+        <div class="context-icon">
+          <mat-icon>info_outline</mat-icon>
+        </div>
+        <div class="context-content">
+          <span class="context-label">اطلاعات صفحه جاری (خودکار)</span>
+          <div class="context-details" [class.visible]="showContext()">
+            <div class="context-item">
+              <mat-icon>web</mat-icon>
+              <span>{{ ctx.title }}</span>
+            </div>
+            @if (ctx.courseId) {
+              <div class="context-item">
+                <mat-icon>book</mat-icon>
+                <span>دوره: {{ ctx.courseId }}</span>
+              </div>
+            }
+            @if (ctx.lectureId) {
+              <div class="context-item">
+                <mat-icon>play_circle</mat-icon>
+                <span>جلسه: {{ ctx.lectureId }}</span>
+              </div>
+            }
+          </div>
+        </div>
+        <mat-icon class="context-chevron" [class.rotated]="showContext()">expand_more</mat-icon>
+      </div>
+    }
+  }
+
+  <!-- Dialog Body -->
+  <div class="dialog-body">
+    <!-- Category Selection -->
+    <div class="form-section">
+      <label class="section-label">
+        <mat-icon>category</mat-icon>
+        <span>دسته‌بندی</span>
+        <span class="required">*</span>
+      </label>
+      <div class="category-grid" role="radiogroup" aria-label="دسته‌بندی تیکت">
+        @for (cat of categories; track cat.value) {
+          <button
+            type="button"
+            class="category-card"
+            [class.selected]="category() === cat.value"
+            [class]="getCategoryColorClass(cat.color)"
+            (click)="selectCategory(cat.value)"
+            [attr.aria-pressed]="category() === cat.value"
+            role="radio"
+          >
+            <div class="cat-icon">
+              <mat-icon>{{ cat.icon }}</mat-icon>
+            </div>
+            <div class="cat-text">
+              <span class="cat-label">{{ cat.label }}</span>
+              <span class="cat-desc">{{ cat.description }}</span>
+            </div>
+            <div class="cat-check">
+              <mat-icon>check_circle</mat-icon>
+            </div>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Subject Input -->
+    <div class="form-section">
+      <label class="section-label">
+        <mat-icon>title</mat-icon>
+        <span>موضوع تیکت</span>
+        <span class="required">*</span>
+      </label>
+      <div class="input-wrapper">
+        <mat-icon class="input-icon">subject</mat-icon>
+        <input
+          id="ticket-subject"
+          type="text"
+          [(ngModel)]="subject"
+          placeholder="مثال: مشکل در پخش ویدیو دوره آنگولار"
+          maxlength="100"
+          class="form-input"
+          [class.error]="subject().length > 0 && subject().trim().length < 5"
+        />
+        <span class="char-count" [class.warning]="subject().length > 90">
+          {{ subject().length }}/100
+        </span>
+      </div>
+      @if (subject().length > 0 && subject().trim().length < 5) {
+        <span class="field-error">
+          <mat-icon>error_outline</mat-icon>
+          حداقل ۵ کاراکتر
+        </span>
+      } @else {
+        <span class="field-hint">
+          <mat-icon>info_outline</mat-icon>
+          حداقل ۵ کاراکتر (توضیح کوتاه و شفاف)
+        </span>
+      }
+    </div>
+
+    <!-- Priority Selection -->
+    <div class="form-section">
+      <label class="section-label">
+        <mat-icon>priority_high</mat-icon>
+        <span>اولویت</span>
+      </label>
+      <div class="priority-grid" role="radiogroup" aria-label="اولویت تیکت">
+        @for (pri of priorities; track pri.value) {
+          <button
+            type="button"
+            class="priority-card"
+            [class.selected]="priority() === pri.value"
+            [class]="getPriorityColorClass(pri.color)"
+            (click)="selectPriority(pri.value)"
+            [attr.aria-pressed]="priority() === pri.value"
+            role="radio"
+          >
+            <mat-icon>{{ pri.icon }}</mat-icon>
+            <span>{{ pri.label }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Message Textarea -->
+    <div class="form-section">
+      <label class="section-label">
+        <mat-icon>description</mat-icon>
+        <span>شرح مشکل یا سوال</span>
+        <span class="required">*</span>
+      </label>
+      <div class="textarea-wrapper">
+        <app-rich-text-editor
+          [(ngModel)]="message"
+          placeholder="لطفاً مشکل خود را با جزئیات کامل توضیح دهید..."
+          minHeight="160px"
+          [autoExpand]="true"
+          [toolbar]="['bold', 'italic', 'underline', 'bullet', 'list', 'code-block']"
+        ></app-rich-text-editor>
+        <span class="char-count-tx" [class.warning]="message().length > 900">
+          {{ message().length }}/1000
+        </span>
+      </div>
+      @if (message().length > 0 && message().trim().length < 10) {
+        <span class="field-error">
+          <mat-icon>error_outline</mat-icon>
+          حداقل ۱۰ کاراکتر
+        </span>
+      } @else {
+        <span class="field-hint">
+          <mat-icon>info_outline</mat-icon>
+          حداقل ۱۰ کاراکتر (توضیحات دقیق سرعت پاسخگویی را افزایش می‌دهد)
+        </span>
+      }
+    </div>
+
+    <!-- Submit Error -->
+    @if (submitError()) {
+      <div class="submit-error">
+        <mat-icon>error</mat-icon>
+        <span>{{ submitError() }}</span>
+      </div>
+    }
+
+    <!-- Tips Box -->
+    <div class="tips-box">
+      <div class="tips-header">
+        <mat-icon>lightbulb_outline</mat-icon>
+        <span>نکات برای پاسخ سریع‌تر</span>
+      </div>
+      <ul>
+        <li>شماره دوره یا لینک صفحه مربوطه را ذکر کنید</li>
+        <li>در صورت مشکل فنی، از خطای دریافتی اسکرین‌شات پیوست کنید</li>
+        <li>مرورگر و سیستم‌عامل خود را مشخص نمایید</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Dialog Footer -->
+  <div class="dialog-footer">
+    <button class="btn-cancel" (click)="close()" [disabled]="isSubmitting()" type="button">
+      <mat-icon>close</mat-icon>
+      <span>انصراف</span>
+    </button>
+    <button
+      class="btn-submit"
+      (click)="submit()"
+      [disabled]="!canSubmit()"
+      type="button"
+    >
+      @if (isSubmitting()) {
+        <mat-spinner diameter="20"></mat-spinner>
+        <span>در حال ارسال...</span>
+      } @else {
+        <mat-icon>send</mat-icon>
+        <span>ارسال تیکت</span>
+      }
+    </button>
+  </div>
+</div>

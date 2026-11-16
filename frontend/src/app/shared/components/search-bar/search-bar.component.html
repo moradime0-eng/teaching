@@ -1,0 +1,47 @@
+<div
+  class="search-bar-container"
+  [ngClass]="size"
+  [class.focused]="isFocused()"
+  [class.loading]="isLoading"
+  [class.has-value]="!!query"
+  dir="rtl"
+>
+  <!-- Leading Search Icon or Animated Spinner -->
+  <div class="search-lead-icon" aria-hidden="true">
+    @if (isLoading) {
+      <span class="search-spinner"></span>
+    } @else {
+      <mat-icon class="icon">search</mat-icon>
+    }
+  </div>
+
+  <!-- Search Input Field -->
+  <input
+    #searchInput
+    type="text"
+    role="searchbox"
+    [placeholder]="placeholder"
+    [(ngModel)]="query"
+    (ngModelChange)="onInput()"
+    (keydown)="onKeyDown($event)"
+    (focus)="isFocused.set(true)"
+    (blur)="isFocused.set(false)"
+    [autofocus]="autoFocus"
+    autocomplete="off"
+    spellcheck="false"
+    aria-label="کادر جستجو"
+  />
+
+  <!-- Quick Clear Button -->
+  @if (query) {
+    <button
+      type="button"
+      class="clear-btn"
+      (click)="clear()"
+      aria-label="پاک کردن متن جستجو"
+      title="پاک کردن (Esc)"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+  }
+</div>

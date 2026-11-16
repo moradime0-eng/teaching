@@ -1,0 +1,903 @@
+@use '@angular/material' as mat;
+@use 'styles/cards';
+
+@font-face {
+  font-family: 'Vazirmatn';
+  src: url('./assets/fonts/Vazirmatn.woff2') format('woff2');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@import 'leaflet/dist/leaflet.css';
+@import 'quill/dist/quill.snow.css';
+
+/* Material Icons fallback - use local font if Google Fonts is blocked */
+@font-face {
+  font-family: 'Material Icons';
+  font-style: normal;
+  font-weight: 400;
+  src: url(https://fonts.gstatic.com/s/materialicons/v142/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2) format('woff2');
+  font-display: swap;
+}
+
+/* Fallback for when Google Fonts is blocked - use a data URI or alternative CDN */
+.material-icons-fallback {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ==========================================================================
+   FOCUS-VISIBLE — A11y
+   ========================================================================== */
+a:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--h-brand, #8b5cf6);
+  outline-offset: 2px;
+  border-radius: 8px;
+}
+
+/* ==========================================================================
+   DARK NEON GLASS — Design Tokens (Default: Dark Mode)
+   ========================================================================== */
+:root {
+  --bg: #070412;
+  --bg-2: #0b0720;
+  --bg-3: #100a2a;
+  --card: rgba(255, 255, 255, 0.035);
+  --card-2: rgba(255, 255, 255, 0.065);
+  --card-solid: #110b28;
+  --border: rgba(255, 255, 255, 0.09);
+  --border-2: rgba(255, 255, 255, 0.16);
+  --text: #f5f3ff;
+  --text-2: rgba(245, 243, 255, 0.66);
+  --text-3: rgba(245, 243, 255, 0.42);
+  --brand: #8b5cf6;
+  --brand-2: #d946ef;
+  --brand-glow: rgba(139, 92, 246, 0.42);
+  --shadow: 0 20px 60px -18px rgba(0, 0, 0, 0.65);
+  --shadow-sm: 0 10px 30px -12px rgba(0, 0, 0, 0.5);
+}
+
+/* Light mode overrides */
+[data-theme='light'] {
+  --bg: #f7f5ff;
+  --bg-2: #efe9ff;
+  --bg-3: #e8e0ff;
+  --card: rgba(23, 14, 60, 0.035);
+  --card-2: rgba(23, 14, 60, 0.065);
+  --card-solid: #ffffff;
+  --border: rgba(23, 14, 60, 0.1);
+  --border-2: rgba(23, 14, 60, 0.18);
+  --text: #171233;
+  --text-2: rgba(23, 18, 51, 0.68);
+  --text-3: rgba(23, 18, 51, 0.46);
+  --brand: #7c3aed;
+  --brand-2: #c026d3;
+  --brand-glow: rgba(124, 58, 237, 0.25);
+  --shadow: 0 20px 50px -20px rgba(76, 40, 160, 0.22);
+  --shadow-sm: 0 10px 30px -16px rgba(76, 40, 160, 0.14);
+}
+
+/* ==========================================================================
+   QUILL EDITOR - FINAL FIX (Responsive Aware)
+   ========================================================================== */
+
+/* --- 1. Tailwind SVG Preflight Fix --- */
+.ql-toolbar svg,
+.ql-toolbar .ql-picker-label svg {
+  display: inline-block !important;
+  vertical-align: middle !important;
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  max-width: 18px !important;
+  max-height: 18px !important;
+  overflow: visible !important;
+  box-sizing: content-box !important;
+}
+
+/* Responsive SVG sizes */
+@media (max-width: 768px) {
+  .ql-toolbar svg,
+  .ql-toolbar .ql-picker-label svg {
+    width: 14px !important;
+    height: 14px !important;
+    min-width: 14px !important;
+    min-height: 14px !important;
+    max-width: 14px !important;
+    max-height: 14px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .ql-toolbar svg,
+  .ql-toolbar .ql-picker-label svg {
+    width: 12px !important;
+    height: 12px !important;
+    min-width: 12px !important;
+    min-height: 12px !important;
+    max-width: 12px !important;
+    max-height: 12px !important;
+  }
+}
+
+/* --- 2. Toolbar & Overflow Fix --- */
+.ql-container.ql-snow,
+.custom-quill-editor {
+  overflow: visible !important;
+  border: none !important;
+  max-width: 100% !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.ql-toolbar.ql-snow {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: center !important;
+  justify-content: center !important; /* ⭐ وسط‌چین */
+  gap: 4px !important;
+  direction: ltr !important;
+  padding: 10px 16px !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.ql-toolbar.ql-snow .ql-formats {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 6px !important; /* فاصله یکنواخت دو طرف */
+  float: none !important; /* جلوگیری از float پیش‌فرض Quill */
+}
+
+/* دکمه‌ها و pickerها در یک ردیف منظم */
+.ql-toolbar.ql-snow button,
+.ql-toolbar.ql-snow .ql-picker {
+  float: none !important;
+}
+
+@media (max-width: 768px) {
+  .ql-toolbar.ql-snow {
+    padding: 5px 6px !important;
+    gap: 2px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ql-toolbar.ql-snow {
+    padding: 4px !important;
+    gap: 1px;
+  }
+}
+
+.ql-toolbar.ql-snow .ql-formats {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 2px;
+  margin: 0 8px 0 0 !important;
+}
+
+@media (max-width: 768px) {
+  .ql-toolbar.ql-snow .ql-formats {
+    margin: 0 4px 0 0 !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .ql-toolbar.ql-snow .ql-formats {
+    margin: 0 2px 0 0 !important;
+  }
+}
+
+.ql-toolbar.ql-snow button {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 8px !important;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+@media (max-width: 768px) {
+  .ql-toolbar.ql-snow button {
+    width: 26px !important;
+    height: 24px !important;
+    padding: 2px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .ql-toolbar.ql-snow button {
+    width: 22px !important;
+    height: 20px !important;
+    padding: 1px !important;
+  }
+}
+
+.ql-toolbar.ql-snow button:hover {
+  background: rgba(164, 53, 240, 0.1) !important;
+}
+
+.ql-toolbar.ql-snow button.ql-active {
+  background: rgba(164, 53, 240, 0.15) !important;
+}
+
+.ql-toolbar button.ql-emoji::before {
+  content: '😊' !important;
+  font-size: 16px !important;
+  display: inline-block !important;
+  line-height: 1 !important;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif !important;
+}
+
+@media (max-width: 480px) {
+  .ql-toolbar button.ql-emoji::before {
+    font-size: 13px !important;
+  }
+}
+
+/* --- 3. Dropdowns Fix --- */
+.ql-toolbar .ql-picker {
+  position: relative !important;
+  color: var(--text-secondary, #64748b);
+}
+
+.ql-toolbar .ql-picker-label {
+  border: none !important;
+  padding: 2px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .ql-toolbar .ql-picker-label {
+    padding: 2px 4px !important;
+    font-size: 11px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .ql-toolbar .ql-picker-label {
+    padding: 1px 3px !important;
+    font-size: 10px !important;
+  }
+}
+
+.ql-toolbar .ql-picker-label::before {
+  font-family: 'Vazirmatn', Arial, sans-serif !important;
+  display: inline !important;
+}
+
+.ql-toolbar .ql-picker.ql-header {
+  min-width: 90px !important;
+}
+.ql-toolbar .ql-picker.ql-size {
+  min-width: 70px !important;
+}
+
+@media (max-width: 640px) {
+  .ql-toolbar .ql-picker.ql-header {
+    min-width: 60px !important;
+  }
+  .ql-toolbar .ql-picker.ql-size {
+    min-width: 50px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .ql-toolbar .ql-picker.ql-header {
+    min-width: auto !important;
+  }
+  .ql-toolbar .ql-picker.ql-size,
+  .ql-toolbar .ql-color-picker,
+  .ql-toolbar .ql-background,
+  .ql-toolbar .ql-code-block,
+  .ql-toolbar .ql-blockquote {
+    display: none !important;
+  }
+}
+
+@media (max-width: 380px) {
+  .ql-toolbar .ql-indent,
+  .ql-toolbar .ql-direction,
+  .ql-toolbar .ql-clean,
+  .ql-toolbar .ql-strike {
+    display: none !important;
+  }
+}
+
+/* Dropdown Options */
+.ql-toolbar .ql-picker-options {
+  display: none !important;
+  position: absolute !important;
+  top: 100% !important;
+  z-index: 99999 !important;
+  background: var(--bg-primary, #ffffff) !important;
+  border: 1px solid var(--border-color, #e2e8f0) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14) !important;
+  padding: 6px !important;
+  max-height: 260px;
+  overflow-y: auto;
+  margin-top: 4px;
+  left: 0 !important;
+  right: auto !important;
+}
+
+.ql-toolbar .ql-picker.ql-expanded .ql-picker-options {
+  display: block !important;
+}
+
+.ql-toolbar .ql-color-picker.ql-expanded .ql-picker-options,
+.ql-toolbar .ql-background.ql-expanded .ql-picker-options {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  width: 152px !important;
+  gap: 4px;
+  padding: 8px !important;
+}
+
+.ql-toolbar .ql-picker-item {
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+.ql-toolbar .ql-picker-item:hover {
+  background: rgba(164, 53, 240, 0.1);
+}
+
+.ql-toolbar .ql-color-picker .ql-picker-item,
+.ql-toolbar .ql-background .ql-picker-item {
+  width: 20px !important;
+  height: 20px !important;
+  padding: 0 !important;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 4px !important;
+}
+
+/* --- 4. SVG Stroke & Fill --- */
+.ql-toolbar .ql-stroke {
+  stroke: var(--text-secondary, #64748b) !important;
+  fill: none !important;
+  stroke-width: 1.5;
+}
+.ql-toolbar .ql-fill {
+  fill: var(--text-secondary, #64748b) !important;
+  stroke: none !important;
+}
+.ql-toolbar button:hover .ql-stroke,
+.ql-toolbar button.ql-active .ql-stroke {
+  stroke: var(--primary-color, #a435f0) !important;
+}
+.ql-toolbar button:hover .ql-fill,
+.ql-toolbar button.ql-active .ql-fill {
+  fill: var(--primary-color, #a435f0) !important;
+}
+
+.ql-snow .ql-tooltip {
+  z-index: 10070 !important;
+  background: var(--bg-primary, #fff);
+  border: 1px solid var(--border-color, #e2e8f0);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  color: var(--text-primary, #1c1d1f);
+  max-width: calc(100vw - 32px);
+}
+
+/* --- 5. Editor Container Sizing --- */
+.ql-editor {
+  min-height: 150px;
+  padding: 14px 18px !important;
+  line-height: 1.7;
+  box-sizing: border-box;
+  word-wrap: break-word !important;
+  overflow-wrap: break-word !important;
+  max-width: 100% !important;
+  font-family: 'Vazirmatn', 'IRANSans', 'Tahoma', sans-serif !important;
+  font-size: 1rem;
+  color: var(--text-primary, #1c1d1f);
+}
+
+.ql-editor p {
+  font-family: inherit !important;
+  font-size: inherit;
+  line-height: 1.8;
+  margin-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .ql-editor {
+    min-height: 120px;
+    padding: 10px 12px !important;
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .ql-editor {
+    min-height: 100px;
+    padding: 8px 10px !important;
+    font-size: 0.85rem;
+  }
+}
+
+/* ==========================================================================
+   6. RTL LISTS & PLACEHOLDER FIX 
+   ========================================================================== */
+
+.ql-editor li::after {
+  content: none !important;
+  display: none !important;
+}
+
+.ql-editor[dir='rtl'] ol,
+.ql-editor[dir='rtl'] ul,
+.rich-text-wrapper.rtl-mode .ql-editor ol,
+.rich-text-wrapper.rtl-mode .ql-editor ul {
+  padding-right: 1.5em !important;
+  padding-left: 0 !important;
+  margin: 0.5em 0 !important;
+}
+
+.ql-editor[dir='rtl'] li,
+.rich-text-wrapper.rtl-mode .ql-editor li {
+  position: relative;
+  text-align: right;
+  direction: rtl;
+  list-style-type: none !important;
+}
+
+body .ql-editor[dir='rtl'] li > .ql-ui:before,
+body .ql-editor[dir='rtl'] li.ql-direction-rtl > .ql-ui:before,
+body .ql-editor[dir='rtl'] li:not(.ql-direction-rtl) > .ql-ui:before,
+body .rich-text-wrapper.rtl-mode .ql-editor li > .ql-ui:before,
+body .rich-text-wrapper.rtl-mode .ql-editor li.ql-direction-rtl > .ql-ui:before,
+body .rich-text-wrapper.rtl-mode .ql-editor li:not(.ql-direction-rtl) > .ql-ui:before {
+  display: inline-block !important;
+  margin-left: 0.3em !important;
+  margin-right: -1.5em !important;
+  text-align: left !important;
+  white-space: nowrap !important;
+  width: 1.2em !important;
+  direction: ltr !important;
+  unicode-bidi: isolate !important;
+  color: var(--primary-color, #a435f0);
+  font-weight: 600;
+}
+
+body .ql-editor[dir='rtl'] li::before,
+body .ql-editor[dir='rtl'] li:not(.ql-direction-rtl)::before,
+body .ql-editor[dir='rtl'] li.ql-direction-rtl::before,
+body .rich-text-wrapper.rtl-mode .ql-editor li::before {
+  margin-left: 0.3em !important;
+  margin-right: -1.5em !important;
+  text-align: left !important;
+  direction: ltr !important;
+  unicode-bidi: isolate !important;
+  color: var(--primary-color, #a435f0);
+  font-weight: 600;
+}
+
+.ql-editor[dir='rtl'] li.ql-indent-1 {
+  padding-right: 1.5em !important;
+  padding-left: 0 !important;
+}
+.ql-editor[dir='rtl'] li.ql-indent-2 {
+  padding-right: 3em !important;
+  padding-left: 0 !important;
+}
+.ql-editor[dir='rtl'] li.ql-indent-3 {
+  padding-right: 4.5em !important;
+  padding-left: 0 !important;
+}
+.ql-editor[dir='rtl'] li.ql-indent-4 {
+  padding-right: 6em !important;
+  padding-left: 0 !important;
+}
+.ql-editor[dir='rtl'] li.ql-indent-5 {
+  padding-right: 7.5em !important;
+  padding-left: 0 !important;
+}
+
+.ql-editor[dir='ltr'] ol,
+.ql-editor[dir='ltr'] ul {
+  padding-left: 1.5em !important;
+  padding-right: 0 !important;
+}
+
+body .ql-editor[dir='ltr'] li > .ql-ui:before {
+  margin-left: -1.5em !important;
+  margin-right: 0.3em !important;
+  text-align: right !important;
+}
+
+/* Placeholder Fix */
+.ql-editor.ql-blank::before {
+  font-style: normal !important;
+  color: var(--text-muted, #94a3b8) !important;
+  font-family: inherit !important;
+  right: 18px !important;
+  left: 18px !important;
+}
+
+.ql-editor[dir='rtl'].ql-blank::before,
+.rich-text-wrapper.rtl-mode .ql-editor.ql-blank::before {
+  left: auto !important;
+  right: 18px !important;
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+.ql-editor[dir='ltr'].ql-blank::before,
+.rich-text-wrapper.ltr-mode .ql-editor.ql-blank::before {
+  right: auto !important;
+  left: 18px !important;
+  text-align: left !important;
+  direction: ltr !important;
+}
+
+@media (max-width: 480px) {
+  .ql-editor.ql-blank::before {
+    right: 10px !important;
+    left: 10px !important;
+  }
+
+  .ql-editor[dir='rtl'].ql-blank::before,
+  .rich-text-wrapper.rtl-mode .ql-editor.ql-blank::before {
+    right: 10px !important;
+    left: auto !important;
+  }
+
+  .ql-editor[dir='ltr'].ql-blank::before,
+  .rich-text-wrapper.ltr-mode .ql-editor.ql-blank::before {
+    left: 10px !important;
+    right: auto !important;
+  }
+}
+
+/* ==========================================================================
+   CSS VARIABLES & BASE STYLES
+   ========================================================================== */
+:root {
+  --primary-color: #a435f0;
+  --primary-dark: #8710d8;
+  --primary-light: #c77dff;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f7f8;
+  --bg-card: #ffffff;
+  --bg-tertiary: #f8fafc;
+  --bg-dark: #1c1d1f;
+  --bg-hover: #f0f0f0;
+  --text-primary: #1c1d1f;
+  --text-secondary: #64748b;
+  --text-muted: #94a3b8;
+  --text-light: #e2e8f0;
+  --border-color: #e2e8f0;
+  --border-hover: #cbd5e1;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+}
+
+.dark,
+.dark-theme,
+[data-theme='dark'] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-card: #1e293b;
+  --bg-tertiary: #0f172a;
+  --bg-dark: #020617;
+  --bg-hover: #334155;
+  --text-primary: #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --border-color: #334155;
+  --border-hover: #475569;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+html {
+  scroll-behavior: smooth;
+}
+body {
+  font-family: 'Vazirmatn', 'Tahoma', sans-serif;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  direction: rtl;
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--text-muted);
+  border-radius: 4px;
+  &:hover {
+    background: var(--text-secondary);
+  }
+}
+
+/* ==========================================================================
+   MATERIAL OVERLAYS & DARK MODE
+   ========================================================================== */
+.cdk-overlay-container {
+  z-index: 99999 !important;
+}
+.cdk-overlay-pane {
+  direction: rtl !important;
+}
+
+.cdk-overlay-pane .mat-mdc-menu-panel {
+  background-color: var(--bg-primary, #ffffff) !important;
+  border-radius: 12px !important;
+  border: 1px solid var(--border-color, #e2e8f0) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15) !important;
+  min-width: 240px !important;
+  overflow: hidden !important;
+}
+
+.cdk-overlay-pane .mat-mdc-menu-item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  font-family: 'Vazirmatn', inherit !important;
+  font-size: 0.9rem !important;
+  color: var(--text-primary, #1c1d1f) !important;
+  height: 44px !important;
+}
+
+.cdk-overlay-pane .mat-mdc-menu-item .mat-icon {
+  margin-right: 0 !important;
+  margin-left: 12px !important;
+  color: var(--text-secondary, #64748b) !important;
+}
+
+.cdk-overlay-pane .mat-mdc-menu-item:hover {
+  background-color: var(--bg-hover, #f0f0f0) !important;
+  color: var(--primary-color, #a435f0) !important;
+}
+.cdk-overlay-pane .mat-mdc-menu-item:hover .mat-icon {
+  color: var(--primary-color, #a435f0) !important;
+}
+
+.dark .cdk-overlay-pane .mat-mdc-menu-panel,
+[data-theme='dark'] .cdk-overlay-pane .mat-mdc-menu-panel {
+  background-color: #0f172a !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6) !important;
+}
+
+.dark .cdk-overlay-pane .mat-mdc-menu-item,
+[data-theme='dark'] .cdk-overlay-pane .mat-mdc-menu-item {
+  color: #f1f5f9 !important;
+}
+.dark .cdk-overlay-pane .mat-mdc-menu-item .mat-icon,
+[data-theme='dark'] .cdk-overlay-pane .mat-mdc-menu-item .mat-icon {
+  color: #94a3b8 !important;
+}
+.dark .cdk-overlay-pane .mat-mdc-menu-item:hover,
+[data-theme='dark'] .cdk-overlay-pane .mat-mdc-menu-item:hover {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  color: var(--primary-light, #c77dff) !important;
+}
+.dark .cdk-overlay-pane .mat-mdc-menu-item:hover .mat-icon,
+[data-theme='dark'] .cdk-overlay-pane .mat-mdc-menu-item:hover .mat-icon {
+  color: var(--primary-light, #c77dff) !important;
+}
+
+/* Quill Dark Mode */
+.dark .ql-toolbar.ql-snow,
+[data-theme='dark'] .ql-toolbar.ql-snow {
+  background: #1e293b;
+  border-bottom-color: rgba(255, 255, 255, 0.1) !important;
+}
+.dark .ql-toolbar .ql-picker-options,
+[data-theme='dark'] .ql-toolbar .ql-picker-options {
+  background: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+.dark .ql-toolbar .ql-stroke,
+[data-theme='dark'] .ql-toolbar .ql-stroke {
+  stroke: #94a3b8 !important;
+}
+.dark .ql-toolbar .ql-fill,
+[data-theme='dark'] .ql-toolbar .ql-fill {
+  fill: #94a3b8 !important;
+}
+.dark .ql-toolbar button:hover .ql-stroke,
+.dark .ql-toolbar button.ql-active .ql-stroke,
+[data-theme='dark'] .ql-toolbar button:hover .ql-stroke,
+[data-theme='dark'] .ql-toolbar button.ql-active .ql-stroke {
+  stroke: var(--primary-light, #c77dff) !important;
+}
+.dark .ql-toolbar button:hover .ql-fill,
+.dark .ql-toolbar button.ql-active .ql-fill,
+[data-theme='dark'] .ql-toolbar button:hover .ql-fill,
+[data-theme='dark'] .ql-toolbar button.ql-active .ql-fill {
+  fill: var(--primary-light, #c77dff) !important;
+}
+.dark .ql-snow .ql-tooltip,
+[data-theme='dark'] .ql-snow .ql-tooltip {
+  background: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  color: #f1f5f9 !important;
+}
+
+/* ==========================================================================
+   Global Smooth Theme Transition
+   ========================================================================== */
+body,
+body * {
+  transition:
+    background-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    border-color 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+    color 0.25s ease,
+    fill 0.25s ease,
+    stroke 0.25s ease !important;
+}
+
+/* جلوگیری از اختلال در ترانزیشن‌های Quill و Pickers */
+.mat-mdc-progress-spinner,
+.spinner,
+.animated-element,
+[class*='animate-'],
+.ql-picker-options,
+.ql-toolbar,
+.ql-tooltip,
+.ql-emoji-picker,
+.ql-editor {
+  transition: none !important;
+}
+
+/* ==========================================================================
+   View Transition Fix - جلوگیری از InvalidStateError
+   ========================================================================== */
+
+/* ثابت نگه داشتن عرض viewport در حین ترنزیشن */
+html {
+  overflow-y: scroll !important;
+  scrollbar-gutter: stable !important;
+}
+
+/* جلوگیری از تغییر سایز viewport هنگام ترنزیشن */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none !important;
+  mix-blend-mode: normal !important;
+}
+
+/* حذف انیمیشن پیش‌فرض ترنزیشن که باعث خطا می‌شود */
+::view-transition-group(root) {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+}
+
+::view-transition-image-pair(root) {
+  isolation: auto !important;
+}
+
+/* ==========================================================================
+   Classroom Active — Hide navbar & footer for immersive learning
+   ========================================================================== */
+body.classroom-active app-navbar,
+body.classroom-active app-footer,
+body.classroom-active app-activity-snackbar {
+  display: none !important;
+}
+
+body.classroom-active .main-content {
+  min-height: 0 !important;
+}
+.stage-editor-panel {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+    --mdc-dialog-container-shape: 1.35rem;
+  }
+  .mdc-dialog__surface {
+    padding: 0 !important;
+    overflow: hidden !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+}
+/* frontend/src/styles.scss */
+
+.custom-stage-dialog-panel {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .mdc-dialog__surface {
+    padding: 0 !important;
+    background: transparent !important;
+    border-radius: 1.35rem !important;
+    overflow: hidden !important;
+    box-shadow: none !important;
+  }
+}
+/* frontend/src/styles.scss */
+
+.custom-dialog-panel {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .mdc-dialog__surface {
+    padding: 0 !important;
+    background: transparent !important;
+    border-radius: 1.35rem !important; /* شعاع انحنای دیزاین جدید */
+    overflow: hidden !important;
+    box-shadow: none !important;
+  }
+}
+.preview-dialog-panel {
+  .mat-mdc-dialog-container {
+    padding: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .mdc-dialog__surface {
+    padding: 0 !important;
+    border-radius: 1.25rem !important;
+    overflow: hidden;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   Full-Page Mode (Learning Paths Catalog)
+   ═══════════════════════════════════════════ */
+body.lp-fullpage .navbar-wrapper {
+  border-bottom-color: transparent !important;
+  background: rgba(244, 240, 230, 0.75) !important;
+  backdrop-filter: blur(16px) saturate(180%) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(180%) !important;
+}
+
+.dark-theme body.lp-fullpage .navbar-wrapper,
+[data-theme='dark'] body.lp-fullpage .navbar-wrapper,
+body.dark.lp-fullpage .navbar-wrapper,
+html.dark body.lp-fullpage .navbar-wrapper {
+  background: rgba(15, 23, 42, 0.85) !important;
+}

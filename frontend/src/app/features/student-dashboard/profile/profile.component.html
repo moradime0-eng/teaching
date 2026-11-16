@@ -1,0 +1,261 @@
+<div class="profile-container" dir="rtl">
+  <!-- Top Breadcrumb & Title -->
+  <header class="page-header">
+    <div class="header-breadcrumb">
+      <a routerLink="/" class="breadcrumb-item">
+        <mat-icon>home</mat-icon>
+        صفحه اصلی
+      </a>
+      <mat-icon class="separator">chevron_left</mat-icon>
+      <span class="breadcrumb-active">تنظیمات حساب کاربری</span>
+    </div>
+    <div class="header-titles">
+      <h1 class="page-title">پروفایل کاربری</h1>
+      <p class="page-subtitle">اطلاعات شخصی، مشخصات تماس و بیوگرافی حساب خود را مدیریت کنید.</p>
+    </div>
+  </header>
+
+  <!-- Success Notification -->
+  <div class="alert-box success" *ngIf="successMsg()">
+    <div class="alert-content">
+      <mat-icon class="alert-icon">verified</mat-icon>
+      <div>
+        <strong>عملیات موفق</strong>
+        <p>{{ successMsg() }}</p>
+      </div>
+    </div>
+    <button class="alert-close" (click)="successMsg.set('')" aria-label="بستن">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Error Notification -->
+  <div class="alert-box error" *ngIf="errorMsg()">
+    <div class="alert-content">
+      <mat-icon class="alert-icon">error_outline</mat-icon>
+      <div>
+        <strong>خطا در انجام عملیات</strong>
+        <p>{{ errorMsg() }}</p>
+      </div>
+    </div>
+    <button class="alert-close" (click)="errorMsg.set('')" aria-label="بستن">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <!-- Layout: 2 Columns -->
+  <div class="profile-layout">
+    <!-- LEFT COLUMN: Identity & Quick Overview Card -->
+    <aside class="profile-sidebar">
+      <div class="profile-card identity-card">
+        <div class="avatar-wrapper">
+          <div class="avatar-circle">
+            <img
+              *ngIf="avatarPreview()"
+              [src]="avatarPreview()"
+              alt="Avatar"
+              class="avatar-image"
+              appImageFallback="avatar"
+              (error)="avatarPreview.set(null)"
+            />
+            <div *ngIf="!avatarPreview()" class="avatar-fallback">
+              {{ userInitials }}
+            </div>
+          </div>
+
+          <label class="avatar-upload-btn" title="تغییر تصویر پروفایل">
+            <mat-icon>photo_camera</mat-icon>
+            <input
+              type="file"
+              (change)="onAvatarChange($event)"
+              accept="image/png, image/jpeg, image/webp"
+            />
+          </label>
+        </div>
+
+        <div class="user-meta">
+          <h2 class="user-name">{{ fullNameCtrl.value || 'کاربر عزیز' }}</h2>
+          <span class="user-badge role-badge">
+            <mat-icon>school</mat-icon>
+            {{ authService.currentUser()?.role === 'instructor' ? 'مدرس آکادمی' : 'دانشجوی دوره' }}
+          </span>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Account Info List -->
+        <div class="info-list">
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>email</mat-icon>
+              ایمیل کاربری
+            </div>
+            <div class="info-val-wrap">
+              <span class="info-val ltr">{{ authService.currentUser()?.email || '—' }}</span>
+              <button
+                type="button"
+                class="btn-copy"
+                [class.copied]="copiedField() === 'email'"
+                (click)="copyToClipboard(authService.currentUser()?.email || '', 'email')"
+                [title]="copiedField() === 'email' ? 'کپی شد!' : 'کپی ایمیل'"
+              >
+                <mat-icon>{{ copiedField() === 'email' ? 'check' : 'content_copy' }}</mat-icon>
+              </button>
+            </div>
+          </div>
+
+          <div class="info-item">
+            <div class="info-label">
+              <mat-icon>verified_user</mat-icon>
+              وضعیت حساب
+            </div>
+            <span class="status-pill active">
+              <span class="status-dot"></span>
+              فعال و تایید شده
+            </span>
+          </div>
+        </div>
+
+        <!-- Security Tip -->
+        <div class="security-tip">
+          <mat-icon>shield</mat-icon>
+          <p>اطلاعات هویتی شما طبق سیاست‌های حفظ حریم خصوصی کاملاً محافظت می‌شود.</p>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT COLUMN: Main Edit Form -->
+    <main class="profile-main">
+      <div class="profile-card">
+        <div class="card-header">
+          <div class="card-title-wrap">
+            <mat-icon class="title-icon">manage_accounts</mat-icon>
+            <div>
+              <h3 class="card-title">ویرایش مشخصات</h3>
+              <span class="card-desc">اطلاعات کاربری قابل نمایش در حساب شما</span>
+            </div>
+          </div>
+          <span class="dirty-badge" *ngIf="isFormDirty"> تغییرات ذخیره‌نشده </span>
+        </div>
+
+        <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="edit-form" novalidate>
+          <!-- Full Name -->
+          <div class="form-group" [class.has-error]="fullNameCtrl.invalid && fullNameCtrl.touched">
+            <label for="fullName">
+              نام و نام خانوادگی
+              <span class="required-star">*</span>
+            </label>
+            <div class="input-container">
+              <mat-icon class="input-icon">person_outline</mat-icon>
+              <input
+                id="fullName"
+                type="text"
+                formControlName="fullName"
+                placeholder="مثال: علی رضایی"
+              />
+              <mat-icon class="valid-icon" *ngIf="fullNameCtrl.valid && fullNameCtrl.touched"
+                >check_circle</mat-icon
+              >
+            </div>
+            <div class="field-error" *ngIf="fullNameCtrl.invalid && fullNameCtrl.touched">
+              <span *ngIf="fullNameCtrl.errors?.['required']"
+                >وارد کردن نام و نام خانوادگی الزامی است.</span
+              >
+              <span *ngIf="fullNameCtrl.errors?.['minlength']"
+                >نام باید حداقل شامل ۳ حرف باشد.</span
+              >
+            </div>
+          </div>
+
+          <!-- Phone Number -->
+          <div class="form-group" [class.has-error]="phoneCtrl.invalid && phoneCtrl.touched">
+            <label for="phone"> شماره تلفن همراه </label>
+            <div class="input-container">
+              <mat-icon class="input-icon">phone_android</mat-icon>
+              <input
+                id="phone"
+                type="tel"
+                formControlName="phone"
+                dir="ltr"
+                placeholder="09123456789"
+                maxlength="11"
+              />
+              <mat-icon class="valid-icon" *ngIf="phoneCtrl.valid && phoneCtrl.value"
+                >check_circle</mat-icon
+              >
+            </div>
+            <div class="field-hint" *ngIf="!phoneCtrl.invalid || !phoneCtrl.touched">
+              شماره موبایل برای اطلاع‌رسانی پیامکی و بازیابی رمز عبور استفاده می‌شود.
+            </div>
+            <div class="field-error" *ngIf="phoneCtrl.invalid && phoneCtrl.touched">
+              شماره موبایل باید معتبر باشد و با ۰۹ شروع شود (۱۱ رقم).
+            </div>
+          </div>
+
+          <!-- Email (Read-Only) -->
+          <div class="form-group">
+            <div class="label-with-badge">
+              <label for="userEmail">آدرس ایمیل</label>
+              <span class="locked-badge"> <mat-icon>lock</mat-icon> غیرقابل ویرایش </span>
+            </div>
+            <div class="input-container disabled-box">
+              <mat-icon class="input-icon">alternate_email</mat-icon>
+              <input
+                id="userEmail"
+                type="email"
+                [value]="authService.currentUser()?.email || 'user@domain.com'"
+                dir="ltr"
+                disabled
+              />
+            </div>
+            <div class="field-hint">
+              جهت تغییر ایمیل حساب کاربری با واحد پشتیبانی تماس حاصل فرمایید.
+            </div>
+          </div>
+
+          <!-- Bio -->
+          <div class="form-group">
+            <div class="label-with-counter">
+              <label for="bio">درباره من (بیوگرافی کوتاه)</label>
+              <span class="char-counter" [class.limit-reached]="bioLength >= maxBioLength">
+                {{ bioLength }} / {{ maxBioLength }}
+              </span>
+            </div>
+            <div class="input-container textarea-box">
+              <app-rich-text-editor
+                id="bio"
+                formControlName="bio"
+                placeholder="چند خط درباره تخصص‌ها، علایق یادگیری یا سوابق کاری خود بنویسید..."
+                minHeight="150px"
+                [autoExpand]="true"
+              ></app-rich-text-editor>
+            </div>
+          </div>
+
+          <!-- Actions Footer -->
+          <div class="form-actions">
+            <button
+              type="button"
+              class="btn-secondary"
+              [disabled]="!isFormDirty || isUpdating()"
+              (click)="resetForm()"
+            >
+              <mat-icon>restart_alt</mat-icon>
+              انصراف
+            </button>
+
+            <button
+              type="submit"
+              class="btn-primary"
+              [disabled]="profileForm.invalid || isUpdating() || !isFormDirty"
+            >
+              <div class="spinner" *ngIf="isUpdating()"></div>
+              <mat-icon *ngIf="!isUpdating()">save</mat-icon>
+              <span>{{ isUpdating() ? 'در حال ذخیره‌سازی...' : 'ذخیره تغییرات' }}</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+</div>

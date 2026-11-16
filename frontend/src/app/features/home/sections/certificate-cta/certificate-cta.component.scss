@@ -1,0 +1,305 @@
+// ==========================================================================
+// 🏆 Certificate CTA — Glassmorphism with Gold Border
+// ==========================================================================
+$ease: cubic-bezier(0.16, 1, 0.3, 1);
+$grad-brand: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
+$grad-gold: linear-gradient(135deg, #fbbf24, #f59e0b);
+
+:host { display: block; }
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.32rem 0.8rem;
+  border-radius: 99px;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  color: #b45309;
+  font-size: 0.72rem;
+  font-weight: 800;
+  margin-bottom: 0.85rem;
+  mat-icon { font-size: 15px; width: 15px; height: 15px; }
+}
+
+// ─── Section ───
+.cert-cta {
+  padding: 3.5rem 0;
+
+  &__inner {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    align-items: center;
+    gap: 3rem;
+    padding: 2.5rem;
+    border-radius: 24px;
+    border: 1.5px solid rgba(251, 191, 36, 0.25);
+    background: color-mix(in srgb, var(--bg-surface, #ffffff) 85%, transparent);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow:
+      0 24px 48px -16px rgba(15, 23, 42, 0.12),
+      inset 0 1px 0 rgba(255, 255, 255, 0.6);
+    overflow: hidden;
+    position: relative;
+    animation: cert-rise 0.7s $ease both;
+
+    // Gold gradient border effect
+    &::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 24px;
+      padding: 1.5px;
+      background: linear-gradient(135deg, rgba(251, 191, 36, 0.4), rgba(139, 92, 246, 0.3), rgba(34, 211, 238, 0.3));
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: xor;
+      -webkit-mask-composite: xor;
+      pointer-events: none;
+    }
+  }
+
+  // ─── Visual ───
+  &__visual {
+    display: flex;
+    justify-content: center;
+  }
+
+  // ─── Content ───
+  &__content {
+    padding: 0.5rem 0;
+  }
+
+  &__title {
+    margin: 0 0 0.8rem;
+    font-size: clamp(1.3rem, 2.4vw, 1.65rem);
+    font-weight: 900;
+    line-height: 1.5;
+    color: var(--text-primary, #0f172a);
+  }
+
+  &__desc {
+    margin: 0 0 1.5rem;
+    font-size: 0.92rem;
+    font-weight: 500;
+    line-height: 1.9;
+    color: var(--text-secondary, #64748b);
+  }
+
+  &__list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.8rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+
+    li {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-primary, #0f172a);
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        color: #10b981;
+        flex-shrink: 0;
+      }
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+  }
+
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.8rem 1.5rem;
+    border-radius: 13px;
+    font-size: 0.88rem;
+    font-weight: 800;
+    text-decoration: none;
+    transition: transform 0.2s ease, filter 0.2s ease, background 0.2s ease;
+
+    mat-icon {
+      font-size: 17px;
+      width: 17px;
+      height: 17px;
+      transition: transform 0.2s ease;
+    }
+
+    &--primary {
+      background: $grad-gold;
+      color: #fff;
+      box-shadow: 0 10px 24px -6px rgba(251, 191, 36, 0.45);
+      &:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.08);
+      }
+      &:hover mat-icon { transform: scale(1.12); }
+    }
+
+    &--ghost {
+      background: transparent;
+      border: 1.5px solid var(--border-color, #e2e8f0);
+      color: var(--text-primary, #0f172a);
+      &:hover {
+        background: color-mix(in srgb, var(--primary-color, #4f46e5) 6%, transparent);
+        border-color: var(--primary-color, #4f46e5);
+      }
+      &:hover mat-icon { transform: translateX(-2px); }
+    }
+  }
+}
+
+// ─── Certificate Card (Visual Preview) ───
+.cert-card {
+  position: relative;
+  width: 320px;
+  padding: 2rem 1.5rem;
+  border-radius: 16px;
+  border: 1.5px solid rgba(251, 191, 36, 0.35);
+  background: linear-gradient(135deg, #fffbeb, #fef3c7);
+  box-shadow: 0 20px 40px -12px rgba(251, 191, 36, 0.2);
+  text-align: center;
+  animation: cert-float 5s ease-in-out infinite;
+
+  &__mesh {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(251, 191, 36, 0.12) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(251, 191, 36, 0.12) 1px, transparent 1px);
+    background-size: 24px 24px;
+    border-radius: 16px;
+    pointer-events: none;
+  }
+
+  &__content {
+    position: relative;
+    z-index: 1;
+  }
+
+  &__icon {
+    font-size: 42px;
+    width: 42px;
+    height: 42px;
+    color: #d97706;
+    margin-bottom: 0.8rem;
+  }
+
+  &__title {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: #92400e;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  &__divider {
+    width: 60%;
+    height: 1.5px;
+    margin: 0.8rem auto;
+    background: linear-gradient(90deg, transparent, #d97706, transparent);
+  }
+
+  &__subtitle {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #a16207;
+    margin-bottom: 0.5rem;
+  }
+
+  &__name {
+    font-size: 1rem;
+    font-weight: 900;
+    color: #451a03;
+    margin-bottom: 0.3rem;
+    font-style: italic;
+  }
+
+  &__course {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #92400e;
+    margin-bottom: 0.8rem;
+  }
+
+  &__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 99px;
+    background: rgba(16, 185, 129, 0.15);
+    color: #059669;
+    font-size: 0.68rem;
+    font-weight: 800;
+    mat-icon { font-size: 13px; width: 13px; height: 13px; }
+  }
+}
+
+@keyframes cert-rise {
+  from { opacity: 0; transform: translateY(22px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes cert-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  25% { transform: translateY(-6px) rotate(0.5deg); }
+  75% { transform: translateY(4px) rotate(-0.5deg); }
+}
+
+// ═══════════════ Dark Theme ═══════════════
+:host-context(.dark-theme),
+:host-context(.dark-mode),
+:host-context(.dark),
+:host-context([data-theme='dark']) {
+  .cert-cta__inner {
+    background: color-mix(in srgb, #1e293b 90%, transparent);
+    box-shadow: 0 24px 48px -16px rgba(0, 0, 0, 0.4);
+    border-color: rgba(251, 191, 36, 0.2);
+  }
+  .cert-card {
+    background: linear-gradient(135deg, #1e1a10, #292524);
+    border-color: rgba(251, 191, 36, 0.25);
+    box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.5);
+    &__title { color: #fbbf24; }
+    &__subtitle { color: #d4a76a; }
+    &__name { color: #fef3c7; }
+    &__course { color: #d4a76a; }
+    &__mesh {
+      background-image:
+        linear-gradient(rgba(251, 191, 36, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(251, 191, 36, 0.06) 1px, transparent 1px);
+    }
+  }
+}
+
+// ═══════════════ Responsive ═══════════════
+@media (max-width: 900px) {
+  .cert-cta__inner {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    padding: 2rem 1.5rem;
+  }
+  .cert-cta__visual { order: -1; }
+  .cert-card { width: 100%; max-width: 300px; }
+}
+
+@media (max-width: 640px) {
+  .cert-cta { padding: 2rem 0; }
+  .cert-cta__inner { padding: 1.5rem 1rem; }
+  .cert-cta__actions { flex-direction: column; width: 100%; }
+  .cert-cta__btn { width: 100%; justify-content: center; }
+}

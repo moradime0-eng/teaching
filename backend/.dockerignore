@@ -1,0 +1,50 @@
+# Dependencies
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-store
+
+# Build output
+dist
+build
+out
+*.tsbuildinfo
+
+# Environment files — never bake secrets into an image
+.env
+.env.*
+!.env.example
+
+# Tests & coverage
+coverage
+.nyc_output
+**/*.spec.ts
+**/*.test.ts
+tests
+
+# IDE / OS noise
+.vscode
+.idea
+.DS_Store
+Thumbs.db
+
+# VCS
+.git
+.gitignore
+.gitattributes
+
+# Docker meta — don't include the Docker context itself
+Dockerfile
+.dockerignore
+
+# Logs
+logs
+*.log
+
+# Docs that don't belong in a runtime image
+*.md
+README.md
+API_SECURITY_AUDIT.md
+MULTI_TENANCY_AUDIT_REPORT.md
+LICENSE

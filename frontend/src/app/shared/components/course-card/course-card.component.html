@@ -1,0 +1,150 @@
+<article
+  class="course-card enter"
+  [style.--ins-color]="instructorColor()"
+  [style.animation-delay.ms]="index * 70"
+  [class.has-countdown]="isCountdownDiscount()"
+  tiltGlare [intensity]="20" [lift]="4" [scale]="1.02" [perspective]="700"
+>
+  <a [routerLink]="['/course', course.slug]" class="cc-thumb">
+    @if (shouldShowImage('thumb', courseThumb(course))) {
+      <img
+        [src]="resolveImageUrl(courseThumb(course))"
+        [alt]="course.title"
+        loading="lazy"
+        (error)="onImageError('thumb', $event)"
+      />
+    }
+
+    <!-- 🏷️ تگ‌ها (Badges) - گوشه بالا راست -->
+    <div class="cc-badges">
+      @if (isCampaignDiscount()) {
+        <span class="campaign-badge" [class]="activeCampaign()?.theme ? 'theme-' + activeCampaign()!.theme : 'theme-fire'">
+          <mat-icon>{{ getCampaignIcon() }}</mat-icon>
+          <span>کمپین {{ faNum(campaignDiscountPercent()) }}%</span>
+        </span>
+      } @else if (hasDiscount()) {
+        <span class="is-off-badge">{{ faNum(discountPercent()) }}%</span>
+      }
+      @if (course.category?.name) {
+        <span class="is-cat" [style.background]="categoryGradient()">
+          {{ course.category.name }}
+        </span>
+      }
+    </div>
+
+    <!-- ❤️ دکمه علاقه‌مندی (بیرون از cc-badges) - گوشه بالا چپ -->
+    <button 
+      class="cc-wishlist-btn"
+      [class.active]="isInWishlist()"
+      [disabled]="wishlistLoading()"
+      (click)="toggleWishlist($event)"
+      [attr.aria-label]="isInWishlist() ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'"
+    >
+      <mat-icon>{{ isInWishlist() ? 'favorite' : 'favorite_border' }}</mat-icon>
+      @if (wishlistLoading()) {
+        <span class="wishlist-spinner"></span>
+      }
+    </button>
+
+    <!-- ⏱️ تعداد جلسات - پایین -->
+    @if (course.totalLectures || course.lecturesCount) {
+      <span class="cc-sessions">
+        <mat-icon>play_circle</mat-icon>
+        {{ faNum(course.totalLectures || course.lecturesCount || 0) }} جلسه
+      </span>
+    }
+  </a>
+
+  <div class="cc-body">
+    <div class="cc-rating">
+      <app-rating-stars
+        [rating]="ratingValue()"
+        size="small"
+        [readonly]="true"
+      ></app-rating-stars>
+      
+      @if (ratingValue() > 0) {
+        <b>{{ faNum(ratingValue()) }}</b>
+        <span class="votes">({{ faNum(reviewCountValue()) }})</span>
+      } @else {
+        <span class="no-rating-text">بدون امتیاز</span>
+      }
+      
+      <span class="level">{{ levelLabel(course.level) }}</span>
+    </div>
+
+    <h3 class="cc-title">{{ course.title }}</h3>
+
+    <div class="cc-instructor">
+      <span class="avatar">
+        @if (hasInstructorAvatar()) {
+          <img
+            [src]="instructorAvatarUrl()"
+            [alt]="course.instructor?.fullName || course.instructor?.name || 'مدرس'"
+            loading="lazy"
+          />
+        } @else {
+          {{ instructorInitial() }}
+        }
+      </span>
+      <div>
+        <b>{{ course.instructor?.fullName || course.instructor?.name || 'مدرس' }}</b>
+        <small>مدرس دوره</small>
+      </div>
+    </div>
+
+    <div class="cc-meta">
+      <span>
+        <mat-icon>schedule</mat-icon>
+        {{ course.totalDuration ? (course.totalDuration | faDurationSeconds) : '۰ ثانیه' }}
+      </span>
+      <span>
+        <mat-icon>group</mat-icon>
+        {{ faNum(course.totalStudents || course.studentsCount || 0) }} هنرجو
+      </span>
+    </div>
+
+    <div class="cc-price-row">
+      @if (course.isFree || course.price === 0) {
+        <div class="now free">رایگان</div>
+      } @else if (isCampaignDiscount()) {
+        <div class="price-discount campaign-price">
+          <div class="old">{{ faNum(course.price) }} تومان</div>
+          <div class="now">
+            {{ faNum(finalPrice()) }}
+            <small>تومان</small>
+          </div>
+        </div>
+      } @else if (hasDiscount()) {
+        <div class="price-discount">
+          <div class="old">{{ faNum(course.price) }} تومان</div>
+          <div class="now">
+            {{ faNum(finalPrice()) }}
+            <small>تومان</small>
+          </div>
+        </div>
+        @if (isCountdownDiscount()) {
+          <div class="countdown-chip" [class.active]="countdownActive()">
+            <div class="countdown-chip__inner">
+              <mat-icon class="countdown-chip__icon">timer</mat-icon>
+              <span class="countdown-chip__label">{{ countdownRemaining() }}</span>
+            </div>
+            <div class="countdown-chip__bar">
+              <span class="countdown-chip__fill" [style.width.%]="countdownProgress()"></span>
+            </div>
+          </div>
+        } @else {
+          <span class="off">{{ faNum(discountPercent()) }}&#x066A;</span>
+        }
+      } @else {
+        <div class="now">
+          {{ faNum(course.price) }}
+          <small>تومان</small>
+        </div>
+      }
+      <a class="cc-cta" [routerLink]="['/course', course.slug]">
+        <mat-icon>arrow_back</mat-icon>
+      </a>
+    </div>
+  </div>
+</article>
